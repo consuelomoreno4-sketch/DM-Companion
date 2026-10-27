@@ -95,12 +95,23 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
     estadísticas, iniciativa 2024 de cada monstruo, reglas.
   - https://github.com/5e-bits/5e-database (MIT), `src/2024/en`: campos de hechizos para los filtros.
 
-### 3. Campaña — FASE 3
-- **Notas de sesión** en punteo (viñetas, con sangría para sub-puntos).
-- **Historial de sesiones** (fecha, título, resumen, notas).
-- **Bitácora**: fichas de personajes, lugares, objetos y facciones (nombre, tipo, descripción, etiquetas, enlaces entre fichas).
-- **Líneas de historia** con estado: idea / activa / resuelta.
-- Búsqueda global en la campaña.
+### 3. Campaña — FASE 3 ✅ (v3.0)
+- Tres vistas (Sesiones / Bitácora / Líneas de historia) y **búsqueda en toda la campaña** (resultados por
+  tipo con un fragmento del texto; al tocar uno se abre).
+- Todo se **guarda solo** (pausa de 0,4 s tras escribir; se fuerza al salir de la app y antes de exportar).
+  Aviso "Guardado ✓".
+- **Sesiones** (historial): n.º (automático), fecha (hoy por defecto), título, resumen y **notas en punteo**:
+  - Enter crea un punto nuevo (se detecta el salto de línea, así funciona con el teclado de la tablet);
+    Enter a mitad de texto lo divide; pegar varias líneas crea varios puntos.
+  - Sangría 0–4 con botones o Tab / Shift+Tab; mover con botones o Alt+↑/↓; borrar con botón o Retroceso en un
+    punto vacío. Los botones actúan sobre el punto donde está el cursor.
+- **Bitácora**: fichas de personaje / lugar / objeto / facción con descripción corta, etiquetas, descripción y
+  **enlaces** a otras fichas (buscador; si el nombre no existe, ofrece crear la ficha). "Aparece en": fichas e
+  historias que la enlazan y sesiones cuyas notas contienen su nombre. Filtro por tipo y por nombre/etiqueta.
+  Al borrar una ficha se quita de los enlaces de las demás.
+- **Líneas de historia**: tablero de tres columnas **idea / activa / resuelta**; tarjetas con título, descripción
+  y fichas involucradas; ◀ ▶ mueven de columna; tocar la tarjeta abre la edición. Una tarjeta nueva que se cierra
+  vacía se descarta.
 
 ### 4. Ambientación — FASE 4
 - Generar descripciones de escena con la **API de Anthropic** (requiere internet).
@@ -128,6 +139,12 @@ js/conditions.js        Lista de las 15 condiciones de 2024 (los textos están e
 js/monsters.js          Monstruos (SRD + propios) para sugerencias y Compendio
 js/compendium-data.js   Datos del Compendio: carga, listas, presentación y entradas propias
 js/compendium.js        Pantalla del Compendio
+js/campaign-data.js     Datos de la Campaña: carga, guardado automático, enlaces y búsqueda
+js/campaign.js          Pantalla de la Campaña (vistas y búsqueda)
+js/campaign-sessions.js Vista Sesiones (notas en punteo)
+js/campaign-codex.js    Vista Bitácora
+js/campaign-stories.js  Vista Líneas de historia (tablero)
+js/campaign-ui.js       Piezas compartidas (enlaces entre fichas, fechas)
 js/markdown.js          Formato sencillo del texto de entradas propias
 data/monsters.json      Índice de monstruos (id, nombre, tipo, CR, HP, AC, iniciativa)
 data/monsters-full.json Bloque de estadísticas de cada monstruo (HTML)
@@ -142,7 +159,8 @@ icons/                  Iconos de la app
 
 ## Modelo de datos (IndexedDB)
 
-Base `dm-companion`, versión 2. Almacenes: `kv` (clave → valor) y `homebrew` (entradas propias del Compendio).
+Base `dm-companion`, versión 3. Almacenes: `kv` (clave → valor), `homebrew` (entradas propias del Compendio)
+y los de la Campaña: `sessions`, `codex`, `storylines`.
 
 - `settings`: `{ lang: 'en' | 'es' | 'de' }`
 
@@ -163,7 +181,11 @@ Base `dm-companion`, versión 2. Almacenes: `kv` (clave → valor) y `homebrew` 
   - spell: level, school, classes[], castingTime, ritual, concentration, range, components, duration, higher
   - rule: category
 
-Fases futuras añadirán almacenes (`notes`, `sessions`, `codex`, `storylines`, `scenes`)
+- `sessions`: `{ id, number, date: 'AAAA-MM-DD', title, summary, notes: [{ id, text, depth: 0–4 }], createdAt, updatedAt }`
+- `codex`: `{ id, kind: 'character' | 'place' | 'item' | 'faction', name, subtitle, tags: [], description, links: [ids], … }`
+- `storylines`: `{ id, title, status: 'idea' | 'active' | 'resolved', description, links: [ids de la bitácora], … }`
+
+Fases futuras añadirán almacenes (`scenes`)
 subiendo la versión de la base de datos en `js/db.js`.
 
 Copia de seguridad (`.json`):
@@ -203,3 +225,5 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
 - **2.0.0** — Fase 2: Compendio (monstruos, hechizos y reglas del SRD 5.2.1, filtros, entradas propias,
   duplicar como propia, añadir al combate, bloque de estadísticas desde el Combate). La iniciativa automática
   usa ahora el bonificador oficial de Iniciativa 2024 de cada monstruo.
+- **3.0.0** — Fase 3: Campaña (sesiones con notas en punteo, bitácora con enlaces y "Aparece en",
+  tablero de líneas de historia, búsqueda en toda la campaña, guardado automático). Base de datos v3.

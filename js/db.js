@@ -4,8 +4,9 @@
 
 const DB_NAME = 'dm-companion';
 // v2: almacén 'homebrew' para las entradas propias del Compendio.
-const DB_VERSION = 2;
-const STORES = ['kv', 'homebrew'];
+// v3: almacenes de la Campaña: 'sessions', 'codex' y 'storylines'.
+const DB_VERSION = 3;
+const STORES = ['kv', 'homebrew', 'sessions', 'codex', 'storylines'];
 
 export const BACKUP_APP = 'dm-companion';
 export const BACKUP_FORMAT = 1;
@@ -56,26 +57,32 @@ export async function kvSet(key, value) {
   return done(tx);
 }
 
+// ---------- Almacenes con objetos que tienen id (Compendio y Campaña) ----------
+
+export async function storeAll(name) {
+  const db = await open();
+  return request(db.transaction(name).objectStore(name).getAll());
+}
+
+export async function storePut(name, obj) {
+  const db = await open();
+  const tx = db.transaction(name, 'readwrite');
+  tx.objectStore(name).put(obj, obj.id);
+  return done(tx);
+}
+
+export async function storeDelete(name, id) {
+  const db = await open();
+  const tx = db.transaction(name, 'readwrite');
+  tx.objectStore(name).delete(id);
+  return done(tx);
+}
+
 // ---------- Entradas propias del Compendio (monstruos, hechizos, reglas) ----------
 
-export async function homebrewAll() {
-  const db = await open();
-  return request(db.transaction('homebrew').objectStore('homebrew').getAll());
-}
-
-export async function homebrewPut(entry) {
-  const db = await open();
-  const tx = db.transaction('homebrew', 'readwrite');
-  tx.objectStore('homebrew').put(entry, entry.id);
-  return done(tx);
-}
-
-export async function homebrewDelete(id) {
-  const db = await open();
-  const tx = db.transaction('homebrew', 'readwrite');
-  tx.objectStore('homebrew').delete(id);
-  return done(tx);
-}
+export const homebrewAll = () => storeAll('homebrew');
+export const homebrewPut = (entry) => storePut('homebrew', entry);
+export const homebrewDelete = (id) => storeDelete('homebrew', id);
 
 // Copia de seguridad: todos los almacenes como lista de { key, value }.
 export async function exportAll() {

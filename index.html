@@ -46,6 +46,15 @@
       <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
       <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/></symbol>
       <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+      <symbol id="i-gem" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9zM2 9h20M9 3 7.5 9 12 21M15 3l1.5 6L12 21"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></symbol>
+      <symbol id="i-indent" viewBox="0 0 24 24"><path d="M3 5h18M11 10h10M11 14h10M3 19h18M3 9l4 3-4 3"/></symbol>
+      <symbol id="i-outdent" viewBox="0 0 24 24"><path d="M3 5h18M11 10h10M11 14h10M3 19h18M7 9l-4 3 4 3"/></symbol>
+      <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+      <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
       <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
     </defs>
   </svg>
@@ -111,11 +120,20 @@
           <article class="comp-detail" id="comp-detail"></article>
         </div>
       </section>
+      <!-- PANEL 3: CAMPAIGN -->
       <section class="panel" id="panel-campana" data-panel="campana" data-i18n-aria="tab.campaign" hidden>
-        <div class="coming">
-          <svg class="icon icon-xl" aria-hidden="true"><use href="#i-scroll"/></svg>
-          <h2 data-i18n="tab.campaign">Campaign</h2>
-          <p data-coming="campaign" data-phase="3"></p>
+        <div class="camp">
+          <div class="camp-bar">
+            <div class="segmented" id="camp-views" role="radiogroup" data-i18n-aria="tab.campaign">
+              <label class="seg"><input type="radio" name="camp-view" value="sessions" checked><span><svg class="icon" aria-hidden="true"><use href="#i-scroll"/></svg> <span data-i18n="camp.sessions">Sessions</span></span></label>
+              <label class="seg"><input type="radio" name="camp-view" value="codex"><span><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg> <span data-i18n="camp.codex">Codex</span></span></label>
+              <label class="seg"><input type="radio" name="camp-view" value="storylines"><span><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg> <span data-i18n="camp.storylines">Storylines</span></span></label>
+            </div>
+            <input type="search" id="camp-search" autocomplete="off" data-i18n-placeholder="camp.searchAll" data-i18n-aria="camp.searchAll">
+            <span class="camp-saved hint" id="camp-saved" aria-live="polite" hidden></span>
+          </div>
+          <div class="camp-body" id="camp-body"></div>
+          <div class="camp-results" id="camp-results" hidden></div>
         </div>
       </section>
       <section class="panel" id="panel-ambientacion" data-panel="ambientacion" data-i18n-aria="tab.ambience" hidden>
@@ -212,6 +230,11 @@
       </header>
       <div class="statblock" id="statblock-body" lang="en"></div>
     </div>
+  </dialog>
+
+  <!-- DIALOG: storyline -->
+  <dialog class="dialog" id="dlg-story" aria-labelledby="dlg-story-title">
+    <div class="dialog-body" id="story-body"></div>
   </dialog>
 
   <!-- DIALOG: combat options -->

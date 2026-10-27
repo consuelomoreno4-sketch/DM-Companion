@@ -3,7 +3,7 @@
 Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet en horizontal
 (Samsung Galaxy Tab S8 Ultra). Funciona sin internet una vez instalada y guarda todo en el dispositivo.
 
-**Estado:** Fases 1 y 2 listas (Combate y Compendio), versión 2.0. Ver [`SPEC.md`](SPEC.md) para el plan completo.
+**Estado:** Fases 1, 2 y 3 listas (Combate, Compendio y Campaña), versión 3.0. Ver [`SPEC.md`](SPEC.md) para el plan completo.
 
 **Idiomas:** inglés (por defecto), español y alemán. Se cambia en **Settings / Ajustes** (⚙).
 
@@ -33,6 +33,15 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
 - **Nueva**: crea tus propios monstruos, hechizos o reglas. **Duplicar como propia** copia una entrada oficial
   para modificarla. Tus monstruos también aparecen en las sugerencias del Combate.
 
+## Qué hace el panel de Campaña
+
+- **Sesiones**: número, fecha, título, resumen y **notas en punteo**. Enter crea un punto nuevo; los botones de
+  arriba de las notas cambian la sangría, mueven o borran el punto donde está el cursor.
+- **Bitácora**: fichas de personajes, lugares, objetos y facciones, con etiquetas y **enlaces** entre fichas.
+  "Aparece en" muestra dónde se menciona cada ficha (otras fichas, historias y notas de sesión).
+- **Líneas de historia**: tablero Idea / Activa / Resuelta; ◀ ▶ mueven cada tarjeta.
+- **Buscar en toda la campaña** desde la barra de arriba. Todo se guarda solo.
+
 ### Atajos con teclado
 
 | Tecla | Acción |
@@ -43,13 +52,15 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
 | Esc | Cerrar ventana |
 | Ctrl + Z | Deshacer |
 | Enter (en la ventana de HP) | Aplicar daño (Shift + Enter: curar) |
+| Tab / Shift + Tab (en notas) | Sangría / quitar sangría |
+| Alt + ↑ / ↓ (en notas) | Mover el punto |
 
 Los atajos no se activan mientras escribes en un campo.
 
 ## Publicar una versión nueva
 
 1. Sube los cambios a la rama `main`.
-2. En `sw.js`, aumenta el número de `VERSION` (por ejemplo, de `1.1.0` a `1.1.1`).
+2. En `sw.js`, aumenta el número de `VERSION` (por ejemplo, de `3.0.0` a `3.0.1`).
    Así las tablets saben que hay algo nuevo y muestran "Hay una versión nueva → Actualizar".
 3. Si añades archivos nuevos (CSS, JS, imágenes), agrégalos también a la lista `FILES` de `sw.js`.
 

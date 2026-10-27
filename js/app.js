@@ -4,6 +4,7 @@
 import * as combat from './combat.js';
 import * as combatState from './combat-state.js';
 import * as compendium from './compendium.js';
+import * as campaign from './campaign.js';
 import { exportAll, importAll, validateBackup, kvGet, kvSet } from './db.js';
 import { toast, openDialog, closeDialog, wireDialog, confirmDialog, isTyping, esc } from './ui.js';
 import { t, setLang, getLang, applyStatic, LANGS, DEFAULT_LANG } from './i18n.js';
@@ -54,6 +55,7 @@ function showPanel(name) {
   if (location.hash.slice(1) !== name) history.replaceState(null, '', `#${name}`);
   if (name === 'combate') combat.onShow();
   if (name === 'compendio') compendium.onShow();
+  if (name === 'campana') campaign.onShow();
 }
 
 const currentPanel = () => document.querySelector('.panel:not([hidden])')?.dataset.panel;
@@ -109,6 +111,7 @@ function wireSettings() {
 
   $('#btn-export').addEventListener('click', async () => {
     try {
+      await campaign.flush(); // incluye lo que se acaba de escribir
       const data = await exportAll();
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const stamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
@@ -216,6 +219,7 @@ async function start() {
 
   combat.initCombat();
   compendium.initCompendium();
+  campaign.initCampaign();
   wireShortcuts();
   wireSettings();
   wireInstall();
