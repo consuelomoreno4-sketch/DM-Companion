@@ -1,15 +1,16 @@
-// Panel de la Campaña: tres vistas (Sesiones, Bitácora, Líneas de historia) y búsqueda en toda la campaña.
+// Panel de la Campaña: cuatro vistas (Sesiones, Bitácora, Líneas de historia, Mapa) y búsqueda en toda la campaña.
 
 import * as C from './campaign-data.js';
 import { mountSessions } from './campaign-sessions.js';
 import { mountCodex } from './campaign-codex.js';
 import { mountStories } from './campaign-stories.js';
+import { mountMap } from './campaign-map.js';
 import { kindIcon, dateText } from './campaign-ui.js';
 import { esc, icon, toast } from './ui.js';
 import { t } from './i18n.js';
 
 const $ = (sel) => document.querySelector(sel);
-const MOUNT = { sessions: mountSessions, codex: mountCodex, storylines: mountStories };
+const MOUNT = { sessions: mountSessions, codex: mountCodex, storylines: mountStories, map: mountMap };
 
 const state = {
   view: 'sessions',
@@ -82,12 +83,12 @@ export async function onShow() {
 function navigate(to, id = null) {
   state.view = to;
   for (const input of els.views.querySelectorAll('input')) input.checked = input.value === to;
-  if (id && to !== 'storylines') state.selected[to] = id;
+  if (id && (to === 'sessions' || to === 'codex')) state.selected[to] = id;
   els.body.innerHTML = '';
   const root = document.createElement('div');
   root.className = 'camp-view';
   els.body.append(root);
-  view = MOUNT[to](root, ctx);
+  view = MOUNT[to](root, ctx, to === 'map' ? id : null);
   if (id && to === 'storylines') view.show(id);
 }
 

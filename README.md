@@ -3,7 +3,7 @@
 Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet en horizontal
 (Samsung Galaxy Tab S8 Ultra). Funciona sin internet una vez instalada y guarda todo en el dispositivo.
 
-**Estado:** Fases 1, 2 y 3 listas (Combate, Compendio y Campaña), versión 3.0. Ver [`SPEC.md`](SPEC.md) para el plan completo.
+**Estado:** Fases 1, 2 y 3 listas (Combate, Compendio y Campaña), versión 3.1. Ver [`SPEC.md`](SPEC.md) para el plan completo.
 
 **Idiomas:** inglés (por defecto), español y alemán. Se cambia en **Settings / Ajustes** (⚙).
 
@@ -37,9 +37,14 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
 
 - **Sesiones**: número, fecha, título, resumen y **notas en punteo**. Enter crea un punto nuevo; los botones de
   arriba de las notas cambian la sangría, mueven o borran el punto donde está el cursor.
+  **Seleccionar → Fusionar** une varios puntos en uno (con Deshacer). Debajo aparecen los **nombres sin ficha**
+  para crearlas con un toque.
 - **Bitácora**: fichas de personajes, lugares, objetos y facciones, con etiquetas y **enlaces** entre fichas.
   "Aparece en" muestra dónde se menciona cada ficha (otras fichas, historias y notas de sesión).
 - **Líneas de historia**: tablero Idea / Activa / Resuelta; ◀ ▶ mueven cada tarjeta.
+- **Mapa**: cada ficha es un círculo y los **hilos** salen de las notas de sesión (dos fichas nombradas en un mismo
+  punto o en un punto y su sub-punto). Toca una ficha para centrarla y una conexión para ver los puntos exactos que
+  las unen. Agrega "otros nombres" a cada ficha (p. ej. "Dagult" para "Dagult Neverember") para que se reconozcan.
 - **Buscar en toda la campaña** desde la barra de arriba. Todo se guarda solo.
 
 ### Atajos con teclado

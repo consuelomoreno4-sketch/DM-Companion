@@ -23,9 +23,12 @@ const toastBox = () => document.getElementById('toasts');
  * Muestra un aviso abajo en el centro.
  * kind: 'info' | 'warn' | 'error'. duration en ms (0 = hasta que se cierre).
  * action: { label, run } añade un botón.
+ * group: un aviso nuevo del mismo grupo reemplaza al anterior (no se apilan).
  */
-export function toast(message, { kind = 'info', duration = 4000, action = null } = {}) {
+export function toast(message, { kind = 'info', duration = 4000, action = null, group = null } = {}) {
+  if (group) toastBox().querySelector(`[data-group="${group}"]`)?.remove();
   const el = document.createElement('div');
+  if (group) el.dataset.group = group;
   el.className = `toast ${kind}`;
   el.setAttribute('role', kind === 'info' ? 'status' : 'alert');
   el.innerHTML = `<p>${esc(message)}</p>`;
@@ -47,7 +50,7 @@ export function toast(message, { kind = 'info', duration = 4000, action = null }
 
   const box = toastBox();
   box.append(el);
-  while (box.children.length > 4) box.firstElementChild.remove();
+  while (box.children.length > 3) box.firstElementChild.remove();
 
   let timer = duration ? setTimeout(() => dismiss(), duration) : null;
   function dismiss() {

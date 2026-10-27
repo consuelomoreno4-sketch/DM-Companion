@@ -85,3 +85,29 @@ export function linkPicker({ exclude = () => [], onPick }) {
   input.addEventListener('blur', () => setTimeout(close, 200));
   return box;
 }
+
+// Texto de un punto con los nombres de fichas resaltados (cada uno lleva a su ficha).
+export function highlightHtml(text) {
+  return C.highlightParts(text || '').map((p) => (p.id
+    ? `<mark class="mention" data-go-codex="${esc(p.id)}">${esc(p.text)}</mark>`
+    : esc(p.text))).join('');
+}
+
+// Lista de puntos agrupados por sesión (para "Registro" de una ficha y los hilos del mapa).
+export function notesHtml(items) {
+  const groups = [];
+  for (const it of items) {
+    if (groups.at(-1)?.session !== it.session) groups.push({ session: it.session, items: [] });
+    groups.at(-1).items.push(it);
+  }
+  const cut = (x) => (x.length > 80 ? `${x.slice(0, 80)}…` : x);
+  return groups.map((g) => `
+    <div class="log-group">
+      <button type="button" class="log-session" data-go-session="${esc(g.session.id)}">${icon('scroll')}
+        <span><span class="num">#${esc(g.session.number ?? '')}</span> ${esc(g.session.title || t('camp.untitled'))}</span>
+        <span class="hint">${esc(dateText(g.session.date))}</span></button>
+      <ul class="log-notes">${g.items.map((it) => `
+        <li>${it.context.length ? `<span class="log-context">${esc(it.context.map(cut).join(' › '))}</span>` : ''}
+          <span class="log-text">${highlightHtml(it.note.text)}</span></li>`).join('')}</ul>
+    </div>`).join('');
+}

@@ -112,6 +112,24 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
 - **Líneas de historia**: tablero de tres columnas **idea / activa / resuelta**; tarjetas con título, descripción
   y fichas involucradas; ◀ ▶ mueven de columna; tocar la tarjeta abre la edición. Una tarjeta nueva que se cierra
   vacía se descarta.
+- **Fusionar puntos (v3.1)**: botón "Seleccionar" → marcar puntos → "Fusionar". Se unen en el lugar del primero
+  (cada parte termina en punto), con la sangría menor; el aviso ofrece Deshacer. Con teclado: Retroceso al inicio de
+  un punto lo une al anterior.
+- **Menciones (v3.1)**: una ficha se reconoce en las notas por su nombre o sus **otros nombres** (alias), sin
+  mayúsculas ni tildes y como palabra completa. Un sub-punto hereda las fichas de sus puntos padre.
+  - Cada ficha muestra su **Registro en sesiones** (los puntos donde aparece, agrupados por sesión, con el
+    contexto del punto padre y los nombres resaltados y tocables).
+  - Bajo las notas de cada sesión: **nombres sin ficha** (palabras con mayúscula que no empiezan frase, o nombres
+    de varias palabras) para crearlas con un toque; la × los oculta en esa sesión (`ignoredNames`).
+- **Mapa (v3.1)**: grafo de la campaña.
+  - Nodos = fichas (color e icono por tipo; tamaño según menciones). Hilos = dos fichas en un mismo punto (al menos
+    una nombrada en el propio punto), enlaces de la bitácora (línea discontinua) y líneas de historia; grosor
+    según la cantidad.
+  - Vista general (colocación automática por fuerzas) y vista **centrada** en una ficha con sus conexiones en
+    anillos (máx. 18, las más conectadas primero). Migas: Vista general › A › B.
+  - Tocar una conexión muestra el **hilo**: los puntos exactos que unen las dos fichas; segundo toque o
+    "Centrar en…" la pone en el centro. Panel con conexiones, registro y enlaces a sesiones, fichas e historias.
+  - Arrastrar para mover, dos dedos / rueda / botones para el zoom; los textos se mantienen a 18 px.
 
 ### 4. Ambientación — FASE 4
 - Generar descripciones de escena con la **API de Anthropic** (requiere internet).
@@ -144,6 +162,7 @@ js/campaign.js          Pantalla de la Campaña (vistas y búsqueda)
 js/campaign-sessions.js Vista Sesiones (notas en punteo)
 js/campaign-codex.js    Vista Bitácora
 js/campaign-stories.js  Vista Líneas de historia (tablero)
+js/campaign-map.js      Vista Mapa (grafo de fichas e hilos)
 js/campaign-ui.js       Piezas compartidas (enlaces entre fichas, fechas)
 js/markdown.js          Formato sencillo del texto de entradas propias
 data/monsters.json      Índice de monstruos (id, nombre, tipo, CR, HP, AC, iniciativa)
@@ -181,8 +200,8 @@ y los de la Campaña: `sessions`, `codex`, `storylines`.
   - spell: level, school, classes[], castingTime, ritual, concentration, range, components, duration, higher
   - rule: category
 
-- `sessions`: `{ id, number, date: 'AAAA-MM-DD', title, summary, notes: [{ id, text, depth: 0–4 }], createdAt, updatedAt }`
-- `codex`: `{ id, kind: 'character' | 'place' | 'item' | 'faction', name, subtitle, tags: [], description, links: [ids], … }`
+- `sessions`: `{ id, number, date: 'AAAA-MM-DD', title, summary, notes: [{ id, text, depth: 0–4 }], ignoredNames: [], createdAt, updatedAt }`
+- `codex`: `{ id, kind: 'character' | 'place' | 'item' | 'faction', name, aliases: [], subtitle, tags: [], description, links: [ids], … }`
 - `storylines`: `{ id, title, status: 'idea' | 'active' | 'resolved', description, links: [ids de la bitácora], … }`
 
 Fases futuras añadirán almacenes (`scenes`)
@@ -214,6 +233,9 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
 
 - Más secciones del SRD en el Compendio: objetos mágicos, equipo, dotes, clases (ya están en la fuente).
 - Ver el bloque de estadísticas al tocar el token de un monstruo en la grilla.
+- **Revisión de sesión con IA (propuesta para la fase 4)**: tras la sesión, un botón envía las notas a la API de
+  Anthropic para corregir ortografía, gramática y redacción (se muestran los cambios para aceptarlos o no) y
+  detectar personajes, lugares, objetos y facciones nuevos para crear sus fichas y que entren al mapa.
 
 ## Historial de cambios
 
@@ -227,3 +249,5 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
   usa ahora el bonificador oficial de Iniciativa 2024 de cada monstruo.
 - **3.0.0** — Fase 3: Campaña (sesiones con notas en punteo, bitácora con enlaces y "Aparece en",
   tablero de líneas de historia, búsqueda en toda la campaña, guardado automático). Base de datos v3.
+- **3.1.0** — Fusionar puntos de las notas; alias de fichas; registro en sesiones de cada ficha; sugerencias de
+  nombres sin ficha; **Mapa** de la campaña con hilos entre fichas basados en las notas. Avisos agrupados.

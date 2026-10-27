@@ -2,7 +2,7 @@
 // con etiquetas, enlaces entre fichas y "Aparece en" (quién la enlaza o la nombra).
 
 import * as C from './campaign-data.js';
-import { autosize, dateText, kindIcon, kindLabel, linkChips, linkPicker } from './campaign-ui.js';
+import { autosize, kindIcon, kindLabel, linkChips, linkPicker, notesHtml } from './campaign-ui.js';
 import { normalize } from './monsters.js';
 import { esc, icon, confirmDialog, toast } from './ui.js';
 import { t } from './i18n.js';
@@ -62,10 +62,10 @@ export function mountCodex(root, ctx) {
     for (const st of b.storylines) {
       parts.push(`<span class="link-chip"><button type="button" class="link-go" data-go-story="${esc(st.id)}">${icon('book')}<span>${esc(st.title || t('camp.untitled'))}</span></button></span>`);
     }
-    for (const s of b.sessions) {
-      parts.push(`<span class="link-chip"><button type="button" class="link-go" data-go-session="${esc(s.id)}">${icon('scroll')}<span>#${esc(s.number ?? '')} ${esc(s.title || dateText(s.date))}</span></button></span>`);
-    }
     box.innerHTML = parts.join('') || `<span class="hint">${esc(t('camp.noBacklinks'))}</span>`;
+    const log = editor.querySelector('[data-log]');
+    const items = C.entryLog(c.id);
+    log.innerHTML = items.length ? notesHtml(items) : `<span class="hint">${esc(t('camp.noLog'))}</span>`;
   }
 
   function renderEditor() {
@@ -75,10 +75,12 @@ export function mountCodex(root, ctx) {
       return;
     }
     editor.innerHTML = `
-      <div class="sess-head">
-        <label class="field sess-title"><span>${esc(t('entry.name'))}</span><input data-field="name" maxlength="100" value="${esc(c.name || '')}" placeholder="${esc(t('camp.namePlaceholder'))}"></label>
+      <div class="codex-head">
+        <label class="field"><span>${esc(t('entry.name'))}</span><input data-field="name" maxlength="100" value="${esc(c.name || '')}" placeholder="${esc(t('camp.namePlaceholder'))}"></label>
+        <button class="btn" type="button" data-map>${icon('map')}<span>${esc(t('camp.showOnMap'))}</span></button>
         <button class="btn btn-icon btn-danger" type="button" data-delete aria-label="${esc(t('comp.delete'))}">${icon('trash')}</button>
       </div>
+      <label class="field"><span>${esc(t('camp.aliases'))}</span><input data-field="aliases" value="${esc((c.aliases || []).join(', '))}" placeholder="${esc(t('camp.aliasesPlaceholder'))}"></label>
       <div class="segmented seg-4" role="radiogroup" aria-label="${esc(t('entry.type'))}">
         ${C.CODEX_KINDS.map((k) => `<label class="seg"><input type="radio" name="codex-kind" value="${k}"${c.kind === k ? ' checked' : ''}><span>${kindIcon(k)} ${esc(kindLabel(k))}</span></label>`).join('')}
       </div>
@@ -96,7 +98,11 @@ export function mountCodex(root, ctx) {
         <h3>${esc(t('camp.mentionedIn'))}</h3>
         <div class="link-chips" data-backlinks></div>
       </div>
-      <p class="hint">${esc(t('camp.formatHint'))}</p>`;
+      <div class="stack">
+        <h3>${icon('scroll')} ${esc(t('camp.log'))}</h3>
+        <p class="hint">${esc(t('camp.logHint'))}</p>
+        <div data-log></div>
+      </div>`;
     editor.querySelector('[data-picker]').append(linkPicker({
       exclude: () => [c.id, ...(current()?.links || [])],
       onPick: (id) => {
@@ -130,6 +136,7 @@ export function mountCodex(root, ctx) {
     if (goStory) { ctx.navigate('storylines', goStory.dataset.goStory); return; }
     const goSession = e.target.closest('[data-go-session]');
     if (goSession) { ctx.navigate('sessions', goSession.dataset.goSession); return; }
+    if (e.target.closest('[data-map]')) { ctx.navigate('map', current().id); return; }
     const unlink = e.target.closest('[data-unlink]');
     if (unlink) {
       const c = current();
@@ -138,7 +145,7 @@ export function mountCodex(root, ctx) {
       return;
     }
     if (e.target.closest('[data-new]')) {
-      const c = C.create('codex', { kind: filter || 'character', name: '', subtitle: '', tags: [], description: '', links: [] });
+      const c = C.create('codex', { kind: filter || 'character', name: '', aliases: [], subtitle: '', tags: [], description: '', links: [] });
       select(c.id);
       editor.querySelector('[data-field="name"]').focus();
       return;
@@ -161,7 +168,7 @@ export function mountCodex(root, ctx) {
     const c = current();
     const field = el.dataset.field;
     if (!c || !field) return;
-    const value = field === 'tags' ? el.value.split(',').map((x) => x.trim()).filter(Boolean) : el.value;
+    const value = field === 'tags' || field === 'aliases' ? el.value.split(',').map((x) => x.trim()).filter(Boolean) : el.value;
     C.update('codex', c.id, { [field]: value });
     if (el.tagName === 'TEXTAREA') autosize(el);
   });
