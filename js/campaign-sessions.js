@@ -212,8 +212,10 @@ export function mountSessions(root, ctx) {
     const i = notes.findIndex((n) => n.id === ta.closest('[data-note]').dataset.note);
     if (i <= 0) return false;
     const prev = notes[i - 1];
-    const caret = prev.text.length + (prev.text && notes[i].text ? 1 : 0);
-    prev.text = [prev.text, notes[i].text].filter(Boolean).join(' ');
+    const left = prev.text.replace(/\s+$/, '');
+    const right = notes[i].text.replace(/^\s+/, '');
+    const caret = left.length + (left && right ? 1 : 0);
+    prev.text = left && right ? `${left} ${right}` : left || right;
     notes.splice(i, 1);
     setNotes(notes, prev.id, caret);
     return true;
