@@ -39,12 +39,14 @@ function emitEffects(effects) { for (const e of effects) for (const fn of effect
 
 // ---------- Guardado ----------
 
-let saveTimer = null;
+// Se guarda en cuanto hay un cambio (sin esperar), para no perder nada si la app se cierra de golpe.
+// Los guardados van en fila para que siempre quede el último.
+let saving = Promise.resolve();
 function persist() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    kvSet(KEY, state).catch((err) => emitEffects([{ type: 'error', message: `No se pudo guardar: ${err.message}` }]));
-  }, 150);
+  const snapshot = state;
+  saving = saving
+    .then(() => kvSet(KEY, snapshot))
+    .catch((err) => emitEffects([{ type: 'error', message: `No se pudo guardar: ${err.message}` }]));
 }
 
 export async function load() {
