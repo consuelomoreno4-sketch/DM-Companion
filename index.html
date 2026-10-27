@@ -88,11 +88,27 @@
       </section>
 
       <!-- FUTURE PANELS (built in phases 2, 3 and 4) -->
+      <!-- PANEL 2: COMPENDIUM -->
       <section class="panel" id="panel-compendio" data-panel="compendio" data-i18n-aria="tab.compendium" hidden>
-        <div class="coming">
-          <svg class="icon icon-xl" aria-hidden="true"><use href="#i-book"/></svg>
-          <h2 data-i18n="tab.compendium">Compendium</h2>
-          <p data-coming="compendium" data-phase="2"></p>
+        <div class="comp">
+          <div class="comp-side">
+            <div class="segmented" id="comp-kinds" role="radiogroup" data-i18n-aria="tab.compendium">
+              <label class="seg"><input type="radio" name="comp-kind" value="monster" checked><span data-i18n="comp.monsters">Monsters</span></label>
+              <label class="seg"><input type="radio" name="comp-kind" value="spell"><span data-i18n="comp.spells">Spells</span></label>
+              <label class="seg"><input type="radio" name="comp-kind" value="rule"><span data-i18n="comp.rules">Rules</span></label>
+            </div>
+            <input type="search" id="comp-search" autocomplete="off" spellcheck="false" data-i18n-aria="comp.searchAria">
+            <details class="comp-filter-box">
+              <summary><svg class="icon" aria-hidden="true"><use href="#i-flag"/></svg><span data-i18n="comp.filters">Filters</span><span class="badge" id="comp-filter-count" hidden></span></summary>
+              <div class="comp-filters" id="comp-filters"></div>
+            </details>
+            <div class="comp-bar">
+              <span class="hint num" id="comp-count" aria-live="polite"></span>
+              <button class="btn" type="button" id="comp-new"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span data-i18n="comp.new">New</span></button>
+            </div>
+            <ul class="comp-list" id="comp-list"></ul>
+          </div>
+          <article class="comp-detail" id="comp-detail"></article>
         </div>
       </section>
       <section class="panel" id="panel-campana" data-panel="campana" data-i18n-aria="tab.campaign" hidden>
@@ -180,6 +196,22 @@
   <!-- DIALOG: combatant details (conditions, editing) -->
   <dialog class="dialog dialog-wide" id="dlg-detail" aria-labelledby="dlg-detail-title">
     <div class="dialog-body" id="detail-body"></div>
+  </dialog>
+
+  <!-- DIALOG: own compendium entry (new / edit) -->
+  <dialog class="dialog dialog-wide" id="dlg-entry" aria-labelledby="dlg-entry-title">
+    <form class="dialog-body" id="entry-body" autocomplete="off"></form>
+  </dialog>
+
+  <!-- DIALOG: stat block from the compendium (opened from Combat) -->
+  <dialog class="dialog dialog-wide" id="dlg-statblock" aria-labelledby="dlg-statblock-title">
+    <div class="dialog-body">
+      <header class="dialog-head">
+        <h2 id="dlg-statblock-title"></h2>
+        <button class="btn btn-icon" type="button" data-close data-i18n-aria="common.close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </header>
+      <div class="statblock" id="statblock-body" lang="en"></div>
+    </div>
   </dialog>
 
   <!-- DIALOG: combat options -->

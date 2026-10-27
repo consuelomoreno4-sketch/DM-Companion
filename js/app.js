@@ -3,6 +3,7 @@
 
 import * as combat from './combat.js';
 import * as combatState from './combat-state.js';
+import * as compendium from './compendium.js';
 import { exportAll, importAll, validateBackup, kvGet, kvSet } from './db.js';
 import { toast, openDialog, closeDialog, wireDialog, confirmDialog, isTyping, esc } from './ui.js';
 import { t, setLang, getLang, applyStatic, LANGS, DEFAULT_LANG } from './i18n.js';
@@ -52,6 +53,7 @@ function showPanel(name) {
   }
   if (location.hash.slice(1) !== name) history.replaceState(null, '', `#${name}`);
   if (name === 'combate') combat.onShow();
+  if (name === 'compendio') compendium.onShow();
 }
 
 const currentPanel = () => document.querySelector('.panel:not([hidden])')?.dataset.panel;
@@ -213,6 +215,7 @@ async function start() {
   translatePage();
 
   combat.initCombat();
+  compendium.initCompendium();
   wireShortcuts();
   wireSettings();
   wireInstall();

@@ -3,7 +3,7 @@
 Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet en horizontal
 (Samsung Galaxy Tab S8 Ultra). Funciona sin internet una vez instalada y guarda todo en el dispositivo.
 
-**Estado:** Fase 1 lista (base de la app + panel de Combate), versión 1.1. Ver [`SPEC.md`](SPEC.md) para el plan completo.
+**Estado:** Fases 1 y 2 listas (Combate y Compendio), versión 2.0. Ver [`SPEC.md`](SPEC.md) para el plan completo.
 
 **Idiomas:** inglés (por defecto), español y alemán. Se cambia en **Settings / Ajustes** (⚙).
 
@@ -23,6 +23,15 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
 - **Grilla**: arrastra los tokens con el dedo o el S Pen. Tamaño de la grilla en el botón "⋯" de la barra.
 - **Deshacer**: botón "Deshacer" (o Ctrl+Z) revierte la última acción, hasta 50 pasos.
 - **Ajustes** (⚙ arriba a la derecha): idioma, exportar o importar una copia de seguridad, y créditos.
+
+## Qué hace el panel de Compendio
+
+- **Monstruos, Hechizos y Reglas** del SRD 5.2.1 (en inglés), con buscador.
+- **Filtros** (botón "Filters / Filtros"): por fuente, tipo y CR de monstruos; nivel, escuela, clase,
+  tiempo de lanzamiento, concentración y ritual de hechizos; categoría de reglas.
+- **Añadir al combate** desde cualquier monstruo.
+- **Nueva**: crea tus propios monstruos, hechizos o reglas. **Duplicar como propia** copia una entrada oficial
+  para modificarla. Tus monstruos también aparecen en las sugerencias del Combate.
 
 ### Atajos con teclado
 
@@ -52,7 +61,8 @@ Con Python instalado: `python3 -m http.server` dentro de esta carpeta y abre `ht
 ## Créditos y licencias
 
 - Fuentes **Cinzel** e **Inter**: SIL Open Font License 1.1 (ver `fonts/`).
-- Datos de monstruos preparados por el proyecto [5e-bits/5e-database](https://github.com/5e-bits/5e-database) (licencia MIT).
-- Stats de monstruos y resúmenes de condiciones basados en el **System Reference Document 5.2** de Wizards of the Coast LLC,
-  disponible en https://dnd.wizards.com/resources/systems-reference-document,
-  licenciado bajo [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
+- Textos del SRD preparados por el proyecto [downfallx/dnd-5e-srd-markdown](https://github.com/downfallx/dnd-5e-srd-markdown) (CC-BY-4.0)
+  y datos de hechizos de [5e-bits/5e-database](https://github.com/5e-bits/5e-database) (licencia MIT).
+- This work includes material from the **System Reference Document 5.2.1** ("SRD 5.2.1") by Wizards of the Coast LLC,
+  available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the
+  [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/legalcode).

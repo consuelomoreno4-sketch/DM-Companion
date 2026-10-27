@@ -3,8 +3,9 @@
 // Fases futuras: añadir almacenes en STORES y subir DB_VERSION.
 
 const DB_NAME = 'dm-companion';
-const DB_VERSION = 1;
-const STORES = ['kv'];
+// v2: almacén 'homebrew' para las entradas propias del Compendio.
+const DB_VERSION = 2;
+const STORES = ['kv', 'homebrew'];
 
 export const BACKUP_APP = 'dm-companion';
 export const BACKUP_FORMAT = 1;
@@ -52,6 +53,27 @@ export async function kvSet(key, value) {
   const db = await open();
   const tx = db.transaction('kv', 'readwrite');
   tx.objectStore('kv').put(value, key);
+  return done(tx);
+}
+
+// ---------- Entradas propias del Compendio (monstruos, hechizos, reglas) ----------
+
+export async function homebrewAll() {
+  const db = await open();
+  return request(db.transaction('homebrew').objectStore('homebrew').getAll());
+}
+
+export async function homebrewPut(entry) {
+  const db = await open();
+  const tx = db.transaction('homebrew', 'readwrite');
+  tx.objectStore('homebrew').put(entry, entry.id);
+  return done(tx);
+}
+
+export async function homebrewDelete(id) {
+  const db = await open();
+  const tx = db.transaction('homebrew', 'readwrite');
+  tx.objectStore('homebrew').delete(id);
   return done(tx);
 }
 

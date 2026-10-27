@@ -5,6 +5,7 @@ import { CONDITION_KEYS, EXHAUSTION_KEY } from './conditions.js';
 import { esc, icon, toast, openDialog, closeDialog, wireDialog, confirmDialog, reducedMotion } from './ui.js';
 import { t, tn, tm } from './i18n.js';
 import { loadMonsters, searchMonsters, findMonster, crText, rollInitiative } from './monsters.js';
+import { statblockFor } from './compendium-data.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -45,7 +46,7 @@ export function initCombat() {
   els.live.setAttribute('aria-live', 'polite');
   document.body.append(els.live);
 
-  [els.dlgAdd, els.dlgHp, els.dlgDetail, els.dlgMenu].forEach(wireDialog);
+  [els.dlgAdd, els.dlgHp, els.dlgDetail, els.dlgMenu, $('#dlg-statblock')].forEach(wireDialog);
 
   els.next.addEventListener('click', next);
   els.prev.addEventListener('click', prev);
@@ -395,6 +396,17 @@ function openAdd() {
   loadMonsters().catch(() => {});
 }
 
+// Desde el Compendio: abre "Añadir" con el monstruo ya cargado (se elige cantidad y facción).
+export function openAddWithMonster(m) {
+  resetAdd();
+  const f = els.formAdd.elements;
+  f.faction.value = 'enemy';
+  syncRequired(els.formAdd);
+  openDialog(els.dlgAdd);
+  pickMonster(m);
+  f.count.focus();
+}
+
 function wireAdd() {
   els.formAdd.addEventListener('change', (e) => {
     if (e.target.name === 'faction') syncRequired(els.formAdd);
@@ -445,8 +457,8 @@ async function updateSuggest() {
   active = -1;
   els.suggest.innerHTML = matches.map((m, i) => `
     <li role="option" id="sg-${i}" data-i="${esc(m.i)}" aria-selected="false">
-      <span class="sg-name">${esc(m.n)}</span>
-      <span class="sg-meta num">${esc(t('term.cr'))} ${crText(m.cr)} · ${esc(m.s)} ${esc(m.t)} · ${esc(t('term.hp'))} ${m.hp} · ${esc(t('term.ac'))} ${m.ac}</span>
+      <span class="sg-name">${esc(m.n)}${m.src === 'hb' ? ` <span class="badge badge-hb">${esc(t('comp.src.hb'))}</span>` : ''}</span>
+      <span class="sg-meta num">${esc(t('term.cr'))} ${crText(m.cr)} · ${esc(m.s)} · ${esc(t('term.hp'))} ${m.hp} · ${esc(t('term.ac'))} ${m.ac}</span>
     </li>`).join('');
   els.suggest.hidden = false;
   els.addName.setAttribute('aria-expanded', 'true');
@@ -597,6 +609,7 @@ function openDetail(id) {
           </div>
           <button class="btn btn-primary" type="submit">${icon('edit')}<span>${esc(t('detail.save'))}</span></button>
         </form>
+        ${c.ref ? `<button class="btn" type="button" id="btn-statblock">${icon('book')}<span>${esc(t('detail.statblock'))}</span></button>` : ''}
         <button class="btn btn-danger" type="button" id="btn-remove">${icon('trash')}<span>${esc(t('detail.remove'))}</span></button>
         <h3>${esc(t('detail.help'))}</h3>
         <div class="cond-help">
@@ -660,6 +673,7 @@ function wireDetail() {
     const exh = target.closest('[data-exh]');
     if (exh) { S.setExhaustion(detailId, S.find(detailId).exhaustion + Number(exh.dataset.exh)); return; }
     if (target.closest('[data-conc]')) { S.toggleConcentration(detailId); return; }
+    if (target.closest('#btn-statblock')) { openStatblock(S.find(detailId)?.ref); return; }
     if (target.closest('#btn-remove')) {
       const c = S.find(detailId);
       confirmDialog(t('detail.removeConfirm', { name: c.name }), { yes: t('detail.removeYes') }).then((ok) => {
@@ -711,6 +725,21 @@ function wireMenu() {
     closeDialog(els.dlgMenu);
     toast(t('menu.cleared'), { duration: 3000 });
   });
+}
+
+// ---------- Ventana: bloque de estadísticas (del Compendio) ----------
+
+async function openStatblock(ref) {
+  const dlg = $('#dlg-statblock');
+  const sb = ref ? await statblockFor(ref).catch(() => null) : null;
+  if (!sb) {
+    toast(t('detail.statblockMissing'), { duration: 3000 });
+    return;
+  }
+  $('#dlg-statblock-title').textContent = sb.name;
+  $('#statblock-body').innerHTML = sb.html;
+  openDialog(dlg);
+  $('#statblock-body').scrollTop = 0;
 }
 
 // Se llama al volver al panel (la grilla necesita medir su espacio).
