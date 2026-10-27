@@ -87,7 +87,7 @@ body {
 
 h1, h2, h3 { font-family: var(--font-title); font-weight: 700; margin: 0; letter-spacing: 0.02em; }
 h2 { font-size: 26px; }
-h3 { font-size: 20px; color: var(--amber); }
+h3 { font-size: 20px; color: var(--amber); display: flex; align-items: center; gap: var(--s1); }
 p { margin: 0; }
 
 .num { font-variant-numeric: tabular-nums; }
@@ -151,6 +151,7 @@ p { margin: 0; }
   border-bottom: 1px solid var(--line);
 }
 .brand { font-size: 24px; color: var(--amber); white-space: nowrap; }
+#btn-settings { flex: none; }
 
 .tabs { display: flex; gap: var(--s1); flex: 1; }
 .tab {
@@ -427,7 +428,29 @@ p { margin: 0; }
 
 /* Formularios */
 .field { display: grid; gap: var(--s1); border: 0; padding: 0; margin: 0; min-width: 0; }
-.field > span, .field > legend { color: var(--muted); font-size: 18px; font-weight: 600; padding: 0; }
+.field > span, .field > legend, .field > label { color: var(--muted); font-size: 18px; font-weight: 600; padding: 0; }
+
+/* Monster suggestions under the name field */
+.suggest {
+  list-style: none; margin: 0; padding: var(--s1);
+  display: grid; gap: var(--s1);
+  max-height: 336px; overflow-y: auto;
+  border: 1px solid var(--amber); border-radius: var(--radius);
+  background: var(--bg);
+  overscroll-behavior: contain;
+}
+.suggest li {
+  display: grid; gap: 0;
+  min-height: 56px; padding: var(--s1) var(--s2);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  cursor: pointer; touch-action: manipulation;
+  transition: background-color var(--t);
+}
+.suggest li:active, .suggest li[aria-selected="true"] { background: var(--surface-3); box-shadow: inset 4px 0 0 var(--amber); }
+.sg-name { font-weight: 700; font-size: 20px; color: var(--text); }
+.sg-meta { font-size: 18px; color: var(--muted); }
+#add-hint { color: var(--amber); }
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--s2); }
 .field-end { align-content: end; }
 input, select, textarea {
@@ -454,6 +477,7 @@ input::placeholder { color: #8994a7; }
   border: 3px solid var(--line);
   transition: background-color var(--t), border-color var(--t);
 }
+.seg input:checked + span { border-color: var(--amber); background: var(--surface-3); color: var(--text); }
 .seg input:focus-visible + span { outline: 3px solid var(--amber); outline-offset: 2px; }
 .seg-ally input:checked + span { border: 3px solid var(--ally); background: #26406b; }
 .seg-enemy input:checked + span { border: 6px double var(--enemy); background: #5a2a33; }
@@ -547,6 +571,11 @@ input::placeholder { color: #8994a7; }
 
 @media (max-width: 1320px) {
   :root { --list-w: 420px; }
+  /* En pantallas más estrechas, Ajustes queda solo con el engranaje (el texto sigue para lectores de pantalla) */
+  .settings-label {
+    position: absolute; width: 1px; height: 1px; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
   .btn span { white-space: nowrap; }
 }
 @media (max-width: 900px) {

@@ -2,7 +2,11 @@
 // Cada cambio guarda una "foto" del estado anterior para poder deshacer.
 
 import { kvGet, kvSet } from './db.js';
-import { CONDITION_NAMES } from './conditions.js';
+import { CONDITION_KEYS } from './conditions.js';
+
+// Los textos (etiquetas de deshacer y avisos) se guardan como { key, params }
+// y se traducen al mostrarse (ver i18n.js).
+const m = (key, params = {}) => ({ key, params });
 
 const KEY = 'combat';
 const MAX_UNDO = 50;
@@ -46,7 +50,7 @@ function persist() {
   const snapshot = state;
   saving = saving
     .then(() => kvSet(KEY, snapshot))
-    .catch((err) => emitEffects([{ type: 'error', message: `No se pudo guardar: ${err.message}` }]));
+    .catch((err) => emitEffects([{ type: 'error', msg: m('msg.saveError', { msg: err.message }) }]));
 }
 
 export async function load() {
@@ -123,14 +127,14 @@ function tickConditions(s, effects, { turnId = null, newRound = false }) {
       if (!due) return true;
       cd.rounds -= 1;
       if (cd.rounds > 0) return true;
-      effects.push({ type: 'condition-end', id: c.id, message: `Terminó «${CONDITION_NAMES[cd.key]}» en ${c.name}.` });
+      effects.push({ type: 'condition-end', id: c.id, msg: m('msg.condEnd', { cond: cd.key, name: c.name }) });
       return false;
     });
   }
 }
 
 export function nextTurn() {
-  return commit('Siguiente turno', (s, effects) => {
+  return commit(m('undo.next'), (s, effects) => {
     const list = order(s);
     if (!list.some(takesTurn)) return false;
     let i = s.started ? list.findIndex((c) => c.id === s.activeId) : -1;
@@ -144,12 +148,12 @@ export function nextTurn() {
     s.activeId = current.id;
     if (newRound) effects.push({ type: 'round', round: s.round });
     tickConditions(s, effects, { turnId: current.id, newRound });
-    effects.push({ type: 'turn', id: current.id, message: `Turno de ${current.name}` });
+    effects.push({ type: 'turn', id: current.id, msg: m('msg.turn', { name: current.name }) });
   });
 }
 
 export function prevTurn() {
-  return commit('Turno anterior', (s, effects) => {
+  return commit(m('undo.prev'), (s, effects) => {
     if (!s.started) return false;
     const list = order(s);
     let i = list.findIndex((c) => c.id === s.activeId);
@@ -168,7 +172,7 @@ export function prevTurn() {
     if (!takesTurn(list[i])) return false;
     s.round = round;
     s.activeId = list[i].id;
-    effects.push({ type: 'turn', id: list[i].id, message: `Turno de ${list[i].name}` });
+    effects.push({ type: 'turn', id: list[i].id, msg: m('msg.turn', { name: list[i].name }) });
   });
 }
 
@@ -201,10 +205,11 @@ const clampInt = (v, min, max, fallback) => {
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
 };
 
-export function addCombatants({ name, faction, init, hpMax, ac, count = 1 }) {
-  const base = String(name).trim().slice(0, 40) || 'Sin nombre';
+// ref = identificador del monstruo del SRD (si vino de las sugerencias), para la fase 2.
+export function addCombatants({ name, faction, init, hpMax, ac, count = 1, ref = '' }) {
+  const base = String(name).trim().slice(0, 40) || '?';
   const n = clampInt(count, 1, 20, 1);
-  const label = n > 1 ? `Añadir ${n} × ${base}` : `Añadir ${base}`;
+  const label = n > 1 ? m('undo.addMany', { n, name: base }) : m('undo.add', { name: base });
   return commit(label, (s) => {
     // Si ya hay "Goblin 1" y "Goblin 2", los nuevos siguen con 3, 4…
     const re = new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} (\\d+)$`);
@@ -232,6 +237,7 @@ export function addCombatants({ name, faction, init, hpMax, ac, count = 1 }) {
         conditions: [],
         exhaustion: 0,
         concentration: false,
+        ref: ref || null,
         x: pos.x,
         y: pos.y,
       });
@@ -242,7 +248,7 @@ export function addCombatants({ name, faction, init, hpMax, ac, count = 1 }) {
 export function updateCombatant(id, patch) {
   const c = find(id);
   if (!c) return false;
-  return commit(`Editar ${c.name}`, (s) => {
+  return commit(m('undo.edit', { name: c.name }), (s) => {
     const t = find(id, s);
     if (patch.name != null) t.name = String(patch.name).trim().slice(0, 40) || t.name;
     if (FACTIONS.includes(patch.faction)) t.faction = patch.faction;
@@ -258,7 +264,7 @@ export function updateCombatant(id, patch) {
 export function removeCombatant(id) {
   const c = find(id);
   if (!c) return false;
-  return commit(`Quitar ${c.name}`, (s) => {
+  return commit(m('undo.remove', { name: c.name }), (s) => {
     if (s.activeId === id) {
       // El turno pasa al siguiente que pueda actuar (sin contar condiciones).
       const list = order(s).filter((x) => x.id === id || takesTurn(x));
@@ -280,8 +286,7 @@ export function applyHp(id, rawAmount, kind) {
   const c = find(id);
   const amount = clampInt(rawAmount, 0, 9999, 0);
   if (!c || amount <= 0) return false;
-  const verb = { damage: 'Daño', heal: 'Curación', temp: 'HP temporales' }[kind];
-  return commit(`${verb} a ${c.name}`, (s, effects) => {
+  return commit(m(`undo.${kind}`, { name: c.name }), (s, effects) => {
     const t = find(id, s);
     rememberAmount(s, amount);
     if (kind === 'damage') {
@@ -293,14 +298,14 @@ export function applyHp(id, rawAmount, kind) {
       if (t.concentration) {
         if (t.hp === 0) {
           t.concentration = false;
-          effects.push({ type: 'info', message: `${t.name} pierde la Concentración (0 HP).` });
+          effects.push({ type: 'info', msg: m('msg.concLost', { name: t.name }) });
         } else {
           const dc = Math.min(30, Math.max(10, Math.floor(amount / 2)));
-          effects.push({ type: 'warn', message: `${t.name}: salvación de Constitución CD ${dc} para mantener la Concentración.` });
+          effects.push({ type: 'warn', msg: m('msg.concSave', { name: t.name, dc }) });
         }
       }
       if (wasUp && t.hp === 0) {
-        effects.push({ type: 'down', id, message: t.faction === 'ally' ? `${t.name} cae a 0 HP: salvaciones contra la muerte.` : `${t.name} ha caído.` });
+        effects.push({ type: 'down', id, msg: m(t.faction === 'ally' ? 'msg.downAlly' : 'msg.downEnemy', { name: t.name }) });
       }
     } else if (kind === 'heal') {
       const before = t.hp;
@@ -316,7 +321,7 @@ export function applyHp(id, rawAmount, kind) {
 export function toggleConcentration(id) {
   const c = find(id);
   if (!c) return false;
-  return commit(`${c.concentration ? 'Quitar' : 'Marcar'} concentración de ${c.name}`, (s) => {
+  return commit(m(c.concentration ? 'undo.concOff' : 'undo.concOn', { name: c.name }), (s) => {
     const t = find(id, s);
     t.concentration = !t.concentration;
   });
@@ -325,9 +330,9 @@ export function toggleConcentration(id) {
 // rounds: número de rondas o null (sin límite). Si ya la tiene, se quita.
 export function toggleCondition(id, key, rounds = null) {
   const c = find(id);
-  if (!c || !CONDITION_NAMES[key]) return false;
+  if (!c || !CONDITION_KEYS.includes(key)) return false;
   const has = c.conditions.some((cd) => cd.key === key);
-  return commit(`${has ? 'Quitar' : 'Aplicar'} ${CONDITION_NAMES[key]} a ${c.name}`, (s) => {
+  return commit(m(has ? 'undo.condOff' : 'undo.condOn', { cond: key, name: c.name }), (s) => {
     const t = find(id, s);
     if (has) {
       t.conditions = t.conditions.filter((cd) => cd.key !== key);
@@ -342,9 +347,9 @@ export function setExhaustion(id, level) {
   const c = find(id);
   const lvl = clampInt(level, 0, 6, 0);
   if (!c || lvl === c.exhaustion) return false;
-  return commit(`Agotamiento ${lvl} en ${c.name}`, (s, effects) => {
+  return commit(m('undo.exh', { n: lvl, name: c.name }), (s, effects) => {
     find(id, s).exhaustion = lvl;
-    if (lvl === 6) effects.push({ type: 'warn', message: `${c.name} llega a Agotamiento 6: muere.` });
+    if (lvl === 6) effects.push({ type: 'warn', msg: m('msg.exh6', { name: c.name }) });
   });
 }
 
@@ -355,7 +360,7 @@ export function moveToken(id, x, y) {
   const nx = clampInt(x, 0, state.grid.cols - 1, c.x);
   const ny = clampInt(y, 0, state.grid.rows - 1, c.y);
   if (nx === c.x && ny === c.y) return false;
-  return commit(`Mover ${c.name}`, (s) => {
+  return commit(m('undo.move', { name: c.name }), (s) => {
     const t = find(id, s);
     t.x = nx;
     t.y = ny;
@@ -365,7 +370,7 @@ export function moveToken(id, x, y) {
 export function setGrid(cols, rows) {
   const nc = clampInt(cols, 4, 60, state.grid.cols);
   const nr = clampInt(rows, 4, 40, state.grid.rows);
-  return commit('Cambiar grilla', (s) => {
+  return commit(m('undo.grid'), (s) => {
     s.grid = { cols: nc, rows: nr };
     for (const c of s.combatants) {
       c.x = Math.min(c.x, nc - 1);
@@ -376,7 +381,7 @@ export function setGrid(cols, rows) {
 
 // keepAllies: conserva a los aliados (sin condiciones de combate) y quita al resto.
 export function newCombat(keepAllies) {
-  return commit(keepAllies ? 'Nuevo combate' : 'Vaciar todo', (s) => {
+  return commit(m(keepAllies ? 'undo.newCombat' : 'undo.clearAll'), (s) => {
     s.started = false;
     s.round = 0;
     s.activeId = null;

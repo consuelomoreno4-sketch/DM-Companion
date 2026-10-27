@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>DM Companion</title>
-  <meta name="description" content="Herramienta para Dungeon Masters de D&amp;D 2024: combate, compendio, campaña y ambientación.">
+  <meta name="description" content="A tool for D&amp;D 2024 Dungeon Masters: combat, compendium, campaign and ambience.">
   <meta name="theme-color" content="#1a2130">
   <meta name="color-scheme" content="dark">
   <link rel="manifest" href="manifest.webmanifest">
@@ -16,7 +16,7 @@
   <script type="module" src="js/app.js"></script>
 </head>
 <body>
-  <!-- Iconos (dibujos SVG guardados aquí mismo para que funcionen sin internet) -->
+  <!-- Icons (SVG drawings stored right here so they work offline) -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
       <symbol id="i-swords" viewBox="0 0 24 24"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></symbol>
@@ -44,6 +44,8 @@
       <symbol id="i-install" viewBox="0 0 24 24"><path d="M12 3v10M8 9l4 4 4-4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
       <symbol id="i-backspace" viewBox="0 0 24 24"><path d="M21 5H8l-6 7 6 7h13zM12 9l6 6M18 9l-6 6"/></symbol>
       <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
       <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
     </defs>
   </svg>
@@ -51,98 +53,102 @@
   <div class="app">
     <header class="topbar">
       <h1 class="brand">DM Companion</h1>
-      <nav class="tabs" aria-label="Paneles">
-        <a class="tab" href="#combate" data-panel="combate"><svg class="icon" aria-hidden="true"><use href="#i-swords"/></svg><span>Combate</span><kbd>1</kbd></a>
-        <a class="tab" href="#compendio" data-panel="compendio"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span>Compendio</span><kbd>2</kbd></a>
-        <a class="tab" href="#campana" data-panel="campana"><svg class="icon" aria-hidden="true"><use href="#i-scroll"/></svg><span>Campaña</span><kbd>3</kbd></a>
-        <a class="tab" href="#ambientacion" data-panel="ambientacion"><svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg><span>Ambientación</span><kbd>4</kbd></a>
+      <nav class="tabs" data-i18n-aria="nav.panels" aria-label="Panels">
+        <a class="tab" href="#combate" data-panel="combate"><svg class="icon" aria-hidden="true"><use href="#i-swords"/></svg><span data-i18n="tab.combat">Combat</span><kbd>1</kbd></a>
+        <a class="tab" href="#compendio" data-panel="compendio"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span data-i18n="tab.compendium">Compendium</span><kbd>2</kbd></a>
+        <a class="tab" href="#campana" data-panel="campana"><svg class="icon" aria-hidden="true"><use href="#i-scroll"/></svg><span data-i18n="tab.campaign">Campaign</span><kbd>3</kbd></a>
+        <a class="tab" href="#ambientacion" data-panel="ambientacion"><svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg><span data-i18n="tab.ambience">Ambience</span><kbd>4</kbd></a>
       </nav>
-      <button class="btn btn-ghost" id="btn-backup" type="button">
-        <svg class="icon" aria-hidden="true"><use href="#i-save"/></svg><span>Datos</span>
+      <button class="btn btn-ghost" id="btn-settings" type="button">
+        <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg><span class="settings-label" data-i18n="btn.settings">Settings</span>
       </button>
     </header>
 
     <main class="panels">
-      <!-- PANEL 1: COMBATE -->
-      <section class="panel" id="panel-combate" data-panel="combate" aria-label="Combate">
+      <!-- PANEL 1: COMBAT -->
+      <section class="panel" id="panel-combate" data-panel="combate" data-i18n-aria="combat.aria" aria-label="Combat">
         <div class="combat-toolbar">
           <div class="round-box" aria-live="polite">
-            <span class="round-label">Ronda</span>
+            <span class="round-label" data-i18n="combat.round">Round</span>
             <span class="round-num num" id="round-num">—</span>
           </div>
-          <button class="btn" id="btn-add" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>Añadir</span></button>
-          <button class="btn" id="btn-undo" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg><span>Deshacer</span></button>
-          <button class="btn btn-icon" id="btn-combat-menu" type="button" aria-label="Opciones del combate"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button>
+          <button class="btn" id="btn-add" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span data-i18n="combat.add">Add</span></button>
+          <button class="btn" id="btn-undo" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg><span data-i18n="combat.undo">Undo</span></button>
+          <button class="btn btn-icon" id="btn-combat-menu" type="button" data-i18n-aria="combat.options" aria-label="Combat options"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button>
           <div class="spacer"></div>
-          <button class="btn btn-lg" id="btn-prev" type="button"><svg class="icon" aria-hidden="true"><use href="#i-left"/></svg><span>Anterior</span></button>
-          <button class="btn btn-lg btn-primary" id="btn-next" type="button"><span>Siguiente turno</span><svg class="icon" aria-hidden="true"><use href="#i-right"/></svg></button>
+          <button class="btn btn-lg" id="btn-prev" type="button"><svg class="icon" aria-hidden="true"><use href="#i-left"/></svg><span data-i18n="combat.prev">Previous</span></button>
+          <button class="btn btn-lg btn-primary" id="btn-next" type="button"><span>Next turn</span><svg class="icon" aria-hidden="true"><use href="#i-right"/></svg></button>
         </div>
         <div class="combat-body">
           <div class="board-wrap" id="board-wrap">
-            <div class="board" id="board" aria-label="Grilla de combate"></div>
+            <div class="board" id="board" data-i18n-aria="combat.grid" aria-label="Combat grid"></div>
           </div>
-          <aside class="turn-list" id="turn-list" aria-label="Orden de iniciativa"></aside>
+          <aside class="turn-list" id="turn-list" data-i18n-aria="combat.order" aria-label="Initiative order"></aside>
         </div>
       </section>
 
-      <!-- PANELES FUTUROS (se construyen en las fases 2, 3 y 4) -->
-      <section class="panel" id="panel-compendio" data-panel="compendio" aria-label="Compendio" hidden>
+      <!-- FUTURE PANELS (built in phases 2, 3 and 4) -->
+      <section class="panel" id="panel-compendio" data-panel="compendio" data-i18n-aria="tab.compendium" hidden>
         <div class="coming">
           <svg class="icon icon-xl" aria-hidden="true"><use href="#i-book"/></svg>
-          <h2>Compendio</h2>
-          <p>Llega en la <strong>Fase 2</strong>: reglas, monstruos y hechizos del SRD 5.2, con filtros de hechizos, la fuente de cada entrada y tus propias entradas.</p>
+          <h2 data-i18n="tab.compendium">Compendium</h2>
+          <p data-coming="compendium" data-phase="2"></p>
         </div>
       </section>
-      <section class="panel" id="panel-campana" data-panel="campana" aria-label="Campaña" hidden>
+      <section class="panel" id="panel-campana" data-panel="campana" data-i18n-aria="tab.campaign" hidden>
         <div class="coming">
           <svg class="icon icon-xl" aria-hidden="true"><use href="#i-scroll"/></svg>
-          <h2>Campaña</h2>
-          <p>Llega en la <strong>Fase 3</strong>: notas de sesión en punteo, historial de sesiones, bitácora de personajes, lugares, objetos y facciones, y líneas de historia.</p>
+          <h2 data-i18n="tab.campaign">Campaign</h2>
+          <p data-coming="campaign" data-phase="3"></p>
         </div>
       </section>
-      <section class="panel" id="panel-ambientacion" data-panel="ambientacion" aria-label="Ambientación" hidden>
+      <section class="panel" id="panel-ambientacion" data-panel="ambientacion" data-i18n-aria="tab.ambience" hidden>
         <div class="coming">
           <svg class="icon icon-xl" aria-hidden="true"><use href="#i-sparkles"/></svg>
-          <h2>Ambientación</h2>
-          <p>Llega en la <strong>Fase 4</strong>: descripciones de escena generadas con la API de Anthropic (necesita internet; tu clave se guarda solo en este dispositivo).</p>
+          <h2 data-i18n="tab.ambience">Ambience</h2>
+          <p data-coming="ambience" data-phase="4"></p>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- VENTANA: añadir combatiente -->
+  <!-- DIALOG: add combatant -->
   <dialog class="dialog" id="dlg-add" aria-labelledby="dlg-add-title">
     <form class="dialog-body" id="form-add" autocomplete="off">
       <header class="dialog-head">
-        <h2 id="dlg-add-title">Añadir combatiente</h2>
-        <button class="btn btn-icon" type="button" data-close aria-label="Cerrar"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+        <h2 id="dlg-add-title" data-i18n="add.title">Add combatant</h2>
+        <button class="btn btn-icon" type="button" data-close data-i18n-aria="common.close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
       </header>
-      <label class="field field-wide">
-        <span>Nombre</span>
-        <input name="name" required maxlength="40" placeholder="Ej.: Goblin, Aria la pícara">
-      </label>
+      <div class="field field-wide">
+        <label for="add-name" data-i18n="add.name">Name</label>
+        <input id="add-name" name="name" required maxlength="40" data-i18n-placeholder="add.namePlaceholder"
+               role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="monster-suggest" spellcheck="false">
+        <ul class="suggest" id="monster-suggest" role="listbox" data-i18n-aria="add.suggestions" hidden></ul>
+        <input type="hidden" name="ref">
+      </div>
       <fieldset class="field field-wide">
-        <legend>Facción</legend>
+        <legend data-i18n="add.faction">Faction</legend>
         <div class="segmented" role="radiogroup">
-          <label class="seg seg-ally"><input type="radio" name="faction" value="ally"><span>Aliado</span></label>
-          <label class="seg seg-enemy"><input type="radio" name="faction" value="enemy" checked><span>Enemigo</span></label>
-          <label class="seg seg-neutral"><input type="radio" name="faction" value="neutral"><span>Neutral</span></label>
+          <label class="seg seg-ally"><input type="radio" name="faction" value="ally"><span data-i18n="faction.ally">Ally</span></label>
+          <label class="seg seg-enemy"><input type="radio" name="faction" value="enemy" checked><span data-i18n="faction.enemy">Enemy</span></label>
+          <label class="seg seg-neutral"><input type="radio" name="faction" value="neutral"><span data-i18n="faction.neutral">Neutral</span></label>
         </div>
       </fieldset>
       <div class="field-row">
-        <label class="field"><span>Iniciativa</span><input name="init" type="number" required min="-10" max="50" step="1"></label>
-        <label class="field"><span>HP máx</span><input name="hpMax" type="number" inputmode="numeric" required min="1" max="9999" step="1"></label>
-        <label class="field"><span>CA</span><input name="ac" type="number" inputmode="numeric" required min="0" max="40" step="1"></label>
-        <label class="field"><span>Cantidad</span><input name="count" type="number" inputmode="numeric" min="1" max="20" step="1" value="1"></label>
+        <label class="field"><span data-i18n="term.init">Initiative</span><input name="init" type="number" required min="-10" max="50" step="1"></label>
+        <label class="field"><span data-i18n="field.hpMax">Max HP</span><input name="hpMax" type="number" inputmode="numeric" required min="1" max="9999" step="1"></label>
+        <label class="field"><span data-i18n="term.ac">AC</span><input name="ac" type="number" inputmode="numeric" required min="0" max="40" step="1"></label>
+        <label class="field"><span data-i18n="add.count">Quantity</span><input name="count" type="number" inputmode="numeric" min="1" max="20" step="1" value="1"></label>
       </div>
+      <p class="hint" id="add-hint" aria-live="polite" hidden></p>
       <footer class="dialog-foot">
-        <button class="btn" type="submit" value="more">Añadir y seguir</button>
-        <button class="btn btn-primary" type="submit" value="close">Añadir</button>
+        <button class="btn" type="submit" value="more" data-i18n="add.more">Add &amp; continue</button>
+        <button class="btn btn-primary" type="submit" value="close" data-i18n="add.submit">Add</button>
       </footer>
     </form>
   </dialog>
 
-  <!-- VENTANA: daño / curación -->
+  <!-- DIALOG: damage / healing -->
   <dialog class="dialog dialog-hp" id="dlg-hp" aria-labelledby="dlg-hp-title">
     <div class="dialog-body">
       <header class="dialog-head">
@@ -150,80 +156,85 @@
           <h2 id="dlg-hp-title">—</h2>
           <p class="hp-status num" id="hp-status"></p>
         </div>
-        <button class="btn btn-icon" type="button" data-close aria-label="Cerrar"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+        <button class="btn btn-icon" type="button" data-close data-i18n-aria="common.close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
       </header>
-      <div class="quick" id="hp-quick" aria-label="Cantidades rápidas"></div>
+      <div class="quick" id="hp-quick"></div>
       <div class="hp-entry">
-        <input class="hp-amount num" id="hp-amount" inputmode="none" autocomplete="off" aria-label="Cantidad" placeholder="0" maxlength="4" autofocus>
+        <input class="hp-amount num" id="hp-amount" inputmode="none" autocomplete="off" data-i18n-aria="hp.amount" placeholder="0" maxlength="4" autofocus>
         <div class="keypad" id="hp-keypad">
           <button type="button" class="key" data-k="7">7</button><button type="button" class="key" data-k="8">8</button><button type="button" class="key" data-k="9">9</button>
           <button type="button" class="key" data-k="4">4</button><button type="button" class="key" data-k="5">5</button><button type="button" class="key" data-k="6">6</button>
           <button type="button" class="key" data-k="1">1</button><button type="button" class="key" data-k="2">2</button><button type="button" class="key" data-k="3">3</button>
-          <button type="button" class="key" data-k="C" aria-label="Borrar todo">C</button><button type="button" class="key" data-k="0">0</button>
-          <button type="button" class="key" data-k="back" aria-label="Borrar un número"><svg class="icon" aria-hidden="true"><use href="#i-backspace"/></svg></button>
+          <button type="button" class="key" data-k="C" data-i18n-aria="hp.clearAll">C</button><button type="button" class="key" data-k="0">0</button>
+          <button type="button" class="key" data-k="back" data-i18n-aria="hp.backspace"><svg class="icon" aria-hidden="true"><use href="#i-backspace"/></svg></button>
         </div>
       </div>
       <div class="hp-actions">
-        <button type="button" class="btn btn-lg btn-damage" data-hp="damage">Daño</button>
-        <button type="button" class="btn btn-lg btn-heal" data-hp="heal">Curar</button>
-        <button type="button" class="btn btn-lg btn-temp" data-hp="temp">HP temp.</button>
+        <button type="button" class="btn btn-lg btn-damage" data-hp="damage" data-i18n="hp.damage">Damage</button>
+        <button type="button" class="btn btn-lg btn-heal" data-hp="heal" data-i18n="hp.heal">Heal</button>
+        <button type="button" class="btn btn-lg btn-temp" data-hp="temp" data-i18n="hp.temp">Temp HP</button>
       </div>
     </div>
   </dialog>
 
-  <!-- VENTANA: detalle del combatiente (condiciones, edición) -->
+  <!-- DIALOG: combatant details (conditions, editing) -->
   <dialog class="dialog dialog-wide" id="dlg-detail" aria-labelledby="dlg-detail-title">
     <div class="dialog-body" id="detail-body"></div>
   </dialog>
 
-  <!-- VENTANA: opciones del combate -->
+  <!-- DIALOG: combat options -->
   <dialog class="dialog" id="dlg-combat-menu" aria-labelledby="dlg-combat-menu-title">
     <form class="dialog-body" id="form-grid" autocomplete="off">
       <header class="dialog-head">
-        <h2 id="dlg-combat-menu-title">Opciones del combate</h2>
-        <button class="btn btn-icon" type="button" data-close aria-label="Cerrar"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+        <h2 id="dlg-combat-menu-title" data-i18n="combat.options">Combat options</h2>
+        <button class="btn btn-icon" type="button" data-close data-i18n-aria="common.close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
       </header>
-      <h3>Tamaño de la grilla</h3>
+      <h3 data-i18n="menu.gridSize">Grid size</h3>
       <div class="field-row">
-        <label class="field"><span>Columnas</span><input name="cols" type="number" inputmode="numeric" min="4" max="60" required></label>
-        <label class="field"><span>Filas</span><input name="rows" type="number" inputmode="numeric" min="4" max="40" required></label>
-        <div class="field field-end"><button class="btn" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg><span>Aplicar</span></button></div>
+        <label class="field"><span data-i18n="menu.cols">Columns</span><input name="cols" type="number" inputmode="numeric" min="4" max="60" required></label>
+        <label class="field"><span data-i18n="menu.rows">Rows</span><input name="rows" type="number" inputmode="numeric" min="4" max="40" required></label>
+        <div class="field field-end"><button class="btn" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg><span data-i18n="common.apply">Apply</span></button></div>
       </div>
-      <h3>Nuevo combate</h3>
+      <h3 data-i18n="menu.newCombat">New combat</h3>
       <div class="stack">
-        <button class="btn" type="button" id="btn-new-keep"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg><span>Nuevo combate (conservar aliados)</span></button>
-        <button class="btn btn-danger" type="button" id="btn-new-all"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg><span>Vaciar todo</span></button>
+        <button class="btn" type="button" id="btn-new-keep"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg><span data-i18n="menu.newKeep">New combat (keep allies)</span></button>
+        <button class="btn btn-danger" type="button" id="btn-new-all"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg><span data-i18n="menu.clearAll">Clear everything</span></button>
       </div>
-      <p class="hint">Ambas opciones se pueden revertir con Deshacer.</p>
+      <p class="hint" data-i18n="menu.undoHint">Both can be reverted with Undo.</p>
     </form>
   </dialog>
 
-  <!-- VENTANA: datos y copia de seguridad -->
-  <dialog class="dialog" id="dlg-backup" aria-labelledby="dlg-backup-title">
+  <!-- DIALOG: settings (language, data and backup) -->
+  <dialog class="dialog" id="dlg-settings" aria-labelledby="dlg-settings-title">
     <div class="dialog-body">
       <header class="dialog-head">
-        <h2 id="dlg-backup-title">Tus datos</h2>
-        <button class="btn btn-icon" type="button" data-close aria-label="Cerrar"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+        <h2 id="dlg-settings-title" data-i18n="settings.title">Settings</h2>
+        <button class="btn btn-icon" type="button" data-close data-i18n-aria="common.close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
       </header>
-      <p>Todo se guarda en esta tablet, no en internet. Haz una copia de seguridad de vez en cuando y guárdala en un lugar seguro (por ejemplo, Google Drive).</p>
+      <h3><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg> <span data-i18n="settings.language">Language</span></h3>
+      <div class="segmented" id="lang-picker" role="radiogroup" data-i18n-aria="settings.language"></div>
+      <h3 data-i18n="settings.data">Your data</h3>
+      <p data-i18n="settings.dataIntro"></p>
       <div class="stack">
-        <button class="btn btn-primary" type="button" id="btn-export"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>Exportar copia de seguridad</span></button>
-        <button class="btn" type="button" id="btn-import"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span>Importar copia de seguridad</span></button>
+        <button class="btn btn-primary" type="button" id="btn-export"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span data-i18n="settings.export">Export backup</span></button>
+        <button class="btn" type="button" id="btn-import"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="settings.import">Import backup</span></button>
         <input type="file" id="file-import" accept=".json,application/json" hidden>
-        <button class="btn" type="button" id="btn-install" hidden><svg class="icon" aria-hidden="true"><use href="#i-install"/></svg><span>Instalar la app en este dispositivo</span></button>
+        <button class="btn" type="button" id="btn-install" hidden><svg class="icon" aria-hidden="true"><use href="#i-install"/></svg><span data-i18n="settings.install">Install the app on this device</span></button>
       </div>
       <p class="hint" id="storage-info"></p>
+      <h3 data-i18n="settings.credits">Credits</h3>
+      <p class="hint" data-i18n="settings.creditsText"></p>
     </div>
   </dialog>
 
-  <!-- VENTANA: confirmación -->
+  <!-- DIALOG: confirmation -->
   <dialog class="dialog" id="dlg-confirm" aria-labelledby="dlg-confirm-title">
     <form class="dialog-body" method="dialog">
-      <h2 id="dlg-confirm-title">¿Seguro?</h2>
+      <h2 id="dlg-confirm-title"></h2>
       <p id="dlg-confirm-text"></p>
       <footer class="dialog-foot">
-        <button class="btn" value="no">Cancelar</button>
-        <button class="btn btn-danger" value="yes" id="dlg-confirm-yes">Sí</button>
+        <button class="btn" value="no" data-i18n="common.cancel">Cancel</button>
+        <button class="btn btn-danger" value="yes" id="dlg-confirm-yes"></button>
       </footer>
     </form>
   </dialog>

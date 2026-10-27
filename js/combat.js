@@ -1,8 +1,10 @@
 // Pantalla del panel de Combate: barra de botones, grilla con tokens y lista de turnos.
 
 import * as S from './combat-state.js';
-import { CONDITIONS, CONDITION_NAMES, EXHAUSTION } from './conditions.js';
+import { CONDITION_KEYS, EXHAUSTION_KEY } from './conditions.js';
 import { esc, icon, toast, openDialog, closeDialog, wireDialog, confirmDialog, reducedMotion } from './ui.js';
+import { t, tn, tm } from './i18n.js';
+import { loadMonsters, searchMonsters, findMonster, crText, rollInitiative } from './monsters.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -28,6 +30,9 @@ export function initCombat() {
     board: $('#board'),
     dlgAdd: $('#dlg-add'),
     formAdd: $('#form-add'),
+    addName: $('#add-name'),
+    suggest: $('#monster-suggest'),
+    addHint: $('#add-hint'),
     dlgHp: $('#dlg-hp'),
     hpAmount: $('#hp-amount'),
     dlgDetail: $('#dlg-detail'),
@@ -51,6 +56,7 @@ export function initCombat() {
   wireList();
   wireBoard();
   wireAdd();
+  wireSuggest();
   wireHp();
   wireDetail();
   wireMenu();
@@ -66,7 +72,7 @@ export function next() { S.nextTurn(); }
 export function prev() { S.prevTurn(); }
 export function undo() {
   const label = S.undo();
-  if (label) toast(`Deshecho: ${label}`, { duration: 2500 });
+  if (label) toast(t('combat.undone', { label: tm(label) }), { duration: 2500 });
 }
 
 // ---------- Dibujar ----------
@@ -74,10 +80,10 @@ export function undo() {
 function render(s) {
   els.round.textContent = s.started ? s.round : '—';
   els.undo.disabled = !S.canUndo();
-  els.undo.title = S.canUndo() ? `Deshacer: ${S.undoLabel()}` : 'Nada que deshacer';
+  els.undo.title = S.canUndo() ? t('combat.undoTitle', { label: tm(S.undoLabel()) }) : t('combat.nothingToUndo');
   els.prev.disabled = !s.started;
   els.next.disabled = !s.combatants.length;
-  els.next.querySelector('span').textContent = s.started ? 'Siguiente turno' : 'Empezar combate';
+  els.next.querySelector('span').textContent = t(s.started ? 'combat.next' : 'combat.start');
   renderList(s);
   fitBoard();
   if (els.dlgDetail.open) renderDetailState();
@@ -85,40 +91,39 @@ function render(s) {
 }
 
 function hpText(c) {
-  return `${c.hp} de ${c.hpMax} HP${c.temp ? `, ${c.temp} temporales` : ''}`;
+  return t('card.hpText', { hp: c.hp, max: c.hpMax }) + (c.temp ? t('card.hpTemp', { n: c.temp }) : '');
 }
 
 function cardHtml(c) {
   const chips = [];
-  if (c.concentration) chips.push(`<span class="chip chip-conc">${icon('focus')}Concentración</span>`);
-  if (c.exhaustion) chips.push(`<span class="chip chip-warn">Agotamiento <span class="num">${c.exhaustion}</span></span>`);
+  if (c.concentration) chips.push(`<span class="chip chip-conc">${icon('focus')}${t('card.concentration')}</span>`);
+  if (c.exhaustion) chips.push(`<span class="chip chip-warn num">${esc(t('card.exhaustion', { n: c.exhaustion }))}</span>`);
   for (const cd of c.conditions) {
-    const r = cd.rounds == null ? '' : ` · <span class="num">${cd.rounds}</span> ${cd.rounds === 1 ? 'ronda' : 'rondas'}`;
-    chips.push(`<span class="chip">${esc(CONDITION_NAMES[cd.key])}${r}</span>`);
+    const r = cd.rounds == null ? '' : ` · <span class="num">${esc(tn('round', cd.rounds))}</span>`;
+    chips.push(`<span class="chip">${esc(t(`cond.${cd.key}`))}${r}</span>`);
   }
   return `
-    <div class="card-init num" title="Iniciativa">${c.init}</div>
+    <div class="card-init num" title="${esc(t('term.init'))}">${c.init}</div>
     <button class="card-name" type="button" data-act="detail"><span>${esc(c.name)}</span></button>
     <div class="card-tools">
-      <button class="btn btn-icon" type="button" data-act="conc" aria-pressed="${c.concentration}" aria-label="Concentración">${icon('focus')}</button>
-      <button class="btn btn-icon" type="button" data-act="detail" aria-label="Condiciones y edición">${icon('more')}</button>
+      <button class="btn btn-icon" type="button" data-act="conc" aria-pressed="${c.concentration}" aria-label="${esc(t('card.concentration'))}">${icon('focus')}</button>
+      <button class="btn btn-icon" type="button" data-act="detail" aria-label="${esc(t('card.more'))}">${icon('more')}</button>
     </div>
     <div class="card-stats">
-      <button class="hp-btn" type="button" data-act="hp" aria-label="${esc(hpText(c))}. Aplicar daño o curación">
-        <span class="hp-label">HP</span><span class="hp-cur">${c.hp}</span><span class="hp-max">/ ${c.hpMax}</span>${c.temp ? `<span class="hp-temp">+${c.temp}</span>` : ''}
+      <button class="hp-btn" type="button" data-act="hp" aria-label="${esc(hpText(c))}. ${esc(t('card.applyHp'))}">
+        <span class="hp-label">${esc(t('term.hp'))}</span><span class="hp-cur">${c.hp}</span><span class="hp-max">/ ${c.hpMax}</span>${c.temp ? `<span class="hp-temp">+${c.temp}</span>` : ''}
       </button>
-      <span class="ac">${icon('shield')}CA <b>${c.ac}</b></span>
+      <span class="ac">${icon('shield')}${esc(t('term.ac'))} <b>${c.ac}</b></span>
     </div>
     <div class="chips">${chips.join('')}</div>
-    <span class="card-skull" aria-label="Caído">${icon('skull')}</span>`;
+    <span class="card-skull" aria-label="${esc(t('card.down'))}">${icon('skull')}</span>`;
 }
 
 function renderList(s) {
   const list = S.order(s);
   if (!list.length) {
     cards.clear();
-    els.list.innerHTML = `<div class="list-empty"><p>No hay nadie en el combate.</p>
-      <p>Pulsa <strong>Añadir</strong> para sumar jugadores y monstruos.</p></div>`;
+    els.list.innerHTML = `<div class="list-empty"><p>${esc(t('combat.emptyList1'))}</p><p>${t('combat.emptyList2')}</p></div>`;
     return;
   }
   els.list.querySelector('.list-empty')?.remove();
@@ -178,7 +183,7 @@ function renderBoard(s) {
     if (!empty) {
       empty = document.createElement('div');
       empty.className = 'board-empty';
-      empty.innerHTML = '<p>Los tokens aparecerán aquí.<br>Arrástralos con el dedo; tócalos para aplicar daño o curación.</p>';
+      empty.innerHTML = `<p>${t('combat.emptyBoard')}</p>`;
       els.board.append(empty);
     }
   } else {
@@ -187,31 +192,31 @@ function renderBoard(s) {
 
   const seen = new Set();
   for (const c of s.combatants) {
-    let t = tokens.get(c.id);
-    if (!t) {
+    let tk = tokens.get(c.id);
+    if (!tk) {
       const el = document.createElement('div');
       el.dataset.id = c.id;
       el.tabIndex = 0;
       el.setAttribute('role', 'button');
       el.innerHTML = `<div class="token-face"></div><span class="token-skull">${icon('skull')}</span>`;
       els.board.append(el);
-      t = { el, face: el.firstElementChild, html: '' };
-      tokens.set(c.id, t);
+      tk = { el, face: el.firstElementChild, html: '' };
+      tokens.set(c.id, tk);
     }
-    t.el.className = `token faction-${c.faction}${c.id === s.activeId ? ' active' : ''}${S.isDead(c) ? ' dead' : ''}${drag?.id === c.id && drag.moved ? ' dragging' : ''}`;
-    t.el.setAttribute('aria-label', `${c.name}, ${hpText(c)}. Tocar para daño o curación`);
+    tk.el.className = `token faction-${c.faction}${c.id === s.activeId ? ' active' : ''}${S.isDead(c) ? ' dead' : ''}${drag?.id === c.id && drag.moved ? ' dragging' : ''}`;
+    tk.el.setAttribute('aria-label', `${c.name}, ${hpText(c)}. ${t('token.tap')}`);
     if (!(drag?.id === c.id && drag.moved)) {
-      t.el.style.left = `${c.x * cell}px`;
-      t.el.style.top = `${c.y * cell}px`;
+      tk.el.style.left = `${c.x * cell}px`;
+      tk.el.style.top = `${c.y * cell}px`;
     }
     const pct = Math.round((c.hp / c.hpMax) * 100);
     const level = pct <= 25 ? 'crit' : pct <= 50 ? 'low' : '';
     const html = `<span>${esc(tokenLabel(c.name))}</span><span class="token-hp"><i class="${level}" style="width:${pct}%"></i></span>`;
-    if (html !== t.html) { t.face.innerHTML = html; t.html = html; }
+    if (html !== tk.html) { tk.face.innerHTML = html; tk.html = html; }
     seen.add(c.id);
   }
-  for (const [id, t] of tokens) {
-    if (!seen.has(id)) { t.el.remove(); tokens.delete(id); }
+  for (const [id, tk] of tokens) {
+    if (!seen.has(id)) { tk.el.remove(); tokens.delete(id); }
   }
 }
 
@@ -255,23 +260,23 @@ function handleEffect(e) {
       floatText(card, `+${e.amount} temp`, 'temp');
       break;
     case 'turn':
-      els.live.textContent = e.message;
+      els.live.textContent = tm(e.msg);
       card?.scrollIntoView({ block: 'nearest', behavior: reducedMotion.matches ? 'auto' : 'smooth' });
       break;
     case 'round':
-      toast(`Empieza la ronda ${e.round}`, { duration: 2500 });
+      toast(t('combat.roundStarts', { n: e.round }), { duration: 2500 });
       break;
     case 'condition-end':
-      toast(e.message, { kind: 'warn', duration: 10000 });
+      toast(tm(e.msg), { kind: 'warn', duration: 10000 });
       break;
     case 'warn':
-      toast(e.message, { kind: 'warn', duration: 8000 });
+      toast(tm(e.msg), { kind: 'warn', duration: 8000 });
       break;
     case 'error':
-      toast(e.message, { kind: 'error', duration: 0 });
+      toast(tm(e.msg), { kind: 'error', duration: 0 });
       break;
     default:
-      if (e.message) toast(e.message);
+      if (e.msg) toast(tm(e.msg));
   }
 }
 
@@ -345,13 +350,21 @@ function wireBoard() {
 
 // ---------- Ventana: añadir ----------
 
-function openAdd() {
+function resetAdd() {
   const f = els.formAdd;
   const faction = f.elements.faction.value;
   f.reset();
   f.elements.faction.value = faction || 'enemy';
+  f.elements.ref.value = ''; // un campo oculto no se vacía con reset()
+  els.addHint.hidden = true;
+  closeSuggest();
+}
+
+function openAdd() {
+  resetAdd();
   openDialog(els.dlgAdd);
-  f.elements.name.focus();
+  els.addName.focus();
+  loadMonsters().catch(() => {});
 }
 
 function wireAdd() {
@@ -361,14 +374,98 @@ function wireAdd() {
     const data = Object.fromEntries(new FormData(f));
     S.addCombatants({ ...data, count: data.count || 1 });
     if (e.submitter?.value === 'more') {
-      toast(`Añadido: ${data.name}`, { duration: 2000 });
-      const faction = f.elements.faction.value;
-      f.reset();
-      f.elements.faction.value = faction;
-      f.elements.name.focus();
+      toast(t('add.added', { name: data.name }), { duration: 2000 });
+      resetAdd();
+      els.addName.focus();
     } else {
       closeDialog(els.dlgAdd);
     }
+  });
+}
+
+// ---------- Sugerencias de monstruos al escribir el nombre ----------
+
+let matches = [];
+let active = -1;
+
+function closeSuggest() {
+  matches = [];
+  active = -1;
+  els.suggest.hidden = true;
+  els.suggest.innerHTML = '';
+  els.addName.setAttribute('aria-expanded', 'false');
+  els.addName.removeAttribute('aria-activedescendant');
+}
+
+async function updateSuggest() {
+  try {
+    await loadMonsters();
+  } catch {
+    closeSuggest();
+    return;
+  }
+  const query = els.addName.value;
+  matches = searchMonsters(query);
+  // Si ya está escrito exactamente un monstruo elegido, no hace falta la lista.
+  if (!matches.length || (matches.length === 1 && matches[0].n === query && els.formAdd.elements.ref.value)) {
+    closeSuggest();
+    return;
+  }
+  active = -1;
+  els.suggest.innerHTML = matches.map((m, i) => `
+    <li role="option" id="sg-${i}" data-i="${esc(m.i)}" aria-selected="false">
+      <span class="sg-name">${esc(m.n)}</span>
+      <span class="sg-meta num">${esc(t('term.cr'))} ${crText(m.cr)} · ${esc(m.s)} ${esc(m.t)} · ${esc(t('term.hp'))} ${m.hp} · ${esc(t('term.ac'))} ${m.ac}</span>
+    </li>`).join('');
+  els.suggest.hidden = false;
+  els.addName.setAttribute('aria-expanded', 'true');
+}
+
+function highlight(i) {
+  active = (i + matches.length) % matches.length;
+  els.suggest.querySelectorAll('[role=option]').forEach((li, k) => li.setAttribute('aria-selected', String(k === active)));
+  els.addName.setAttribute('aria-activedescendant', `sg-${active}`);
+  els.suggest.children[active]?.scrollIntoView({ block: 'nearest' });
+}
+
+// Carga los stats del monstruo elegido en el formulario.
+function pickMonster(m) {
+  if (!m) return;
+  const f = els.formAdd.elements;
+  const roll = rollInitiative(m);
+  f.name.value = m.n;
+  f.ref.value = m.i;
+  f.hpMax.value = m.hp;
+  f.ac.value = m.ac;
+  f.init.value = roll.total;
+  const mod = roll.mod >= 0 ? `+ ${roll.mod}` : `− ${-roll.mod}`;
+  els.addHint.textContent = `${t('add.loaded', { name: m.n })} ${t('add.rolled', { mod, total: roll.total })}`;
+  els.addHint.hidden = false;
+  closeSuggest();
+}
+
+function wireSuggest() {
+  const input = els.addName;
+  input.addEventListener('input', () => {
+    els.formAdd.elements.ref.value = ''; // si cambias el nombre, ya no es ese monstruo
+    els.addHint.hidden = true;
+    updateSuggest();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (els.suggest.hidden) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); highlight(active + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); highlight(active - 1); }
+    else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); pickMonster(matches[active]); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeSuggest(); }
+  });
+  input.addEventListener('blur', () => setTimeout(() => {
+    if (document.activeElement !== input) closeSuggest();
+  }, 200));
+  // Evita que tocar la lista quite el foco del campo antes de elegir.
+  els.suggest.addEventListener('pointerdown', (e) => e.preventDefault());
+  els.suggest.addEventListener('click', (e) => {
+    const li = e.target.closest('[data-i]');
+    if (li) pickMonster(findMonster(li.dataset.i));
   });
 }
 
@@ -387,21 +484,21 @@ function renderHp() {
   const c = S.find(hpId);
   if (!c) { closeDialog(els.dlgHp); return; }
   $('#dlg-hp-title').textContent = c.name;
-  $('#hp-status').textContent = `HP ${c.hp} / ${c.hpMax}${c.temp ? ` (+${c.temp} temp.)` : ''} · CA ${c.ac}`;
+  $('#hp-status').textContent = `${t('term.hp')} ${c.hp} / ${c.hpMax}${c.temp ? t('hp.tempShort', { n: c.temp }) : ''} · ${t('term.ac')} ${c.ac}`;
   const recent = S.getState().recent;
   $('#hp-quick').innerHTML = `
-    <div class="quick-row"><span class="hint">Daño rápido</span>
-      ${recent.map((a) => `<button type="button" class="btn quick-dmg num" data-quick="damage" data-amount="${a}" aria-label="Daño ${a}">−${a}</button>`).join('')}
+    <div class="quick-row"><span class="hint">${esc(t('hp.quickDamage'))}</span>
+      ${recent.map((a) => `<button type="button" class="btn quick-dmg num" data-quick="damage" data-amount="${a}" aria-label="${esc(t('hp.damageN', { n: a }))}">−${a}</button>`).join('')}
     </div>
-    <div class="quick-row"><span class="hint">Curación rápida</span>
-      ${recent.map((a) => `<button type="button" class="btn quick-heal num" data-quick="heal" data-amount="${a}" aria-label="Curar ${a}">+${a}</button>`).join('')}
+    <div class="quick-row"><span class="hint">${esc(t('hp.quickHeal'))}</span>
+      ${recent.map((a) => `<button type="button" class="btn quick-heal num" data-quick="heal" data-amount="${a}" aria-label="${esc(t('hp.healN', { n: a }))}">+${a}</button>`).join('')}
     </div>`;
 }
 
 function applyFromDialog(kind, amount) {
   const n = parseInt(amount, 10);
   if (!n) {
-    toast('Escribe una cantidad primero.', { duration: 2500 });
+    toast(t('hp.needAmount'), { duration: 2500 });
     els.hpAmount.focus();
     return;
   }
@@ -439,40 +536,40 @@ function openDetail(id) {
   const c = S.find(id);
   if (!c) return;
   detailId = id;
-  const factions = [['ally', 'Aliado'], ['enemy', 'Enemigo'], ['neutral', 'Neutral']];
+  const factions = ['ally', 'enemy', 'neutral'];
   els.detailBody.innerHTML = `
     <header class="dialog-head">
       <h2 id="dlg-detail-title">${esc(c.name)}</h2>
-      <button class="btn btn-icon" type="button" data-close aria-label="Cerrar">${icon('close')}</button>
+      <button class="btn btn-icon" type="button" data-close aria-label="${esc(t('common.close'))}">${icon('close')}</button>
     </header>
     <div class="detail-grid">
-      <section class="detail-section" id="detail-state" aria-label="Condiciones"></section>
+      <section class="detail-section" id="detail-state" aria-label="${esc(t('detail.conditions'))}"></section>
       <section class="detail-section">
-        <h3>Datos</h3>
+        <h3>${esc(t('detail.details'))}</h3>
         <form class="stack" id="form-edit" autocomplete="off">
-          <label class="field"><span>Nombre</span><input name="name" required maxlength="40" value="${esc(c.name)}"></label>
-          <fieldset class="field"><legend>Facción</legend>
+          <label class="field"><span>${esc(t('add.name'))}</span><input name="name" required maxlength="40" value="${esc(c.name)}"></label>
+          <fieldset class="field"><legend>${esc(t('add.faction'))}</legend>
             <div class="segmented" role="radiogroup">
-              ${factions.map(([v, l]) => `<label class="seg seg-${v}"><input type="radio" name="faction" value="${v}"${c.faction === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}
+              ${factions.map((v) => `<label class="seg seg-${v}"><input type="radio" name="faction" value="${v}"${c.faction === v ? ' checked' : ''}><span>${esc(t(`faction.${v}`))}</span></label>`).join('')}
             </div>
           </fieldset>
           <div class="field-row">
-            <label class="field"><span>Iniciativa</span><input name="init" type="number" required min="-10" max="50" value="${c.init}"></label>
-            <label class="field"><span>CA</span><input name="ac" type="number" inputmode="numeric" required min="0" max="40" value="${c.ac}"></label>
+            <label class="field"><span>${esc(t('term.init'))}</span><input name="init" type="number" required min="-10" max="50" value="${c.init}"></label>
+            <label class="field"><span>${esc(t('term.ac'))}</span><input name="ac" type="number" inputmode="numeric" required min="0" max="40" value="${c.ac}"></label>
           </div>
           <div class="field-row">
-            <label class="field"><span>HP actual</span><input name="hp" type="number" inputmode="numeric" required min="0" max="9999" value="${c.hp}"></label>
-            <label class="field"><span>HP máx</span><input name="hpMax" type="number" inputmode="numeric" required min="1" max="9999" value="${c.hpMax}"></label>
-            <label class="field"><span>HP temp.</span><input name="temp" type="number" inputmode="numeric" min="0" max="9999" value="${c.temp}"></label>
+            <label class="field"><span>${esc(t('field.hp'))}</span><input name="hp" type="number" inputmode="numeric" required min="0" max="9999" value="${c.hp}"></label>
+            <label class="field"><span>${esc(t('field.hpMax'))}</span><input name="hpMax" type="number" inputmode="numeric" required min="1" max="9999" value="${c.hpMax}"></label>
+            <label class="field"><span>${esc(t('field.temp'))}</span><input name="temp" type="number" inputmode="numeric" min="0" max="9999" value="${c.temp}"></label>
           </div>
-          <button class="btn btn-primary" type="submit">${icon('edit')}<span>Guardar cambios</span></button>
+          <button class="btn btn-primary" type="submit">${icon('edit')}<span>${esc(t('detail.save'))}</span></button>
         </form>
-        <button class="btn btn-danger" type="button" id="btn-remove">${icon('trash')}<span>Quitar del combate</span></button>
-        <h3>Qué hace cada condición</h3>
+        <button class="btn btn-danger" type="button" id="btn-remove">${icon('trash')}<span>${esc(t('detail.remove'))}</span></button>
+        <h3>${esc(t('detail.help'))}</h3>
         <div class="cond-help">
-          ${[...CONDITIONS, EXHAUSTION].map((d) => `<details><summary>${d.name}</summary><p>${esc(d.desc)}</p></details>`).join('')}
+          ${[...CONDITION_KEYS, EXHAUSTION_KEY].map((k) => `<details><summary>${esc(t(`cond.${k}`))}</summary><p>${esc(t(`cond.${k}.desc`))}</p></details>`).join('')}
         </div>
-        <p class="hint">Resúmenes basados en el System Reference Document 5.2 de Wizards of the Coast LLC (licencia CC-BY-4.0).</p>
+        <p class="hint">${esc(t('detail.srdNote'))}</p>
       </section>
     </div>`;
   renderDetailState();
@@ -486,52 +583,52 @@ function renderDetailState() {
   const opts = [null, 1, 2, 3, 10];
   const custom = duration != null && !opts.includes(duration) ? duration : '';
   box.innerHTML = `
-    <h3>Condiciones</h3>
+    <h3>${esc(t('detail.conditions'))}</h3>
     <div class="stack">
-      <span class="hint">Duración al aplicar (en rondas):</span>
+      <span class="hint">${esc(t('detail.duration'))}</span>
       <div class="duration">
-        ${opts.map((o) => `<button type="button" class="btn" data-dur="${o ?? ''}" aria-pressed="${duration === o}">${o == null ? 'Sin límite' : o}</button>`).join('')}
-        <input type="number" inputmode="numeric" min="1" max="999" placeholder="Otra" aria-label="Otra duración en rondas" id="dur-custom" value="${custom}">
+        ${opts.map((o) => `<button type="button" class="btn" data-dur="${o ?? ''}" aria-pressed="${duration === o}">${o == null ? esc(t('detail.noLimit')) : o}</button>`).join('')}
+        <input type="number" inputmode="numeric" min="1" max="999" placeholder="${esc(t('detail.other'))}" aria-label="${esc(t('detail.otherAria'))}" id="dur-custom" value="${custom}">
       </div>
-      <span class="hint">Cuenta desde el turno actual y avisa al terminar.</span>
+      <span class="hint">${esc(t('detail.durationHint'))}</span>
     </div>
     <div class="cond-grid">
-      ${CONDITIONS.map((d) => {
-        const cd = c.conditions.find((x) => x.key === d.key);
-        const extra = cd ? `<small>${cd.rounds == null ? '∞' : `${cd.rounds} r`}</small>` : '';
-        return `<button type="button" class="cond" data-cond="${d.key}" aria-pressed="${!!cd}">${d.name}${extra}</button>`;
+      ${CONDITION_KEYS.map((k) => {
+        const cd = c.conditions.find((x) => x.key === k);
+        const extra = cd ? `<small>${cd.rounds == null ? '∞' : esc(t('round.short', { n: cd.rounds }))}</small>` : '';
+        return `<button type="button" class="cond" data-cond="${k}" aria-pressed="${!!cd}">${esc(t(`cond.${k}`))}${extra}</button>`;
       }).join('')}
     </div>
     <div class="stack">
-      <span class="hint">${EXHAUSTION.name} (niveles 0–6)</span>
+      <span class="hint">${esc(t('detail.exhaustion'))}</span>
       <div class="stepper">
-        <button type="button" class="btn btn-icon" data-exh="-1" aria-label="Bajar agotamiento"${c.exhaustion <= 0 ? ' disabled' : ''}>${icon('minus')}</button>
+        <button type="button" class="btn btn-icon" data-exh="-1" aria-label="${esc(t('detail.exhDown'))}"${c.exhaustion <= 0 ? ' disabled' : ''}>${icon('minus')}</button>
         <output class="num" aria-live="polite">${c.exhaustion}</output>
-        <button type="button" class="btn btn-icon" data-exh="1" aria-label="Subir agotamiento"${c.exhaustion >= 6 ? ' disabled' : ''}>${icon('plus')}</button>
-        ${c.exhaustion ? `<span class="hint">−${c.exhaustion * 2} a Pruebas d20 · −${c.exhaustion * 5} pies</span>` : ''}
+        <button type="button" class="btn btn-icon" data-exh="1" aria-label="${esc(t('detail.exhUp'))}"${c.exhaustion >= 6 ? ' disabled' : ''}>${icon('plus')}</button>
+        ${c.exhaustion ? `<span class="hint">${esc(t('detail.exhEffect', { d20: c.exhaustion * 2, ft: c.exhaustion * 5 }))}</span>` : ''}
       </div>
     </div>
-    <button type="button" class="btn" data-conc aria-pressed="${c.concentration}">${icon('focus')}<span>${c.concentration ? 'Concentrándose (tocar para quitar)' : 'Marcar concentración'}</span></button>`;
+    <button type="button" class="btn" data-conc aria-pressed="${c.concentration}">${icon('focus')}<span>${esc(t(c.concentration ? 'detail.concOn' : 'detail.concOff'))}</span></button>`;
 }
 
 function wireDetail() {
   const body = els.detailBody;
   body.addEventListener('click', (e) => {
-    const t = e.target;
-    const dur = t.closest('[data-dur]');
+    const target = e.target;
+    const dur = target.closest('[data-dur]');
     if (dur) {
       duration = dur.dataset.dur === '' ? null : Number(dur.dataset.dur);
       renderDetailState();
       return;
     }
-    const cond = t.closest('[data-cond]');
+    const cond = target.closest('[data-cond]');
     if (cond) { S.toggleCondition(detailId, cond.dataset.cond, duration); return; }
-    const exh = t.closest('[data-exh]');
+    const exh = target.closest('[data-exh]');
     if (exh) { S.setExhaustion(detailId, S.find(detailId).exhaustion + Number(exh.dataset.exh)); return; }
-    if (t.closest('[data-conc]')) { S.toggleConcentration(detailId); return; }
-    if (t.closest('#btn-remove')) {
+    if (target.closest('[data-conc]')) { S.toggleConcentration(detailId); return; }
+    if (target.closest('#btn-remove')) {
       const c = S.find(detailId);
-      confirmDialog(`¿Quitar a ${c.name} del combate? Puedes deshacerlo.`, { yes: 'Quitar' }).then((ok) => {
+      confirmDialog(t('detail.removeConfirm', { name: c.name }), { yes: t('detail.removeYes') }).then((ok) => {
         if (ok) { S.removeCombatant(c.id); closeDialog(els.dlgDetail); }
       });
     }
@@ -549,7 +646,7 @@ function wireDetail() {
     const data = Object.fromEntries(new FormData(e.target));
     S.updateCombatant(detailId, data);
     body.querySelector('#dlg-detail-title').textContent = S.find(detailId).name;
-    toast('Cambios guardados.', { duration: 2000 });
+    toast(t('detail.saved'), { duration: 2000 });
   });
 }
 
@@ -572,12 +669,12 @@ function wireMenu() {
   $('#btn-new-keep').addEventListener('click', () => {
     S.newCombat(true);
     closeDialog(els.dlgMenu);
-    toast('Nuevo combate: se conservaron los aliados.', { duration: 3000 });
+    toast(t('menu.keptAllies'), { duration: 3000 });
   });
   $('#btn-new-all').addEventListener('click', () => {
     S.newCombat(false);
     closeDialog(els.dlgMenu);
-    toast('Combate vaciado. Puedes deshacerlo.', { duration: 3000 });
+    toast(t('menu.cleared'), { duration: 3000 });
   });
 }
 

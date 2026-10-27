@@ -1,5 +1,7 @@
 // Utilidades de interfaz compartidas por todos los paneles.
 
+import { t } from './i18n.js';
+
 export const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 // Evita que un nombre como "<b>" se interprete como código.
@@ -38,7 +40,7 @@ export function toast(message, { kind = 'info', duration = 4000, action = null }
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'btn btn-icon btn-ghost';
-  close.setAttribute('aria-label', 'Cerrar aviso');
+  close.setAttribute('aria-label', t('toast.close'));
   close.innerHTML = icon('close');
   close.addEventListener('click', () => dismiss());
   el.append(close);
@@ -75,7 +77,7 @@ export function wireDialog(dlg) {
   });
 }
 
-export function confirmDialog(text, { yes = 'Sí', title = '¿Seguro?' } = {}) {
+export function confirmDialog(text, { yes = t('common.yes'), title = t('common.sure') } = {}) {
   const dlg = document.getElementById('dlg-confirm');
   dlg.querySelector('#dlg-confirm-title').textContent = title;
   dlg.querySelector('#dlg-confirm-text').textContent = text;

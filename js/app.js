@@ -1,22 +1,54 @@
-// Arranque de la app: navegación entre paneles, atajos de teclado,
-// copia de seguridad y modo sin internet (service worker).
+// Arranque de la app: idioma, navegación entre paneles, atajos de teclado,
+// ajustes y copia de seguridad, y modo sin internet (service worker).
 
 import * as combat from './combat.js';
 import * as combatState from './combat-state.js';
-import { exportAll, importAll, validateBackup } from './db.js';
-import { toast, openDialog, closeDialog, wireDialog, confirmDialog, isTyping } from './ui.js';
+import { exportAll, importAll, validateBackup, kvGet, kvSet } from './db.js';
+import { toast, openDialog, closeDialog, wireDialog, confirmDialog, isTyping, esc } from './ui.js';
+import { t, setLang, getLang, applyStatic, LANGS, DEFAULT_LANG } from './i18n.js';
 
 const PANELS = ['combate', 'compendio', 'campana', 'ambientacion'];
 const $ = (sel) => document.querySelector(sel);
+
+// ---------- Idioma ----------
+
+async function loadSettings() {
+  try {
+    return (await kvGet('settings')) || {};
+  } catch {
+    return {};
+  }
+}
+
+function translatePage() {
+  applyStatic();
+  for (const el of document.querySelectorAll('[data-coming]')) {
+    el.innerHTML = `${t('coming.phase', { n: el.dataset.phase })} ${esc(t(`coming.${el.dataset.coming}`))}`;
+  }
+  const meta = document.querySelector('meta[name="description"]');
+  if (meta) meta.content = `${t('tab.combat')} · ${t('tab.compendium')} · ${t('tab.campaign')} · ${t('tab.ambience')}`;
+}
+
+function renderLangPicker() {
+  const box = $('#lang-picker');
+  box.innerHTML = LANGS.map(([code, name]) => `
+    <label class="seg"><input type="radio" name="lang" value="${code}"${code === getLang() ? ' checked' : ''}><span lang="${code}">${name}</span></label>`).join('');
+  box.addEventListener('change', async (e) => {
+    const code = e.target.value;
+    const settings = await loadSettings();
+    await kvSet('settings', { ...settings, lang: code });
+    location.reload(); // la forma más segura de traducir todo de una vez
+  });
+}
 
 // ---------- Paneles ----------
 
 function showPanel(name) {
   if (!PANELS.includes(name)) name = 'combate';
   for (const p of document.querySelectorAll('.panel')) p.hidden = p.dataset.panel !== name;
-  for (const t of document.querySelectorAll('.tab')) {
-    if (t.dataset.panel === name) t.setAttribute('aria-current', 'page');
-    else t.removeAttribute('aria-current');
+  for (const tab of document.querySelectorAll('.tab')) {
+    if (tab.dataset.panel === name) tab.setAttribute('aria-current', 'page');
+    else tab.removeAttribute('aria-current');
   }
   if (location.hash.slice(1) !== name) history.replaceState(null, '', `#${name}`);
   if (name === 'combate') combat.onShow();
@@ -62,12 +94,13 @@ function wireShortcuts() {
   });
 }
 
-// ---------- Copia de seguridad ----------
+// ---------- Ajustes y copia de seguridad ----------
 
-function wireBackup() {
-  const dlg = $('#dlg-backup');
+function wireSettings() {
+  const dlg = $('#dlg-settings');
   wireDialog(dlg);
-  $('#btn-backup').addEventListener('click', async () => {
+  renderLangPicker();
+  $('#btn-settings').addEventListener('click', async () => {
     openDialog(dlg);
     $('#storage-info').textContent = await storageInfo();
   });
@@ -84,9 +117,9 @@ function wireBackup() {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-      toast('Copia descargada. Búscala en la carpeta «Descargas».', { duration: 5000 });
+      toast(t('backup.downloaded'), { duration: 5000 });
     } catch (err) {
-      toast(`No se pudo exportar: ${err.message}`, { kind: 'error', duration: 0 });
+      toast(t('backup.exportError', { msg: t(err.message) }), { kind: 'error', duration: 0 });
     }
   });
 
@@ -98,19 +131,14 @@ function wireBackup() {
     try {
       const data = JSON.parse(await f.text());
       validateBackup(data);
-      const when = data.exportedAt ? new Date(data.exportedAt).toLocaleString('es') : 'fecha desconocida';
-      const ok = await confirmDialog(
-        `Se reemplazarán TODOS los datos actuales por los de la copia del ${when}. Esto no se puede deshacer.`,
-        { yes: 'Reemplazar', title: '¿Importar copia?' },
-      );
+      const when = data.exportedAt ? new Date(data.exportedAt).toLocaleString(getLang()) : t('backup.unknownDate');
+      const ok = await confirmDialog(t('backup.importConfirm', { when }), { yes: t('backup.importYes'), title: t('backup.importTitle') });
       if (!ok) return;
       await importAll(data);
-      await combatState.load();
-      closeDialog(dlg);
-      toast('Copia de seguridad importada.', { duration: 4000 });
+      location.reload(); // vuelve a cargar todo, incluido el idioma de la copia
     } catch (err) {
-      const msg = err instanceof SyntaxError ? 'El archivo está dañado o no es JSON.' : err.message;
-      toast(`No se pudo importar: ${msg}`, { kind: 'error', duration: 0 });
+      const msg = err instanceof SyntaxError ? t('backup.badJson') : t(err.message);
+      toast(t('backup.importError', { msg }), { kind: 'error', duration: 0 });
     }
   });
 }
@@ -119,8 +147,8 @@ async function storageInfo() {
   if (!navigator.storage?.estimate) return '';
   try {
     const [{ usage }, persisted] = await Promise.all([navigator.storage.estimate(), navigator.storage.persisted?.()]);
-    const kb = Math.max(1, Math.round((usage || 0) / 1024));
-    return `Espacio usado: ${kb.toLocaleString('es')} KB. ${persisted ? 'El navegador no borrará estos datos automáticamente.' : 'Instala la app para que el navegador conserve los datos.'}`;
+    const kb = Math.max(1, Math.round((usage || 0) / 1024)).toLocaleString(getLang());
+    return `${t('storage.used', { kb })} ${t(persisted ? 'storage.persisted' : 'storage.notPersisted')}`;
   } catch {
     return '';
   }
@@ -145,7 +173,7 @@ function wireInstall() {
   });
   window.addEventListener('appinstalled', () => {
     btn.hidden = true;
-    toast('App instalada. Ya funciona sin internet.', { duration: 5000 });
+    toast(t('app.installed'), { duration: 5000 });
   });
 }
 
@@ -154,9 +182,9 @@ async function registerServiceWorker() {
   try {
     const reg = await navigator.serviceWorker.register('./sw.js');
     const offerUpdate = (worker) => {
-      toast('Hay una versión nueva de la app.', {
+      toast(t('app.newVersion'), {
         duration: 0,
-        action: { label: 'Actualizar', run: () => worker.postMessage('skipWaiting') },
+        action: { label: t('app.update'), run: () => worker.postMessage('skipWaiting') },
       });
     };
     if (reg.waiting && navigator.serviceWorker.controller) offerUpdate(reg.waiting);
@@ -173,16 +201,20 @@ async function registerServiceWorker() {
       location.reload();
     });
   } catch (err) {
-    console.warn('Service worker no registrado:', err);
+    console.warn('Service worker not registered:', err);
   }
 }
 
 // ---------- Inicio ----------
 
 async function start() {
+  const settings = await loadSettings();
+  setLang(settings.lang || DEFAULT_LANG);
+  translatePage();
+
   combat.initCombat();
   wireShortcuts();
-  wireBackup();
+  wireSettings();
   wireInstall();
   window.addEventListener('hashchange', () => showPanel(location.hash.slice(1)));
   showPanel(location.hash.slice(1));
@@ -190,7 +222,7 @@ async function start() {
   try {
     await combatState.load();
   } catch (err) {
-    toast(`No se pudieron cargar los datos: ${err.message}`, { kind: 'error', duration: 0 });
+    toast(t('app.loadError', { msg: t(err.message) }), { kind: 'error', duration: 0 });
   }
   navigator.storage?.persist?.().catch(() => {});
   registerServiceWorker();

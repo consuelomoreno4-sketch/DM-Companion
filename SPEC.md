@@ -23,7 +23,10 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
 - **Datos en el dispositivo** con IndexedDB (base `dm-companion`).
   - Botones para **exportar** e **importar** una copia de seguridad (archivo `.json`).
   - Se pide al navegador almacenamiento persistente para que no borre los datos.
-- **Interfaz en español.**
+- **Idiomas:** la interfaz oficial está en **inglés** (idioma por defecto); también se puede elegir
+  **español** o **alemán** en Ajustes. Los textos están en `js/i18n/en.js`, `es.js` y `de.js` (mismas claves).
+  Los nombres de monstruos, hechizos y demás contenido del SRD se muestran en inglés en todos los idiomas.
+  Términos por idioma: HP/AC/CR (en) · HP/CA/VD (es) · TP/RK/HG (de).
 
 ## Diseño
 
@@ -49,6 +52,11 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
 ### 1. Combate — FASE 1 ✅
 - Añadir jugadores y monstruos a mano: nombre, iniciativa, HP máx, CA, facción
   (y cantidad, para añadir varios iguales: "Goblin 1", "Goblin 2"…).
+- **Sugerencias de monstruos (v1.1):** al escribir el nombre se despliega una lista con los 341 monstruos
+  del SRD 5.2 (nombre, CR, tamaño, tipo, HP, AC). Al elegir uno se cargan HP y AC y se tira la iniciativa
+  (d20 + modificador de Destreza; se puede cambiar). El combatiente guarda `ref` = id del monstruo.
+  Solo el SRD 5.2 se puede incluir legalmente; el resto del Monster Manual 2024 no. Los monstruos propios
+  de la fase 2 aparecerán también en estas sugerencias.
 - Lista de turnos ordenada por iniciativa, contador de rondas,
   botones grandes "Siguiente turno" y "Anterior".
 - Por combatiente: HP actual/máx, HP temporales, condiciones (las 15 de 2024;
@@ -65,6 +73,7 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
   El SRD 5.2 está licenciado bajo Creative Commons Attribution 4.0 International License."
 - Búsqueda; filtros de hechizos (nivel, escuela, clase, tiempo de lanzamiento, concentración, ritual).
 - Cada entrada muestra su **fuente** (SRD 5.2 o "Propia").
+- Datos de partida: proyecto 5e-bits/5e-database (MIT), carpeta `src/2024/en` (SRD 5.2).
 - Agregar, editar y borrar **entradas propias** (guardadas en IndexedDB e incluidas en la copia de seguridad).
 - Desde un monstruo, botón para añadirlo directamente al combate.
 - Los datos del SRD se guardan como archivos JSON dentro del repositorio (funcionan sin internet).
@@ -93,10 +102,14 @@ manifest.webmanifest    Datos para instalar la app
 sw.js                   Service worker (modo sin internet)
 .nojekyll               Le dice a GitHub Pages que publique los archivos tal cual
 css/app.css             Todos los estilos y colores
-js/app.js               Arranque, navegación entre paneles, atajos, copia de seguridad
+js/app.js               Arranque, idioma, navegación entre paneles, atajos, ajustes y copia de seguridad
 js/db.js                Acceso a IndexedDB + exportar/importar
 js/ui.js                Utilidades: iconos, avisos (toasts), ventanas
-js/conditions.js        Las 15 condiciones de 2024 (resumen en español)
+js/i18n.js              Sistema de traducción (t, tn, tm)
+js/i18n/en.js, es.js, de.js  Textos de la interfaz en cada idioma
+js/conditions.js        Lista de las 15 condiciones de 2024 (los textos están en i18n)
+js/monsters.js          Búsqueda de monstruos del SRD para las sugerencias
+data/monsters.json      341 monstruos del SRD 5.2 (id, nombre, tamaño, tipo, CR, HP, dados, AC, DES)
 js/combat-state.js      Datos y reglas del combate + deshacer
 js/combat.js            Pantalla del panel de Combate
 fonts/                  Cinzel e Inter (licencia SIL OFL 1.1)
@@ -107,6 +120,8 @@ icons/                  Iconos de la app
 
 Base `dm-companion`, versión 1, almacén `kv` (clave → valor).
 
+- `settings`: `{ lang: 'en' | 'es' | 'de' }`
+
 - `combat`:
   ```
   { version, started, round, activeId, seq,
@@ -114,7 +129,7 @@ Base `dm-companion`, versión 1, almacén `kv` (clave → valor).
     recent: [números usados recientemente],
     combatants: [{ id, seq, name, faction: 'ally'|'enemy'|'neutral',
                    init, hpMax, hp, temp, ac, x, y,
-                   concentration: bool, exhaustion: 0–6,
+                   concentration: bool, exhaustion: 0–6, ref: id SRD | null,
                    conditions: [{ key, rounds|null, anchorId|null }] }] }
   ```
 
@@ -140,3 +155,16 @@ Importar **reemplaza** todos los datos actuales (se pide confirmación).
   termina al **empezar ese mismo turno** X rondas después y aparece un aviso.
   Si el combate no ha empezado, se cuenta al inicio de cada ronda.
 - "Anterior" solo mueve el turno hacia atrás; para revertir efectos se usa "Deshacer".
+
+## Pendientes e ideas
+
+Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan al terminar cada fase.
+
+- (vacío por ahora)
+
+## Historial de cambios
+
+- **1.0.0** — Fase 1: base de la app y panel de Combate.
+- **1.0.1** — Guardado inmediato de cada cambio (antes podía perderse el último si la app se cerraba).
+- **1.1.0** — Interfaz en inglés por defecto con opción de español y alemán (Ajustes).
+  Sugerencias de monstruos del SRD 5.2 al añadir combatientes, con carga automática de HP, AC e iniciativa.

@@ -1,4 +1,5 @@
 // Acceso a IndexedDB (la "base de datos" del navegador, guardada en el dispositivo).
+// Los errores usan claves de traducción (por ejemplo 'backup.invalid'); app.js las traduce.
 // Fases futuras: añadir almacenes en STORES y subir DB_VERSION.
 
 const DB_NAME = 'dm-companion';
@@ -22,7 +23,7 @@ function open() {
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
-    req.onblocked = () => reject(new Error('Cierra otras pestañas de la app y vuelve a intentarlo.'));
+    req.onblocked = () => reject(new Error('db.blocked'));
   });
   return dbPromise;
 }
@@ -69,10 +70,10 @@ export async function exportAll() {
 
 export function validateBackup(data) {
   if (!data || data.app !== BACKUP_APP || typeof data.stores !== 'object') {
-    throw new Error('Este archivo no es una copia de seguridad de DM Companion.');
+    throw new Error('backup.invalid');
   }
   if (data.format > BACKUP_FORMAT) {
-    throw new Error('La copia es de una versión más nueva de la app. Actualiza la app primero.');
+    throw new Error('backup.tooNew');
   }
 }
 

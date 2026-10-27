@@ -2,7 +2,7 @@
 // IMPORTANTE: cada vez que publiques cambios, sube el número de VERSION
 // para que las tablets descarguen la versión nueva.
 
-const VERSION = '1.0.1';
+const VERSION = '1.1.0';
 const CACHE = `dm-companion-${VERSION}`;
 
 const FILES = [
@@ -16,6 +16,12 @@ const FILES = [
   './js/conditions.js',
   './js/combat-state.js',
   './js/combat.js',
+  './js/i18n.js',
+  './js/i18n/en.js',
+  './js/i18n/es.js',
+  './js/i18n/de.js',
+  './js/monsters.js',
+  './data/monsters.json',
   './fonts/inter.woff2',
   './fonts/cinzel.woff2',
   './icons/icon-192.png',
