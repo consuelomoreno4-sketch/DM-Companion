@@ -49,6 +49,8 @@ export default {
   // Turn cards and tokens
   'card.hpText': '{hp} of {max} HP',
   'card.hpTemp': ', {n} temporary',
+  'card.hpUnknown': 'HP tracked by the player',
+  'card.setHp': 'Tap to enter HP',
   'card.applyHp': 'Apply damage or healing',
   'card.concentration': 'Concentration',
   'card.exhaustion': 'Exhaustion {n}',
@@ -61,6 +63,7 @@ export default {
   'add.name': 'Name',
   'add.namePlaceholder': 'Type a monster name, e.g. Goblin',
   'add.faction': 'Faction',
+  'add.optional': 'optional',
   'add.count': 'Quantity',
   'add.more': 'Add & continue',
   'add.submit': 'Add',

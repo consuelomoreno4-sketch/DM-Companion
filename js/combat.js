@@ -91,7 +91,32 @@ function render(s) {
 }
 
 function hpText(c) {
+  if (!S.hasHp(c)) return t('card.hpUnknown');
   return t('card.hpText', { hp: c.hp, max: c.hpMax }) + (c.temp ? t('card.hpTemp', { n: c.temp }) : '');
+}
+
+const dash = (v) => v ?? '—'; // dato que el jugador lleva por su cuenta
+
+// HP: botón para daño/curación, o (sin HP registrados) botón que abre la edición para ponerlos.
+function hpButton(c) {
+  if (!S.hasHp(c)) {
+    return `<button class="hp-btn hp-unknown" type="button" data-act="detail" aria-label="${esc(hpText(c))}. ${esc(t('card.setHp'))}">
+        <span class="hp-label">${esc(t('term.hp'))}</span><span class="hp-max">—</span></button>`;
+  }
+  return `<button class="hp-btn" type="button" data-act="hp" aria-label="${esc(hpText(c))}. ${esc(t('card.applyHp'))}">
+        <span class="hp-label">${esc(t('term.hp'))}</span><span class="hp-cur">${c.hp}</span><span class="hp-max">/ ${c.hpMax}</span>${c.temp ? `<span class="hp-temp">+${c.temp}</span>` : ''}
+      </button>`;
+}
+
+// Para aliados, iniciativa, HP y CA son opcionales; para enemigos y neutrales son obligatorios.
+function syncRequired(form) {
+  const optional = form.elements.faction.value === 'ally';
+  for (const name of ['init', 'ac', 'hpMax', 'hp']) {
+    const input = form.elements[name];
+    if (!input) continue;
+    input.required = !optional;
+    input.placeholder = optional ? t('add.optional') : '';
+  }
 }
 
 function cardHtml(c) {
@@ -103,17 +128,15 @@ function cardHtml(c) {
     chips.push(`<span class="chip">${esc(t(`cond.${cd.key}`))}${r}</span>`);
   }
   return `
-    <div class="card-init num" title="${esc(t('term.init'))}">${c.init}</div>
+    <div class="card-init num" title="${esc(t('term.init'))}">${dash(c.init)}</div>
     <button class="card-name" type="button" data-act="detail"><span>${esc(c.name)}</span></button>
     <div class="card-tools">
       <button class="btn btn-icon" type="button" data-act="conc" aria-pressed="${c.concentration}" aria-label="${esc(t('card.concentration'))}">${icon('focus')}</button>
       <button class="btn btn-icon" type="button" data-act="detail" aria-label="${esc(t('card.more'))}">${icon('more')}</button>
     </div>
     <div class="card-stats">
-      <button class="hp-btn" type="button" data-act="hp" aria-label="${esc(hpText(c))}. ${esc(t('card.applyHp'))}">
-        <span class="hp-label">${esc(t('term.hp'))}</span><span class="hp-cur">${c.hp}</span><span class="hp-max">/ ${c.hpMax}</span>${c.temp ? `<span class="hp-temp">+${c.temp}</span>` : ''}
-      </button>
-      <span class="ac">${icon('shield')}${esc(t('term.ac'))} <b>${c.ac}</b></span>
+      ${hpButton(c)}
+      <span class="ac">${icon('shield')}${esc(t('term.ac'))} <b>${dash(c.ac)}</b></span>
     </div>
     <div class="chips">${chips.join('')}</div>
     <span class="card-skull" aria-label="${esc(t('card.down'))}">${icon('skull')}</span>`;
@@ -209,9 +232,13 @@ function renderBoard(s) {
       tk.el.style.left = `${c.x * cell}px`;
       tk.el.style.top = `${c.y * cell}px`;
     }
-    const pct = Math.round((c.hp / c.hpMax) * 100);
-    const level = pct <= 25 ? 'crit' : pct <= 50 ? 'low' : '';
-    const html = `<span>${esc(tokenLabel(c.name))}</span><span class="token-hp"><i class="${level}" style="width:${pct}%"></i></span>`;
+    let bar = ''; // sin HP registrados, el token no muestra barra
+    if (S.hasHp(c)) {
+      const pct = Math.round((c.hp / c.hpMax) * 100);
+      const level = pct <= 25 ? 'crit' : pct <= 50 ? 'low' : '';
+      bar = `<span class="token-hp"><i class="${level}" style="width:${pct}%"></i></span>`;
+    }
+    const html = `<span>${esc(tokenLabel(c.name))}</span>${bar}`;
     if (html !== tk.html) { tk.face.innerHTML = html; tk.html = html; }
     seen.add(c.id);
   }
@@ -357,6 +384,7 @@ function resetAdd() {
   f.elements.faction.value = faction || 'enemy';
   f.elements.ref.value = ''; // un campo oculto no se vacía con reset()
   els.addHint.hidden = true;
+  syncRequired(f);
   closeSuggest();
 }
 
@@ -368,6 +396,9 @@ function openAdd() {
 }
 
 function wireAdd() {
+  els.formAdd.addEventListener('change', (e) => {
+    if (e.target.name === 'faction') syncRequired(els.formAdd);
+  });
   els.formAdd.addEventListener('submit', (e) => {
     e.preventDefault();
     const f = els.formAdd;
@@ -472,7 +503,9 @@ function wireSuggest() {
 // ---------- Ventana: daño / curación ----------
 
 function openHp(id) {
-  if (!S.find(id)) return;
+  const c = S.find(id);
+  if (!c) return;
+  if (!S.hasHp(c)) { openDetail(id); return; } // primero hay que poner sus HP
   hpId = id;
   els.hpAmount.value = '';
   renderHp();
@@ -554,12 +587,12 @@ function openDetail(id) {
             </div>
           </fieldset>
           <div class="field-row">
-            <label class="field"><span>${esc(t('term.init'))}</span><input name="init" type="number" required min="-10" max="50" value="${c.init}"></label>
-            <label class="field"><span>${esc(t('term.ac'))}</span><input name="ac" type="number" inputmode="numeric" required min="0" max="40" value="${c.ac}"></label>
+            <label class="field"><span>${esc(t('term.init'))}</span><input name="init" type="number" min="-10" max="50" value="${c.init ?? ''}"></label>
+            <label class="field"><span>${esc(t('term.ac'))}</span><input name="ac" type="number" inputmode="numeric" min="0" max="40" value="${c.ac ?? ''}"></label>
           </div>
           <div class="field-row">
-            <label class="field"><span>${esc(t('field.hp'))}</span><input name="hp" type="number" inputmode="numeric" required min="0" max="9999" value="${c.hp}"></label>
-            <label class="field"><span>${esc(t('field.hpMax'))}</span><input name="hpMax" type="number" inputmode="numeric" required min="1" max="9999" value="${c.hpMax}"></label>
+            <label class="field"><span>${esc(t('field.hp'))}</span><input name="hp" type="number" inputmode="numeric" min="0" max="9999" value="${c.hp ?? ''}"></label>
+            <label class="field"><span>${esc(t('field.hpMax'))}</span><input name="hpMax" type="number" inputmode="numeric" min="1" max="9999" value="${c.hpMax ?? ''}"></label>
             <label class="field"><span>${esc(t('field.temp'))}</span><input name="temp" type="number" inputmode="numeric" min="0" max="9999" value="${c.temp}"></label>
           </div>
           <button class="btn btn-primary" type="submit">${icon('edit')}<span>${esc(t('detail.save'))}</span></button>
@@ -572,6 +605,7 @@ function openDetail(id) {
         <p class="hint">${esc(t('detail.srdNote'))}</p>
       </section>
     </div>`;
+  syncRequired(els.detailBody.querySelector('#form-edit'));
   renderDetailState();
   openDialog(els.dlgDetail);
 }
@@ -634,6 +668,7 @@ function wireDetail() {
     }
   });
   body.addEventListener('change', (e) => {
+    if (e.target.name === 'faction' && e.target.form?.id === 'form-edit') syncRequired(e.target.form);
     if (e.target.id === 'dur-custom') {
       const n = parseInt(e.target.value, 10);
       duration = n > 0 ? Math.min(999, n) : null;

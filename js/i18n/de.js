@@ -45,6 +45,8 @@ export default {
 
   'card.hpText': '{hp} von {max} TP',
   'card.hpTemp': ', {n} temporär',
+  'card.hpUnknown': 'TP führt der Spieler',
+  'card.setHp': 'Antippen, um TP einzutragen',
   'card.applyHp': 'Schaden oder Heilung anwenden',
   'card.concentration': 'Konzentration',
   'card.exhaustion': 'Erschöpfung {n}',
@@ -56,6 +58,7 @@ export default {
   'add.name': 'Name',
   'add.namePlaceholder': 'Monster eingeben, z. B. Goblin',
   'add.faction': 'Fraktion',
+  'add.optional': 'optional',
   'add.count': 'Anzahl',
   'add.more': 'Hinzufügen & weiter',
   'add.submit': 'Hinzufügen',

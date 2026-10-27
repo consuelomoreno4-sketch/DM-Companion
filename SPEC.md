@@ -52,6 +52,9 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
 ### 1. Combate — FASE 1 ✅
 - Añadir jugadores y monstruos a mano: nombre, iniciativa, HP máx, CA, facción
   (y cantidad, para añadir varios iguales: "Goblin 1", "Goblin 2"…).
+- **Aliados (v1.1.1):** solo el nombre es obligatorio; iniciativa, HP y CA son opcionales porque los lleva
+  cada jugador. Sin iniciativa van al final del orden; sin HP muestran "—", nunca cuentan como caídos y al tocar
+  su HP se abre la edición para ponerlos. Enemigos y neutrales siguen necesitando todos los campos.
 - **Sugerencias de monstruos (v1.1):** al escribir el nombre se despliega una lista con los 341 monstruos
   del SRD 5.2 (nombre, CR, tamaño, tipo, HP, AC). Al elegir uno se cargan HP y AC y se tira la iniciativa
   (d20 + modificador de Destreza; se puede cambiar). El combatiente guarda `ref` = id del monstruo.
@@ -128,7 +131,7 @@ Base `dm-companion`, versión 1, almacén `kv` (clave → valor).
     grid: { cols, rows },
     recent: [números usados recientemente],
     combatants: [{ id, seq, name, faction: 'ally'|'enemy'|'neutral',
-                   init, hpMax, hp, temp, ac, x, y,
+                   init, hpMax, hp, temp, ac, x, y,   (init/hpMax/hp/ac pueden ser null en aliados)
                    concentration: bool, exhaustion: 0–6, ref: id SRD | null,
                    conditions: [{ key, rounds|null, anchorId|null }] }] }
   ```
@@ -168,3 +171,4 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
 - **1.0.1** — Guardado inmediato de cada cambio (antes podía perderse el último si la app se cerraba).
 - **1.1.0** — Interfaz en inglés por defecto con opción de español y alemán (Ajustes).
   Sugerencias de monstruos del SRD 5.2 al añadir combatientes, con carga automática de HP, AC e iniciativa.
+- **1.1.1** — Para aliados, iniciativa, HP y CA son opcionales (solo el nombre es obligatorio).

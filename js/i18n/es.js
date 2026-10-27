@@ -45,6 +45,8 @@ export default {
 
   'card.hpText': '{hp} de {max} HP',
   'card.hpTemp': ', {n} temporales',
+  'card.hpUnknown': 'HP los lleva el jugador',
+  'card.setHp': 'Tocar para poner sus HP',
   'card.applyHp': 'Aplicar daño o curación',
   'card.concentration': 'Concentración',
   'card.exhaustion': 'Agotamiento {n}',
@@ -56,6 +58,7 @@ export default {
   'add.name': 'Nombre',
   'add.namePlaceholder': 'Escribe un monstruo, p. ej. Goblin',
   'add.faction': 'Facción',
+  'add.optional': 'opcional',
   'add.count': 'Cantidad',
   'add.more': 'Añadir y seguir',
   'add.submit': 'Añadir',

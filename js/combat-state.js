@@ -105,10 +105,14 @@ export function find(id, s = state) { return s.combatants.find((c) => c.id === i
 
 // Orden de turnos: iniciativa mayor primero; empate = el que se añadió antes.
 export function order(s = state) {
-  return [...s.combatants].sort((a, b) => b.init - a.init || a.seq - b.seq);
+  // Sin iniciativa (aliados que aún no la dicen) van al final.
+  const init = (c) => c.init ?? -Infinity;
+  return [...s.combatants].sort((a, b) => (init(b) - init(a)) || a.seq - b.seq);
 }
 
-export const isDead = (c) => c.hp <= 0;
+// Aliados sin HP registrados (los lleva el jugador) nunca cuentan como caídos.
+export const hasHp = (c) => c.hpMax != null;
+export const isDead = (c) => hasHp(c) && c.hp <= 0;
 // Enemigos y neutrales a 0 HP se saltan; los aliados no (tiran salvaciones contra la muerte).
 const takesTurn = (c) => !(isDead(c) && c.faction !== 'ally');
 
@@ -205,6 +209,9 @@ const clampInt = (v, min, max, fallback) => {
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
 };
 
+// Campo opcional: vacío → null (sin dato).
+const optInt = (v, min, max) => (v === '' || v == null ? null : clampInt(v, min, max, null));
+
 // ref = identificador del monstruo del SRD (si vino de las sugerencias), para la fase 2.
 export function addCombatants({ name, faction, init, hpMax, ac, count = 1, ref = '' }) {
   const base = String(name).trim().slice(0, 40) || '?';
@@ -219,9 +226,11 @@ export function addCombatants({ name, faction, init, hpMax, ac, count = 1, ref =
       if (m) start = Math.max(start, Number(m[1]));
     }
     const numbered = n > 1 || start > 0;
-    const max = clampInt(hpMax, 1, 9999, 1);
+    const f = FACTIONS.includes(faction) ? faction : 'enemy';
+    // Para aliados, iniciativa, HP y CA son opcionales; para el resto se usan valores por defecto.
+    const optional = f === 'ally';
+    const max = optional ? optInt(hpMax, 1, 9999) : clampInt(hpMax, 1, 9999, 1);
     for (let k = 0; k < n; k++) {
-      const f = FACTIONS.includes(faction) ? faction : 'enemy';
       const pos = freeCell(s, f);
       s.seq += 1;
       s.combatants.push({
@@ -229,11 +238,11 @@ export function addCombatants({ name, faction, init, hpMax, ac, count = 1, ref =
         seq: s.seq,
         name: numbered ? `${base} ${start + k + 1}` : base,
         faction: f,
-        init: clampInt(init, -10, 50, 0),
+        init: optional ? optInt(init, -10, 50) : clampInt(init, -10, 50, 0),
         hpMax: max,
         hp: max,
         temp: 0,
-        ac: clampInt(ac, 0, 40, 10),
+        ac: optional ? optInt(ac, 0, 40) : clampInt(ac, 0, 40, 10),
         conditions: [],
         exhaustion: 0,
         concentration: false,
@@ -252,12 +261,18 @@ export function updateCombatant(id, patch) {
     const t = find(id, s);
     if (patch.name != null) t.name = String(patch.name).trim().slice(0, 40) || t.name;
     if (FACTIONS.includes(patch.faction)) t.faction = patch.faction;
-    if (patch.init != null) t.init = clampInt(patch.init, -10, 50, t.init);
-    if (patch.ac != null) t.ac = clampInt(patch.ac, 0, 40, t.ac);
-    if (patch.hpMax != null) t.hpMax = clampInt(patch.hpMax, 1, 9999, t.hpMax);
-    if (patch.hp != null) t.hp = clampInt(patch.hp, 0, t.hpMax, t.hp);
-    if (patch.temp != null) t.temp = clampInt(patch.temp, 0, 9999, t.temp);
-    t.hp = Math.min(t.hp, t.hpMax);
+    // Un campo vacío queda "sin dato" (el formulario solo lo permite para aliados).
+    if ('init' in patch) t.init = optInt(patch.init, -10, 50);
+    if ('ac' in patch) t.ac = optInt(patch.ac, 0, 40);
+    if ('hpMax' in patch) t.hpMax = optInt(patch.hpMax, 1, 9999);
+    if (t.hpMax == null) {
+      t.hp = null;
+      t.temp = 0;
+    } else {
+      const hp = 'hp' in patch ? optInt(patch.hp, 0, 9999) : t.hp;
+      t.hp = Math.min(hp ?? t.hpMax, t.hpMax); // si recién se pone HP máx, empieza lleno
+      if ('temp' in patch) t.temp = optInt(patch.temp, 0, 9999) ?? 0;
+    }
   });
 }
 
@@ -285,7 +300,7 @@ function rememberAmount(s, amount) {
 export function applyHp(id, rawAmount, kind) {
   const c = find(id);
   const amount = clampInt(rawAmount, 0, 9999, 0);
-  if (!c || amount <= 0) return false;
+  if (!c || !hasHp(c) || amount <= 0) return false;
   return commit(m(`undo.${kind}`, { name: c.name }), (s, effects) => {
     const t = find(id, s);
     rememberAmount(s, amount);

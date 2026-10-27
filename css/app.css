@@ -348,6 +348,7 @@ p { margin: 0; }
   transition: border-color var(--t), transform var(--t);
 }
 .hp-btn:active { transform: scale(0.97); }
+.hp-btn.hp-unknown { border-style: dashed; }
 .hp-cur { font-size: 24px; font-weight: 700; }
 .hp-max { font-size: 18px; color: var(--muted); }
 .hp-temp { font-size: 18px; font-weight: 700; color: var(--temp); }
