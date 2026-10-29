@@ -277,3 +277,4 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
 - **3.2.0** — Mapa por modos (Lugares con mapa dibujado de la Costa de la Espada, Personajes, Red); paquete
   Dragon of Icespire Peak; importar notas de sesión pegadas o desde archivo.
 - **3.2.1** — Importar notas desde Word (.docx) y varios archivos a la vez; instrucciones para Samsung Notes.
+- **3.2.2** — Google Docs (pegar: el nivel sale de ● ○ ■; o .docx/.txt) e Infomaniak (.docx, títulos "Ttulo1"); instrucciones.

@@ -452,7 +452,9 @@ export default {
   'imp.packDone': '{name}: {created} entries created, {merged} already existed.',
   'imp.packError': 'Could not load the adventure: {msg}',
   'imp.samsungTitle': 'From Samsung Notes',
-  'imp.samsungSteps': 'Open the note in Samsung Notes.\nTap ⋮ (More) → “Save as file” (in some versions: Share → “Save as file” or “Export”).\nChoose “Microsoft Word” (keeps bullets and sub-points) or “Text file”.\nCome back here, tap “Choose files” and pick the saved files (usually in My Files → Documents). You can choose several at once: a note without a “Session…” heading uses its file name as the session title.\nOr: in the note, Select all → Copy, and paste it in the box below.',
+  'imp.samsungSteps': 'Open the note in Samsung Notes.\nTap ⋮ (More) → “Save as file” (in some versions: Share → “Save as file” or “Export”).\nChoose “Microsoft Word” — only the .docx file type, you don’t need Word — (keeps bullets and sub-points) or “Text file”.\nCome back here, tap “Choose files” and pick the saved files (usually in My Files → Documents). You can choose several at once: a note without a “Session…” heading uses its file name as the session title.\nOr: in the note, Select all → Copy, and paste it in the box below.',
   'imp.fileError': 'Could not read the file: {msg}',
   'imp.notDocx': 'it is not a valid Word (.docx) file',
+  'imp.docsTitle': 'From Google Docs or Infomaniak',
+  'imp.docsSteps': 'Easiest: open the document, select all, copy, and paste it in the box below. Google Docs bullets (● ○ ■) keep their levels.\nOr save a file. Google Docs app: ⋮ → “Share & export” → “Save as” → Word (.docx). On a computer: File → Download → Microsoft Word (.docx) or Plain text (.txt).\nInfomaniak (kDrive): its documents are already .docx files. Download the document to the tablet (⋮ → Download, or “Make available offline” and then share it as a file).\nYou don’t need Microsoft Word: “Word” is only the file type (.docx), and this app reads it by itself.\nCome back here, tap “Choose files” and pick one or several files.',
 };

@@ -76,6 +76,7 @@ export async function confirmAndImportPack(id, confirmDialog) {
 const HEADING = /^(?:#{1,6}\s+)(.+)$/;
 const SESSION_WORD = /^(?:sesi[oó]n|session|sitzung)\b/i;
 // Viñetas: guiones, puntos, casillas de verificación (☐ ☑ de Samsung Notes) y listas numeradas.
+const GLYPH_DEPTH = { '○': 1, '◦': 1, '■': 2, '▪': 2 };
 const BULLET = /^([ \t]*)(?:(?:[-*+]|\d+[.)])\s+|[•·▪◦‣○●■□☐☑☒✓✔]\s*)(.*)$/;
 
 function parseDate(text) {
@@ -130,7 +131,9 @@ export function parseNotes(text) {
     const s = ensure();
     const indent = b ? b[1].length : line.match(/^\s*/)[0].length;
     const prev = s.notes.at(-1);
-    const depth = Math.min(C.MAX_DEPTH, Math.round(indent / unit), prev ? prev.depth + 1 : 0);
+    // Al copiar y pegar desde Google Docs no hay sangría: el nivel lo da el símbolo (● → ○ → ■).
+    const glyph = indent === 0 && b ? GLYPH_DEPTH[line.trim()[0]] ?? 0 : 0;
+    const depth = Math.min(C.MAX_DEPTH, Math.max(Math.round(indent / unit), glyph), prev ? prev.depth + 1 : 0);
     s.notes.push({ text: (b ? b[2] : line).trim(), depth });
   }
   return sessions.filter((s) => s.notes.length || s.title);
@@ -199,7 +202,8 @@ export function docxXmlToText(xml) {
     const level = Number(val(p.getElementsByTagNameNS(W, 'ilvl')[0]) || 0);
     const ind = p.getElementsByTagNameNS(W, 'ind')[0];
     const left = Number(ind?.getAttributeNS(W, 'left') || ind?.getAttributeNS(W, 'start') || 0);
-    if (/heading|t[ií]tulo|title|berschrift/i.test(style)) lines.push(`# ${text}`);
+    // Google Docs: "Heading1"/"Title"; Infomaniak (OnlyOffice) en español puede guardar "Ttulo1".
+    if (/heading|t[ií]?tulo|title|berschrift/i.test(style)) lines.push(`# ${text}`);
     else if (numbered) lines.push(`${'  '.repeat(level)}- ${text}`);
     else if (left >= 360) lines.push(`${'  '.repeat(Math.round(left / 720))}- ${text}`);
     else lines.push(text);
@@ -239,6 +243,10 @@ export function openImportDialog(onDone) {
     </header>
     <p class="hint">${esc(t('imp.help'))}</p>
     <pre class="imp-example">${esc(t('imp.example'))}</pre>
+    <details class="comp-filter-box imp-samsung">
+      <summary>${icon('book')}<span>${esc(t('imp.docsTitle'))}</span></summary>
+      <ol class="imp-steps">${t('imp.docsSteps').split('\n').map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
+    </details>
     <details class="comp-filter-box imp-samsung">
       <summary>${icon('book')}<span>${esc(t('imp.samsungTitle'))}</span></summary>
       <ol class="imp-steps">${t('imp.samsungSteps').split('\n').map((x) => `<li>${esc(x)}</li>`).join('')}</ol>

@@ -2,7 +2,7 @@
 // IMPORTANTE: cada vez que publiques cambios, sube el número de VERSION
 // para que las tablets descarguen la versión nueva.
 
-const VERSION = '3.2.1';
+const VERSION = '3.2.2';
 const CACHE = `dm-companion-${VERSION}`;
 
 const FILES = [

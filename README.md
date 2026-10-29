@@ -53,6 +53,8 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
 - **Cargar Dragon of Icespire Peak** (Bitácora o Mapa): personajes, lugares y facciones de la aventura con sus enlaces.
 - **Importar notas** (Sesiones): pega tus notas de sesiones anteriores o elige archivos .txt, .md o Word (.docx).
   Desde Samsung Notes: ⋮ → «Guardar como archivo» → Microsoft Word, y luego «Elegir archivos» en la app.
+  Desde Google Docs: copiar y pegar (se respetan los niveles ● ○ ■) o descargar como .docx / .txt. Infomaniak: sus
+  documentos ya son .docx. No hace falta tener Microsoft Word.
 - **Buscar en toda la campaña** desde la barra de arriba. Todo se guarda solo.
 
 ### Atajos con teclado
