@@ -547,8 +547,9 @@ export default {
   'det.ignoreRest': 'Don’t suggest the unchecked names again',
   'det.create': 'Create {n} entries · {a} other names',
   'det.done': '{n} entries created and {a} other names added. They now appear on the map.',
-  'imp.replace': 'If a session with the same number already exists, update it instead of duplicating it (useful to import again after fixing dates)',
+  'imp.replace': 'If a session already exists (same number, or same first point when the notes have no numbers), update it instead of duplicating it (useful to re-import after fixing dates)',
   'imp.noDate': 'no date',
+  'imp.dateOf': 'Date of session {n}',
   'imp.noDateCount.one': '⚠ {n} without a date',
   'imp.noDateCount.other': '⚠ {n} without a date',
 

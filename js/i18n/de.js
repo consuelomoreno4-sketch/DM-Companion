@@ -535,8 +535,9 @@ export default {
   'det.ignoreRest': 'Nicht markierte Namen nicht mehr vorschlagen',
   'det.create': '{n} Einträge anlegen · {a} andere Namen',
   'det.done': '{n} Einträge angelegt und {a} andere Namen hinzugefügt. Sie erscheinen jetzt auf der Karte.',
-  'imp.replace': 'Wenn es schon eine Sitzung mit derselben Nummer gibt, sie aktualisieren statt verdoppeln (nützlich, um nach dem Korrigieren der Daten erneut zu importieren)',
+  'imp.replace': 'Wenn eine Sitzung schon existiert (gleiche Nummer oder, ohne Nummern, gleicher erster Punkt), sie aktualisieren statt sie zu verdoppeln (nützlich, um nach dem Korrigieren der Daten erneut zu importieren)',
   'imp.noDate': 'ohne Datum',
+  'imp.dateOf': 'Datum der Sitzung {n}',
   'imp.noDateCount.one': '⚠ {n} ohne Datum',
   'imp.noDateCount.other': '⚠ {n} ohne Datum',
 

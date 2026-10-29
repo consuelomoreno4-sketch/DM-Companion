@@ -112,7 +112,13 @@ const validDate = (y, m, d) => m >= 1 && m <= 12 && d >= 1 && d <= 31;
 export function parseDate(text, defaultYear = null) {
   const plain = text.normalize('NFD').replace(/[̀-ͯ]/g, ''); // misma longitud que text en la práctica
   const found = (y, m, d, raw) => {
-    const year = fullYear(y) ?? defaultYear;
+    let year = fullYear(y) ?? defaultYear;
+    // Sin año y sin sesiones anteriores con año: el año más reciente en que esa fecha ya pasó.
+    if (!year) {
+      const now = new Date();
+      year = now.getFullYear();
+      if (m > now.getMonth() + 1 || (m === now.getMonth() + 1 && d > now.getDate())) year -= 1;
+    }
     if (!year || !validDate(year, m, d)) return null;
     return { date: `${year}-${pad(m)}-${pad(d)}`, raw };
   };
@@ -123,7 +129,7 @@ export function parseDate(text, defaultYear = null) {
     if (f) return f;
   }
   // Día y nombre de mes: "3 de mayo de 2025", "3 mayo 2025", "3. Mai", "3rd of May 2025"
-  const dm = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th|°|º)?\\.?\\s*(?:de\\s+|of\\s+)?(${MONTH_RE})\\b\\.?(?:,?\\s*(?:de(?:l)?\\s+)?(\\d{4}|'\\d{2}))?`, 'i');
+  const dm = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th|ro|er|do|to|vo|no|°|º)?\\.?\\s*(?:de\\s+|of\\s+)?(${MONTH_RE})\\b\\.?(?:,?\\s*(?:de(?:l)?\\s+)?(\\d{4}|'\\d{2}))?`, 'i');
   if ((r = plain.match(dm))) {
     const f = found(r[3] ? Number(r[3].replace("'", '')) : null, MONTH_NAMES[r[2].toLowerCase()], Number(r[1]), r[0]);
     if (f) return f;
@@ -136,7 +142,8 @@ export function parseDate(text, defaultYear = null) {
   }
   // Números: 3/5/2025, 3.5.25, 3 - 5 - 2025 (día primero; si el segundo número pasa de 12, es mes/día).
   // Sin año solo con "/" o "." y sin espacios (3/5), para no confundir "Sesión 12 - 5" con una fecha.
-  if ((r = plain.match(/\b(\d{1,2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{2}|\d{4})\b/)) || (defaultYear && (r = plain.match(/\b(\d{1,2})[/.](\d{1,2})\b(?![/.]\d)/)))) {
+  // (parseDate solo se usa en títulos y líneas sueltas, nunca dentro de los puntos de las notas.)
+  if ((r = plain.match(/\b(\d{1,2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{2}|\d{4})\b/)) || (r = plain.match(/\b(\d{1,2})[/.](\d{1,2})\b(?![/.]\d)/))) {
     let d = Number(r[1]);
     let m = Number(r[2]);
     if (m > 12 && d <= 12) [d, m] = [m, d];
@@ -153,6 +160,16 @@ function dateOnly(line, defaultYear) {
   const plain = line.normalize('NFD').replace(/[̀-ͯ]/g, '');
   const rest = plain.replace(raw, ' ').replace(WEEKDAYS, ' ').replace(/\b(fecha|date|datum)\b/gi, ' ').replace(/[\s\-–—:|·,.()#*_]+/g, '');
   return rest ? null : date;
+}
+
+// ¿La línea empieza con una fecha y sigue con un título corto? ("Sábado 12/01 - Llegan a Phandalin")
+function dateFirst(line, defaultYear) {
+  if (line.length > 90) return null;
+  const plain = line.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const { date, raw } = parseDate(plain, defaultYear);
+  if (!date) return null;
+  const before = plain.slice(0, plain.indexOf(raw)).replace(WEEKDAYS, ' ').replace(/\b(fecha|date|datum)\b/gi, ' ').replace(/[\s\-–—:|·,.()#*_]+/g, '');
+  return before ? null : parseHeading(line, defaultYear);
 }
 
 // "Sesión 12 — 03/05/2025: La emboscada" → { number: 12, date: '2025-05-03', title: 'La emboscada' }
@@ -208,6 +225,15 @@ export function parseNotes(text) {
       continue;
     }
     const b = line.match(BULLET);
+    // Un punto de primer nivel que es solo una fecha también empieza una sesión.
+    if (b && !b[1] && !GLYPH_DEPTH[trimmed[0]]) {
+      const onlyDate = dateOnly(b[2].trim(), lastYear);
+      if (onlyDate) {
+        if (current && !current.date && !current.notes.length) { current.date = onlyDate; lastYear = Number(onlyDate.slice(0, 4)); }
+        else start({ date: onlyDate });
+        continue;
+      }
+    }
     if (!b) {
       // Una línea que es solo una fecha: fecha de la sesión recién empezada, o comienzo de una nueva.
       const onlyDate = dateOnly(trimmed, lastYear);
@@ -215,6 +241,20 @@ export function parseNotes(text) {
         if (current && !current.date && !current.notes.length) { current.date = onlyDate; lastYear = Number(onlyDate.slice(0, 4)); }
         else start({ date: onlyDate });
         continue;
+      }
+      const first = dateFirst(trimmed, lastYear);
+      if (first) {
+        if (current && !current.date && !current.notes.length) {
+          current.date = first.date;
+          current.title ||= first.title;
+          lastYear = Number(first.date.slice(0, 4));
+        } else start(first);
+        continue;
+      }
+      // Sesión todavía sin fecha ni notas: una línea que menciona una fecha ("Jugado el 12 de enero en casa de Ana").
+      if (current && !current.date && !current.notes.length) {
+        const { date } = parseDate(trimmed, lastYear);
+        if (date) { current.date = date; lastYear = Number(date.slice(0, 4)); }
       }
     }
     const s = ensure();
@@ -236,10 +276,15 @@ export function importSessions(parsed, { replaceSameNumber = false } = {}) {
   let next = Math.max(0, ...C.list('sessions').map((s) => Number(s.number) || 0));
   const created = [];
   for (const p of parsed) {
-    const number = p.number ?? next + 1;
-    next = Math.max(next, number);
+    let number = p.number ?? next + 1;
     const notes = (p.notes.length ? p.notes : [{ text: '', depth: 0 }]).map((n) => ({ id: C.newId('n'), text: n.text, depth: n.depth }));
-    const existing = replaceSameNumber && p.number != null ? C.list('sessions').find((s) => Number(s.number) === number) : null;
+    // Sin número en las notas: se reconoce la sesión ya importada por su primer punto.
+    const first = normalize(p.notes[0]?.text || '');
+    const existing = !replaceSameNumber ? null : p.number != null
+      ? C.list('sessions').find((s) => Number(s.number) === number)
+      : first && C.list('sessions').find((s) => normalize(s.notes?.[0]?.text || '') === first);
+    if (existing) number = Number(existing.number) || number;
+    next = Math.max(next, number);
     if (existing) {
       created.push(C.update('sessions', existing.id, { date: p.date || existing.date || '', title: p.title || existing.title || '', notes }, { debounce: false }));
     } else {
@@ -368,16 +413,25 @@ export function openImportDialog(onDone) {
       ? `${tn('imp.sessionsFound', parsed.length)} · ${tn('imp.pointsFound', points)}${noDate ? ` · ${tn('imp.noDateCount', noDate)}` : ''}`
       : '';
     // Detalle de cada sesión para revisar fechas y títulos antes de importar.
-    list.innerHTML = parsed.map((s) => `
+    list.innerHTML = parsed.map((s, i) => `
       <li class="${s.date ? '' : 'imp-nodate'}">
         <span class="num">${s.number != null ? `#${s.number}` : '#?'}</span>
-        <span class="num">${s.date ? esc(new Date(`${s.date}T12:00`).toLocaleDateString(getLang(), { day: 'numeric', month: 'short', year: 'numeric' })) : `⚠ ${esc(t('imp.noDate'))}`}</span>
+        <input type="date" class="num" data-imp-date="${i}" value="${esc(s.date)}" aria-label="${esc(t('imp.dateOf', { n: s.number ?? '?' }))}">
         <span>${esc(s.title || '—')}</span>
         <span class="hint num">${esc(tn('imp.pointsFound', s.notes.length))}</span>
       </li>`).join('');
     go.disabled = !parsed.length;
   };
   area.addEventListener('input', update);
+  // Fecha corregida a mano en la lista (solo para esta importación).
+  list.addEventListener('change', (e) => {
+    const inp = e.target.closest('[data-imp-date]');
+    if (!inp) return;
+    parsed[Number(inp.dataset.impDate)].date = inp.value;
+    inp.closest('li').classList.toggle('imp-nodate', !inp.value);
+    const noDate = parsed.filter((x) => !x.date).length;
+    preview.textContent = preview.textContent.replace(/ · ⚠.*$/, '') + (noDate ? ` · ${tn('imp.noDateCount', noDate)}` : '');
+  });
   body.querySelector('[data-imp-file]').addEventListener('change', async (e) => {
     const files = [...e.target.files];
     if (!files.length) return;

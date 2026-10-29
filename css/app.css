@@ -856,7 +856,10 @@ mark.mention {
 .det-example { display: grid; gap: 4px; margin: 0; }
 .imp-sessions { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 280px; overflow-y: auto; }
 .imp-sessions li { display: grid; grid-template-columns: 56px 170px 1fr auto; gap: var(--s1); padding: 4px var(--s1); border-radius: var(--radius); background: var(--surface-2); }
+.imp-sessions li { align-items: center; }
 .imp-sessions li.imp-nodate { background: #4a3a1a; color: #ffe2a8; }
+.imp-sessions input[type=date] { min-height: 44px; padding: 0 var(--s1); }
+.imp-sessions li.imp-nodate input[type=date] { border-color: var(--amber); }
 
 /* ---------- Ventanas (dialog) ---------- */
 

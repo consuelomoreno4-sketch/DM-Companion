@@ -535,8 +535,9 @@ export default {
   'det.ignoreRest': 'No volver a sugerir los nombres sin marcar',
   'det.create': 'Crear {n} fichas · {a} otros nombres',
   'det.done': '{n} fichas creadas y {a} otros nombres añadidos. Ya aparecen en el mapa.',
-  'imp.replace': 'Si ya existe una sesión con el mismo número, actualizarla en vez de duplicarla (útil para volver a importar tras corregir fechas)',
+  'imp.replace': 'Si una sesión ya existe (mismo número, o mismo primer punto si las notas no tienen número), actualizarla en vez de duplicarla (útil para volver a importar tras corregir fechas)',
   'imp.noDate': 'sin fecha',
+  'imp.dateOf': 'Fecha de la sesión {n}',
   'imp.noDateCount.one': '⚠ {n} sin fecha',
   'imp.noDateCount.other': '⚠ {n} sin fecha',
 
