@@ -162,14 +162,41 @@ function dateOnly(line, defaultYear) {
   return rest ? null : date;
 }
 
-// ¿La línea empieza con una fecha y sigue con un título corto? ("Sábado 12/01 - Llegan a Phandalin")
+// ¿La línea empieza con una fecha? Si sigue un título corto ("Sábado 12/01 - Llegan a Phandalin") es el título;
+// si sigue un texto largo ("01.03.2026. Parten en la posada…") es la fecha y el texto son las notas (prose).
 function dateFirst(line, defaultYear) {
-  if (line.length > 90) return null;
   const plain = line.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const { date, raw } = parseDate(plain, defaultYear);
   if (!date) return null;
-  const before = plain.slice(0, plain.indexOf(raw)).replace(WEEKDAYS, ' ').replace(/\b(fecha|date|datum)\b/gi, ' ').replace(/[\s\-–—:|·,.()#*_]+/g, '');
-  return before ? null : parseHeading(line, defaultYear);
+  const at = plain.indexOf(raw);
+  const before = plain.slice(0, at).replace(WEEKDAYS, ' ').replace(/\b(fecha|date|datum)\b/gi, ' ').replace(/[\s\-–—:|·,.()#*_]+/g, '');
+  if (before) return null;
+  const rest = line.slice(at + raw.length).replace(/^[\s\-–—:|·,.)]+/, '');
+  if (line.length > 90 || splitSentences(rest).length > 1) return { date, prose: rest };
+  return parseHeading(line, defaultYear);
+}
+
+// Un párrafo → frases, para que cada una sea un punto. No corta dentro de comillas ni antes de minúscula
+// ("varios. hombres rata" sigue junto).
+const ABBR = /(?:^|\s)(?:sr|sra|srta|dr|dra|st|mr|mrs|ms|nr|no|vs|etc|ej|p\.ej|z\.b|bzw|ca)\.$/i;
+export function splitSentences(text) {
+  const out = [];
+  let depth = 0;
+  let from = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '“' || ch === '«') depth += 1;
+    else if (ch === '”' || ch === '»') depth = Math.max(0, depth - 1);
+    else if (ch === '"') depth = depth ? 0 : 1;
+    if (depth || !/[.!?…]/.test(ch) || !/\s/.test(text[i + 1] || '')) continue;
+    const next = text.slice(i + 1).match(/^\s+([“«"¿¡(]?.)/u);
+    if (!next || !/[\p{Lu}\d“«"¿¡(]/u.test(next[1][0]) || (next[1].length > 1 && !/[\p{Lu}\d]/u.test(next[1][1]))) continue;
+    if (ABBR.test(text.slice(from, i + 1))) continue;
+    out.push(text.slice(from, i + 1).trim());
+    from = i + 1;
+  }
+  out.push(text.slice(from).trim());
+  return out.filter(Boolean);
 }
 
 // "Sesión 12 — 03/05/2025: La emboscada" → { number: 12, date: '2025-05-03', title: 'La emboscada' }
@@ -243,6 +270,13 @@ export function parseNotes(text) {
         continue;
       }
       const first = dateFirst(trimmed, lastYear);
+      if (first?.prose != null) {
+        if (current && !current.date && !current.notes.length) current.date = first.date;
+        else start({ date: first.date });
+        lastYear = Number(first.date.slice(0, 4));
+        for (const text of splitSentences(first.prose)) current.notes.push({ text, depth: 0 });
+        continue;
+      }
       if (first) {
         if (current && !current.date && !current.notes.length) {
           current.date = first.date;
@@ -258,6 +292,11 @@ export function parseNotes(text) {
       }
     }
     const s = ensure();
+    // Párrafo largo sin viñeta: una frase por punto.
+    if (!b && trimmed.length > 120 && splitSentences(trimmed).length > 1) {
+      for (const text of splitSentences(trimmed)) s.notes.push({ text, depth: 0 });
+      continue;
+    }
     const indent = b ? b[1].length : line.match(/^\s*/)[0].length;
     const prev = s.notes.at(-1);
     // Al copiar y pegar desde Google Docs no hay sangría: el nivel lo da el símbolo (● → ○ → ■).
@@ -275,14 +314,21 @@ export function parseNotes(text) {
 export function importSessions(parsed, { replaceSameNumber = false } = {}) {
   let next = Math.max(0, ...C.list('sessions').map((s) => Number(s.number) || 0));
   const created = [];
+  const used = new Set();
   for (const p of parsed) {
     let number = p.number ?? next + 1;
     const notes = (p.notes.length ? p.notes : [{ text: '', depth: 0 }]).map((n) => ({ id: C.newId('n'), text: n.text, depth: n.depth }));
     // Sin número en las notas: se reconoce la sesión ya importada por su primer punto.
+    // (También si antes se importó como un solo párrafo: el primer punto viejo contiene al nuevo.)
     const first = normalize(p.notes[0]?.text || '');
+    const sameStart = (s) => {
+      const old = normalize(s.notes?.[0]?.text || '');
+      return old === first || (first.length >= 20 && old.includes(first));
+    };
     const existing = !replaceSameNumber ? null : p.number != null
       ? C.list('sessions').find((s) => Number(s.number) === number)
-      : first && C.list('sessions').find((s) => normalize(s.notes?.[0]?.text || '') === first);
+      : first && C.list('sessions').find((s) => !used.has(s.id) && sameStart(s));
+    if (existing) used.add(existing.id);
     if (existing) number = Number(existing.number) || number;
     next = Math.max(next, number);
     if (existing) {

@@ -145,8 +145,8 @@ const TRAVEL = [
   new RegExp(`\\b${NUM} tage? (?:reise|unterwegs|marsch)`),
 ];
 const SHORT = /\b(descanso corto|descansan (?:una|1) hora|descansan un rato|short rest|rest for (?:an|one|1) hour|kurze rast)\b/;
-const LONG = /\b(descanso largo|descansan|duermen|se van a dormir|pasan la noche|hacen noche|acampan|pernoctan|long rest|sleep|slept|make camp|made camp|camp for the night|spend the night|spent the night|lange rast|schlafen|ubernachten|nachtlager)\b/;
-const NEXT_DAY = /\b(al dia siguiente|a la manana siguiente|al amanecer|next day|next morning|the following day|at dawn|am nachsten (?:tag|morgen)|im morgengrauen)\b/;
+const LONG = /\b(descanso largo|descansan|descansar|duermen|dormir|se van a dormir|se acuestan|pasan la noche|hacen noche|acampan|acampar|acampa|acampamos|acampando|arman (?:el )?campamento|montan (?:el )?campamento|pernoctan|pernoctar|long rest|sleep|slept|make camp|made camp|camp for the night|spend the night|spent the night|lange rast|schlafen|ubernachten|nachtlager)\b/;
+const NEXT_DAY = /\b(al dia siguiente|a la manana siguiente|a la manana|al amanecer|al despertar|next day|next morning|the following day|at dawn|am nachsten (?:tag|morgen)|im morgengrauen)\b/;
 const WEATHER_WORDS = {
   storm: /\b(tormenta|tormentas|truenos?|relampagos?|tempestad|storm|stormy|thunder|lightning|gewitter|unwetter)\b/,
   snow: /\b(nieve|nieva|nevada|nevando|ventisca|snow|snowing|blizzard|schnee|schneesturm)\b/,
@@ -177,11 +177,14 @@ export function reconstruct(sessions, c = clock) {
     events.push({ id: `t-${events.length.toString(36)}-${Math.random().toString(36).slice(2, 5)}`, kind, minutes, amount, sessionId: session.id, label: '', auto: true, source: note.text });
     cur += minutes;
   };
+  let seen = 0;    // notas leídas
+  let longAt = -9; // nota del último descanso largo
   const ordered = [...sessions].sort((a, b) => (a.number ?? 0) - (b.number ?? 0) || String(a.date).localeCompare(String(b.date)));
   for (const session of ordered) {
     for (const note of session.notes || []) {
       const text = normalize(note.text || '');
       if (!text.trim()) continue;
+      seen += 1;
       // Primero el clima (describe el momento de la nota: "acampan; tormenta por la noche"), luego el tiempo.
       const kind = Object.keys(WEATHER_WORDS).find((k) => WEATHER_WORDS[k].test(text));
       if (kind) {
@@ -203,8 +206,10 @@ export function reconstruct(sessions, c = clock) {
       } else if (LONG.test(text)) {
         // En las notas, un descanso largo es una noche: se despiertan a la mañana siguiente.
         push('long', untilMorning(cur), session, note);
+        longAt = seen;
         stats.long += 1;
-      } else if (NEXT_DAY.test(text)) {
+      } else if (NEXT_DAY.test(text) && !(events.at(-1)?.kind === 'long' && seen - longAt <= 2)) {
+        // "Acampan. A la mañana siguen…": el descanso largo ya los llevó a la mañana.
         push('next-day', nextMorningMinutes(cur), session, note);
         stats.nextDay += 1;
       }
