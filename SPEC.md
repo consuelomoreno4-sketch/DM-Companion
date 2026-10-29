@@ -135,7 +135,10 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
   descripción corta en en/es/de, enlaces y posición en el mapa. "Cargar Dragon of Icespire Peak" (Bitácora o Mapa)
   no duplica fichas con el mismo nombre: solo completa otros nombres, posición y enlaces. Textos propios y breves;
   los datos de la aventura se escribieron de memoria y pueden tener errores (todo es editable).
-- **Importar notas (v3.2)**: Sesiones → "Importar notas": pegar texto o elegir .txt / .md. Una línea con "Sesión" /
+- **Importar notas (v3.2)**: Sesiones → "Importar notas": pegar texto o elegir archivos .txt / .md / .docx (varios a la vez;
+  Word se lee en el navegador con `DecompressionStream`, conservando títulos y niveles de lista). Pensado para Samsung
+  Notes ("Guardar como archivo" → Microsoft Word o Archivo de texto; instrucciones en la ventana). Un archivo sin
+  título de sesión usa su nombre de archivo (con número y fecha si los tiene). Viñetas reconocidas: - * + • ▪ ◦ ○ ● ☐ ☑ … Una línea con "Sesión" /
   "Session" / "Sitzung" o con # inicia una sesión (se reconocen número, fecha AAAA-MM-DD o DD/MM/AAAA y título);
   las demás líneas son puntos (viñetas -, *, •, +, 1. o sin viñeta) y la sangría (espacios o tabulador) da los
   sub-puntos. Vista previa con el conteo antes de importar.
@@ -273,3 +276,4 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
   nombres sin ficha; **Mapa** de la campaña con hilos entre fichas basados en las notas. Avisos agrupados.
 - **3.2.0** — Mapa por modos (Lugares con mapa dibujado de la Costa de la Espada, Personajes, Red); paquete
   Dragon of Icespire Peak; importar notas de sesión pegadas o desde archivo.
+- **3.2.1** — Importar notas desde Word (.docx) y varios archivos a la vez; instrucciones para Samsung Notes.

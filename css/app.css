@@ -720,6 +720,7 @@ mark.mention {
   white-space: pre-wrap;
 }
 .imp-preview { color: var(--heal); font-weight: 600; }
+.imp-steps { margin: 0; padding: var(--s2) var(--s2) var(--s2) var(--s5, 40px); display: grid; gap: var(--s1); }
 .map-bar {
   display: flex; align-items: center; justify-content: space-between; gap: var(--s1);
   padding: var(--s1) var(--s2);

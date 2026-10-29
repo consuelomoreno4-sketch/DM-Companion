@@ -51,7 +51,8 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
   de los enlaces de la bitácora y de las líneas de historia. Agrega "otros nombres" a cada ficha (p. ej. "Dagult")
   para que se reconozcan.
 - **Cargar Dragon of Icespire Peak** (Bitácora o Mapa): personajes, lugares y facciones de la aventura con sus enlaces.
-- **Importar notas** (Sesiones): pega tus notas de sesiones anteriores o elige un archivo .txt / .md.
+- **Importar notas** (Sesiones): pega tus notas de sesiones anteriores o elige archivos .txt, .md o Word (.docx).
+  Desde Samsung Notes: ⋮ → «Guardar como archivo» → Microsoft Word, y luego «Elegir archivos» en la app.
 - **Buscar en toda la campaña** desde la barra de arriba. Todo se guarda solo.
 
 ### Atajos con teclado

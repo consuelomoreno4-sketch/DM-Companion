@@ -1,6 +1,7 @@
 // Importar a la Campaña:
 // - Paquetes de aventura (data/packs/*.json): fichas de personajes, lugares y facciones con sus enlaces.
-// - Notas de sesión escritas en otro lado (pegadas o desde un archivo .txt / .md).
+// - Notas de sesión escritas en otro lado: pegadas, o desde archivos .txt / .md / .docx (por ejemplo,
+//   exportados desde Samsung Notes con "Guardar como archivo").
 
 import * as C from './campaign-data.js';
 import { normalize } from './monsters.js';
@@ -74,12 +75,13 @@ export async function confirmAndImportPack(id, confirmDialog) {
 
 const HEADING = /^(?:#{1,6}\s+)(.+)$/;
 const SESSION_WORD = /^(?:sesi[oó]n|session|sitzung)\b/i;
-const BULLET = /^([ \t]*)(?:[-*•·+▪◦‣]|\d+[.)])\s+(.*)$/;
+// Viñetas: guiones, puntos, casillas de verificación (☐ ☑ de Samsung Notes) y listas numeradas.
+const BULLET = /^([ \t]*)(?:(?:[-*+]|\d+[.)])\s+|[•·▪◦‣○●■□☐☑☒✓✔]\s*)(.*)$/;
 
 function parseDate(text) {
   const iso = text.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
   if (iso) return { date: `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`, raw: iso[0] };
-  const dmy = text.match(/\b(\d{1,2})[/.](\d{1,2})[/.](\d{2,4})\b/);
+  const dmy = text.match(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/);
   if (dmy) {
     const year = dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3];
     return { date: `${year}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`, raw: dmy[0] };
@@ -151,6 +153,77 @@ export function importSessions(parsed) {
   return created;
 }
 
+// ---------- Archivos: .txt / .md / .docx ----------
+
+// Lee un archivo de un .zip (un .docx es un .zip) usando solo lo que trae el navegador.
+async function unzipEntry(buffer, wanted) {
+  const dv = new DataView(buffer);
+  const dec = new TextDecoder();
+  let end = -1;
+  for (let i = buffer.byteLength - 22; i >= Math.max(0, buffer.byteLength - 65557); i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { end = i; break; }
+  }
+  if (end < 0) throw new Error(t('imp.notDocx'));
+  const count = dv.getUint16(end + 10, true);
+  let p = dv.getUint32(end + 16, true);
+  for (let k = 0; k < count && dv.getUint32(p, true) === 0x02014b50; k++) {
+    const method = dv.getUint16(p + 10, true);
+    const size = dv.getUint32(p + 20, true);
+    const nameLen = dv.getUint16(p + 28, true);
+    const extraLen = dv.getUint16(p + 30, true);
+    const commentLen = dv.getUint16(p + 32, true);
+    const local = dv.getUint32(p + 42, true);
+    if (dec.decode(new Uint8Array(buffer, p + 46, nameLen)) === wanted) {
+      const start = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
+      const data = new Uint8Array(buffer, start, size);
+      if (method === 0) return dec.decode(data);
+      const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return new Response(stream).text();
+    }
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  throw new Error(t('imp.notDocx'));
+}
+
+// Word → texto con el formato que entiende parseNotes: títulos con "#", listas con "-" y sangría por nivel.
+export function docxXmlToText(xml) {
+  const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const val = (el) => el?.getAttributeNS(W, 'val') ?? el?.getAttribute('w:val') ?? null;
+  const lines = [];
+  for (const p of doc.getElementsByTagNameNS(W, 'p')) {
+    const text = [...p.getElementsByTagNameNS(W, 't')].map((x) => x.textContent).join('').trim();
+    if (!text) continue;
+    const style = val(p.getElementsByTagNameNS(W, 'pStyle')[0]) || '';
+    const numbered = p.getElementsByTagNameNS(W, 'numPr').length > 0;
+    const level = Number(val(p.getElementsByTagNameNS(W, 'ilvl')[0]) || 0);
+    const ind = p.getElementsByTagNameNS(W, 'ind')[0];
+    const left = Number(ind?.getAttributeNS(W, 'left') || ind?.getAttributeNS(W, 'start') || 0);
+    if (/heading|t[ií]tulo|title|berschrift/i.test(style)) lines.push(`# ${text}`);
+    else if (numbered) lines.push(`${'  '.repeat(level)}- ${text}`);
+    else if (left >= 360) lines.push(`${'  '.repeat(Math.round(left / 720))}- ${text}`);
+    else lines.push(text);
+  }
+  return lines.join('\n');
+}
+
+async function fileToText(file) {
+  if (/\.docx$/i.test(file.name)) return docxXmlToText(await unzipEntry(await file.arrayBuffer(), 'word/document.xml'));
+  return file.text();
+}
+
+// Varios archivos (por ejemplo, una nota por sesión): si uno no tiene un título de sesión,
+// su nombre de archivo pasa a ser el título (y su fecha, si el nombre la lleva).
+export async function filesToText(files) {
+  const parts = [];
+  for (const file of [...files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))) {
+    const text = (await fileToText(file)).trim();
+    const hasHeading = text.split('\n').some((l) => HEADING.test(l.trim()) || SESSION_WORD.test(l.trim()));
+    parts.push(hasHeading ? text : `# ${file.name.replace(/\.[^.]+$/, '')}\n${text}`);
+  }
+  return parts.join('\n\n');
+}
+
 // ---------- Ventana "Importar notas" ----------
 
 let wired = false;
@@ -166,9 +239,13 @@ export function openImportDialog(onDone) {
     </header>
     <p class="hint">${esc(t('imp.help'))}</p>
     <pre class="imp-example">${esc(t('imp.example'))}</pre>
+    <details class="comp-filter-box imp-samsung">
+      <summary>${icon('book')}<span>${esc(t('imp.samsungTitle'))}</span></summary>
+      <ol class="imp-steps">${t('imp.samsungSteps').split('\n').map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
+    </details>
     <label class="field"><span>${esc(t('imp.paste'))}</span><textarea data-imp-text rows="12" spellcheck="false"></textarea></label>
     <div class="map-actions">
-      <label class="btn">${icon('upload')}<span>${esc(t('imp.file'))}</span><input type="file" accept=".txt,.md,text/plain,text/markdown" data-imp-file hidden></label>
+      <label class="btn">${icon('upload')}<span>${esc(t('imp.file'))}</span><input type="file" multiple accept=".txt,.md,.docx,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document" data-imp-file hidden></label>
     </div>
     <p class="imp-preview" data-imp-preview aria-live="polite"></p>
     <footer class="dialog-foot">
@@ -187,9 +264,14 @@ export function openImportDialog(onDone) {
   };
   area.addEventListener('input', update);
   body.querySelector('[data-imp-file]').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    area.value = await file.text();
+    const files = [...e.target.files];
+    if (!files.length) return;
+    try {
+      area.value = await filesToText(files);
+    } catch (err) {
+      toast(t('imp.fileError', { msg: err.message }), { kind: 'error', duration: 0 });
+      return;
+    }
     update();
   });
   go.addEventListener('click', () => {
