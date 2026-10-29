@@ -263,6 +263,15 @@ Importar **reemplaza** todos los datos actuales (se pide confirmación).
   tiempo por días, clima editable, calendario Harptos (meses y festividades, Shieldmeet) y "Reconstruir desde las
   notas" (en las notas un descanso largo = una noche; el clima de una nota se anota antes de avanzar el tiempo).
 
+- **Mapas propios y tokens de lugar (v3.4)**: en Lugares, un selector de mapa: el dibujado o imágenes propias (foto,
+  escaneo o captura del mapa de la aventura) que se guardan solo en la tablet (kv `maps`: `{ id, name, blob, w, h }`,
+  fotos > 4096 px se reducen) y van en la copia de seguridad como data URL. No se incluye ningún mapa oficial en el
+  repositorio (derechos de autor). Cada lugar tiene posición por mapa (`pos` en el dibujado, `mapPos[id]` en los
+  propios) y un token `{ icon, color, size }` (icono adivinado por el nombre si no se eligió). "Editar mapa": tocar un
+  espacio vacío crea un lugar ahí; arrastrar mueve; tocar edita nombre, icono (14), color (8) y tamaño, o lo quita del
+  mapa; gestión del mapa (nombre, cambiar imagen, borrar). Token del grupo por mapa (kv `party`), arrastrable siempre.
+  Los tokens mantienen su tamaño en pantalla con el zoom. Se recuerda el último mapa (kv `lastMap`).
+
 ## Pendientes e ideas
 
 Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan al terminar cada fase.
@@ -295,3 +304,5 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
   línea, sin año), vista previa por sesión y actualizar sesiones con el mismo número; "Detectar en las notas"
   (personajes, lugares, facciones, objetos y sinónimos, con revisión); reloj de juego (Harptos o días) con descansos,
   viajes y clima, vista Tiempo y reconstrucción desde las notas.
+- **3.4.0** — Mapas propios (imagen del usuario, varios mapas), tokens de lugar editables y movibles, crear lugares
+  tocando el mapa, token del grupo, iconos para el paquete Icespire Peak.

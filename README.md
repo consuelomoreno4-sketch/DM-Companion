@@ -3,7 +3,7 @@
 Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet en horizontal
 (Samsung Galaxy Tab S8 Ultra). Funciona sin internet una vez instalada y guarda todo en el dispositivo.
 
-**Estado:** Fases 1, 2 y 3 listas (Combate, Compendio y Campaña), versión 3.3. Ver [`SPEC.md`](SPEC.md) para el plan completo.
+**Estado:** Fases 1, 2 y 3 listas (Combate, Compendio y Campaña), versión 3.4. Ver [`SPEC.md`](SPEC.md) para el plan completo.
 
 **Idiomas:** inglés (por defecto), español y alemán. Se cambia en **Settings / Ajustes** (⚙).
 
@@ -43,8 +43,10 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
   "Aparece en" muestra dónde se menciona cada ficha (otras fichas, historias y notas de sesión).
 - **Líneas de historia**: tablero Idea / Activa / Resuelta; ◀ ▶ mueven cada tarjeta.
 - **Mapa** con tres modos:
-  - **Lugares**: mapa dibujado de la Costa de la Espada; toca un lugar para ver quién y qué está conectado con él.
-    "Ubicar lugares" permite moverlos arrastrando.
+  - **Lugares**: tus lugares como **tokens** sobre el mapa dibujado de la Costa de la Espada o sobre **tu propio mapa**
+    (sube una foto o captura del mapa de tu aventura; se guarda solo en la tablet). "Editar mapa": tocar un espacio
+    vacío crea un lugar, arrastrar mueve, tocar un token cambia su nombre, icono, color y tamaño. Token del **grupo**
+    para marcar dónde están.
   - **Personajes**: elige un personaje y ve con quién está conectado y por qué (los puntos exactos de las notas).
   - **Red**: todas las fichas y sus hilos.
   Los **hilos** salen de las notas de sesión (dos fichas nombradas en un mismo punto o en un punto y su sub-punto),
