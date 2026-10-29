@@ -34,7 +34,9 @@ export async function importPack(id) {
     if (existing) {
       const patch = { aliases: [...new Set([...(existing.aliases || []), ...(e.aliases || [])])] };
       if (!existing.subtitle) patch.subtitle = subtitle;
-      if (!existing.pos && pos) patch.pos = pos;
+      // Las fichas que nunca se movieron siguen a la nueva versión del mapa dibujado (prevPos = posiciones antiguas).
+      const untouched = existing.pos && (e.prevPos || []).some(([x, y]) => existing.pos.x === x && existing.pos.y === y);
+      if (pos && (!existing.pos || untouched)) patch.pos = pos;
       if (!existing.token && e.token) patch.token = e.token;
       C.update('codex', existing.id, patch, { debounce: false });
       ids.set(e.key, existing.id);

@@ -694,9 +694,19 @@ mark.mention {
 /* Mapa dibujado de la Costa de la Espada */
 .geo-sea { fill: #17253a; }
 .geo-land { fill: #283244; stroke: #6b7f9a; stroke-width: 3; }
+.geo-depth { fill: none; stroke: #2a3d5a; stroke-width: 2; stroke-dasharray: 4 8; }
+.geo-contour { stroke: #8794ad; stroke-width: 1.5; }
+.geo-contour.l1 { fill: #2f394c; }
+.geo-contour.l2 { fill: #374258; }
+.geo-contour.l3 { fill: #414d66; }
+.geo-peak { fill: #c9d3e3; stroke: #17253a; stroke-width: 1.5; }
+.geo-wood { fill: #263f34; stroke: #4a7a5c; stroke-width: 2; }
+.geo-trees path { fill: #3f6b52; }
 .geo-swamp { fill: rgba(120, 160, 110, 0.16); stroke: rgba(150, 190, 140, 0.45); stroke-width: 2; stroke-dasharray: 6 6; }
-.geo-forest circle { fill: #2c4a3a; stroke: #4a7a5c; stroke-width: 2; }
-.geo-mountains path { fill: #3a4357; stroke: #8794ad; stroke-width: 2; stroke-linejoin: round; }
+.geo-tufts path { fill: none; stroke: rgba(150, 190, 140, 0.55); stroke-width: 1.5; stroke-linecap: round; }
+.geo-river { fill: none; stroke: #4f7fb8; stroke-width: 4; stroke-linecap: round; }
+.geo-ref circle { fill: #9fb0c8; stroke: #17253a; stroke-width: 2; }
+.geo-label.geo-note { fill: var(--muted); font: italic 600 calc(14px * var(--k)) var(--font-body); letter-spacing: 0; }
 .geo-road { fill: none; stroke: #b9a070; stroke-width: 3; stroke-dasharray: 12 8; stroke-linecap: round; opacity: 0.8; }
 .geo-path { stroke-width: 2; stroke-dasharray: 6 8; }
 .geo-label {
@@ -708,6 +718,7 @@ mark.mention {
 .geo-sea-label { fill: #7fa3d0; font-style: italic; }
 .geo-road-label { fill: #d2bb8a; font-family: var(--font-body); font-style: italic; font-weight: 600; font-size: calc(18px * var(--k)); }
 .geo-title { fill: var(--amber); font-size: calc(26px * var(--k)); }
+.geo-small { font-size: calc(15px * var(--k)); }
 .geo-compass path { fill: var(--amber); }
 .geo-compass text { fill: var(--text); font: 700 calc(18px * var(--k)) var(--font-body); text-anchor: middle; }
 .map-svg .node.movable { cursor: move; }

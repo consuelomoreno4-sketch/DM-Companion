@@ -107,38 +107,116 @@ function egoLayout(focus, list) {
   return P;
 }
 
-// ---------- Fondo: mapa dibujado de la Costa de la Espada (dibujo propio, aproximado) ----------
+// ---------- Fondo: mapa topográfico esquemático de la región de Phandalin (dibujo propio, aproximado) ----------
+// Las coordenadas de abajo están en "millas reales" (5 unidades = 1 milla) según lo que cuentan las guías de la
+// aventura: Phandalin en las faldas de las Montañas de la Espada, el Pico Icespire a ~30 millas, el Bosque de
+// Neverwinter al norte y el Sendero de Triboar a pocas millas al norte del pueblo. Después, una "lupa" agranda la
+// zona de Phandalin (donde hay muchos lugares juntos) sin cambiar las direcciones: por eso el mapa no tiene escala.
+
+const LENS = { x: 560, y: 420, gain: 1.2, reach: 400 };
+function F([x, y]) {
+  const dx = x - LENS.x;
+  const dy = y - LENS.y;
+  const d = Math.hypot(dx, dy);
+  if (!d) return [x, y];
+  const f = (1 + LENS.gain) / (1 + (LENS.gain * d) / LENS.reach);
+  return [Math.round(LENS.x + dx * f), Math.round(LENS.y + dy * f)];
+}
+const FL = (pts) => pts.map(F);
+
+const COAST = FL([[360, -300], [372, 0], [380, 60], [392, 105], [378, 180], [370, 260], [375, 330], [372, 420], [352, 500], [330, 560], [300, 640], [290, 720], [280, 1000]]);
+const WOOD = FL([[420, 170], [470, 130], [560, 120], [650, 140], [700, 180], [690, 240], [640, 270], [560, 280], [480, 275], [430, 245]]);
+const MERE = FL([[330, 560], [380, 560], [400, 610], [380, 680], [330, 690], [300, 640]]);
+const RELIEF = [
+  // Montañas de la Espada: tres curvas de nivel y la cumbre del Pico Icespire
+  [1, [[380, 430], [430, 410], [500, 440], [560, 470], [640, 455], [700, 480], [720, 540], [680, 600], [600, 640], [500, 660], [420, 640], [380, 590], [370, 520]]],
+  [2, [[400, 460], [450, 445], [520, 470], [590, 490], [650, 490], [680, 530], [650, 580], [580, 610], [500, 620], [430, 600], [400, 550]]],
+  [3, [[420, 490], [460, 480], [520, 500], [560, 520], [600, 520], [620, 550], [590, 580], [520, 590], [460, 575], [430, 540]]],
+  // Colinas de la mina Mountain's Toe
+  [1, [[590, 345], [640, 340], [660, 370], [630, 395], [595, 385]]],
+  // Monte Hotenow (volcán al noreste de Neverwinter)
+  [1, [[405, 60], [440, 30], [480, 45], [485, 80], [450, 95], [415, 88]]],
+  [2, [[425, 62], [442, 46], [465, 55], [465, 75], [445, 82], [428, 77]]],
+].map(([lvl, pts]) => [lvl, FL(pts)]);
+
+// Curva suave (Catmull-Rom) que pasa por los puntos dados.
+function smooth(pts, closed = false) {
+  const n = pts.length;
+  const at = (i) => (closed ? pts[(i + n) % n] : pts[Math.max(0, Math.min(n - 1, i))]);
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < (closed ? n : n - 1); i++) {
+    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0]} ${p2[1]}`;
+  }
+  return closed ? `${d} Z` : d;
+}
+
+function inside([x, y], poly) {
+  let ok = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i];
+    const [xj, yj] = poly[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) ok = !ok;
+  }
+  return ok;
+}
+
+// Puntos repartidos dentro de un polígono (siempre los mismos, para que el dibujo no cambie).
+function scatter(poly, step, margin) {
+  const out = [];
+  const xs = poly.map((p) => p[0]);
+  const ys = poly.map((p) => p[1]);
+  for (let y = Math.min(...ys) + margin, row = 0; y < Math.max(...ys) - margin / 2; y += step, row++) {
+    for (let x = Math.min(...xs) + margin + (row % 2) * step / 2; x < Math.max(...xs) - margin / 2; x += step) {
+      const p = [x + Math.sin(x * 12.9 + y * 7.1) * step * 0.25, y + Math.cos(x * 3.7 + y * 9.3) * step * 0.25];
+      const near = [[p[0] + margin, p[1]], [p[0] - margin, p[1]], [p[0], p[1] + margin], [p[0], p[1] - margin]];
+      if (inside(p, poly) && near.every((q) => inside(q, poly))) out.push(p);
+    }
+  }
+  return out;
+}
 
 function geoBackground() {
-  const trees = [];
-  for (let i = 0; i < 60; i++) {
-    const a = i * 2.39996;
-    const r = 18 * Math.sqrt(i);
-    const x = 500 + Math.cos(a) * r * 1.9;
-    const y = 160 + Math.sin(a) * r * 0.85;
-    if (x > 330 && x < 700) trees.push(`<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="11"></circle>`);
-  }
-  const peaks = [];
-  const mountains = [[330, 300], [365, 345], [300, 360], [345, 400], [390, 420], [320, 440], [370, 480], [410, 510], [455, 470], [280, 410], [395, 260], [355, 225], [300, 300], [435, 390]];
-  for (const [x, y] of mountains) peaks.push(`<path d="M${x - 22} ${y + 16} L${x} ${y - 22} L${x + 22} ${y + 16} Z"></path>`);
-  const label = (x, y, key, cls = '', rotate = 0) => `<text class="geo-label ${cls}" x="${x}" y="${y}"${rotate ? ` transform="rotate(${rotate} ${x} ${y})"` : ''}>${esc(t(`map.geo.${key}`))}</text>`;
+  const label = (pt, key, cls = '', rotate = 0) => {
+    const [x, y] = F(pt);
+    return `<text class="geo-label ${cls}" x="${x}" y="${y}"${rotate ? ` transform="rotate(${rotate} ${x} ${y})"` : ''}>${esc(t(`map.geo.${key}`))}</text>`;
+  };
+  const peak = (pt) => { const [x, y] = F(pt); return `<path class="geo-peak" d="M${x - 11} ${y + 9} L${x} ${y - 11} L${x + 11} ${y + 9} Z"></path>`; };
+  const dot = (pt) => { const [x, y] = F(pt); return `<circle cx="${x}" cy="${y}" r="5"></circle>`; };
+  const line = (pts, cls) => `<path class="${cls}" d="${smooth(FL(pts))}"></path>`;
+  const shift = (dx) => COAST.map(([x, y]) => [x + dx, y]);
+  const trees = scatter(WOOD, 20, 9).map(([x, y]) => `<path d="M${x.toFixed(0)} ${(y - 8).toFixed(0)} l6 11 h-12 Z"></path>`);
+  const tufts = scatter(MERE, 18, 8).map(([x, y]) => `<path d="M${(x - 6).toFixed(0)} ${y.toFixed(0)} l3 -6 M${x.toFixed(0)} ${y.toFixed(0)} v-8 M${(x + 6).toFixed(0)} ${y.toFixed(0)} l-3 -6"></path>`);
   return `
     <g class="geo">
       <rect class="geo-sea" x="-400" y="-300" width="1800" height="1300"></rect>
-      <path class="geo-land" d="M265 -300 L262 0 L250 60 L226 100 L214 145 L230 190 L198 240 L170 282 L160 330 L182 382 L150 432 L130 500 L142 560 L118 622 L128 1000 L1400 1000 L1400 -300 Z"></path>
-      <path class="geo-swamp" d="M128 520 C160 500 220 510 235 545 C250 590 205 625 160 620 C135 615 120 580 128 520 Z"></path>
-      <g class="geo-forest">${trees.join('')}</g>
-      <g class="geo-mountains">${peaks.join('')}</g>
-      <path class="geo-road" d="M238 105 L216 170 L190 250 L176 330 L166 420 L150 520 L146 700"></path>
-      <path class="geo-road" d="M238 105 L350 148 L460 212 L600 228 L760 208 L1000 190"></path>
-      <path class="geo-road geo-path" d="M430 205 L470 290 L520 385 L565 525"></path>
-      ${label(70, 430, 'sea', 'geo-sea-label', -90)}
-      ${label(500, 70, 'wood')}
-      ${label(250, 520, 'mountains')}
-      ${label(185, 660, 'mere')}
-      ${label(205, 470, 'highRoad', 'geo-road-label')}
-      ${label(800, 180, 'triboar', 'geo-road-label')}
-      ${label(820, 640, 'coast', 'geo-title')}
+      <path class="geo-depth" d="${smooth(shift(-22))}"></path>
+      <path class="geo-depth" d="${smooth(shift(-55))}"></path>
+      <path class="geo-land" d="${smooth(COAST)} L1400 1000 L1400 -300 Z"></path>
+      ${RELIEF.map(([lvl, pts]) => `<path class="geo-contour l${lvl}" d="${smooth(pts, true)}"></path>`).join('')}
+      <path class="geo-wood" d="${smooth(WOOD, true)}"></path>
+      <g class="geo-trees">${trees.join('')}</g>
+      <path class="geo-swamp" d="${smooth(MERE, true)}"></path>
+      <g class="geo-tufts">${tufts.join('')}</g>
+      ${line([[470, 90], [445, 100], [420, 104], [392, 110]], 'geo-river')}
+      ${peak([454, 526])}${peak([445, 62])}
+      ${line([[392, 114], [385, 180], [380, 260], [382, 330], [376, 420], [362, 500], [345, 560], [330, 640], [318, 720]], 'geo-road')}
+      ${line([[380, 330], [450, 350], [520, 372], [575, 375], [640, 330], [700, 300], [780, 270], [1000, 240]], 'geo-road')}
+      ${line([[560, 375], [560, 420]], 'geo-road geo-path')}
+      <g class="geo-ref">${dot([455, 222])}${dot([700, 285])}</g>
+      ${label([300, 330], 'sea', 'geo-sea-label', -90)}
+      ${label([590, 150], 'wood')}
+      ${label([560, 655], 'mountains')}
+      ${label([255, 640], 'mere', 'geo-small geo-sea-label', -72)}
+      ${label([455, 20], 'hotenow', 'geo-small')}
+      ${label([470, 212], 'thundertree', 'geo-small')}
+      ${label([666, 293], 'conyberry', 'geo-small')}
+      ${label([360, 250], 'highRoad', 'geo-road-label', -87)}
+      ${label([900, 228], 'triboar', 'geo-road-label', -5)}
+      <text class="geo-label geo-title" x="890" y="650">${esc(t('map.geo.coast'))}</text>
+      <text class="geo-label geo-note" x="890" y="680">${esc(t('map.geo.scale'))}</text>
       <g class="geo-compass" transform="translate(950 560)"><path d="M0 -36 L10 0 L0 -8 L-10 0 Z"></path><text y="24">N</text></g>
     </g>`;
 }
@@ -615,7 +693,7 @@ export function mountMap(root, ctx, focusId = null) {
     let minX; let maxX; let minY; let maxY;
     if (view.mode === 'places') {
       const W = world();
-      [minX, minY, maxX, maxY] = view.mapId === M.DRAWN ? [-10, 20, W.w - 10, W.h] : [-20, -20, W.w + 20, W.h + 20];
+      [minX, minY, maxX, maxY] = view.mapId === M.DRAWN ? [200, 0, W.w, W.h + 50] : [-20, -20, W.w + 20, W.h + 20];
     } else {
       const pts = [...(P?.values() || [])];
       minX = Math.min(...pts.map((p) => p.x), -100) - 120;

@@ -305,4 +305,5 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
   (personajes, lugares, facciones, objetos y sinónimos, con revisión); reloj de juego (Harptos o días) con descansos,
   viajes y clima, vista Tiempo y reconstrucción desde las notas.
 - **3.4.0** — Mapas propios (imagen del usuario, varios mapas), tokens de lugar editables y movibles, crear lugares
+- **3.5.0** — Mapa dibujado nuevo: mapa topográfico esquemático propio (curvas de nivel de las Montañas de la Espada y el Monte Hotenow, Bosque de Neverwinter, Marisma de los Hombres Muertos, Camino Alto, Sendero de Triboar, Thundertree y Conyberry), con una "lupa" que agranda la zona de Phandalin. Posiciones del pack de Icespire Peak recolocadas según las distancias de la aventura; al volver a cargar el pack, las fichas que nunca se movieron pasan a su nuevo sitio (`prevPos`).
   tocando el mapa, token del grupo, iconos para el paquete Icespire Peak.
