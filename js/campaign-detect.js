@@ -209,13 +209,26 @@ function groupSynonyms(raw) {
 
 // "el templo de Zavras al sur de Conyberry" → la ficha nueva va un poco al sur de Conyberry.
 // Sin dirección, junto a otro lugar ya ubicado que se nombre en la misma frase. Si no hay pistas, queda sin ubicar.
-const DIRS = {
+export const DIRS = {
   norte: [0, -1], sur: [0, 1], este: [1, 0], oeste: [-1, 0], noreste: [0.7, -0.7], nordeste: [0.7, -0.7], noroeste: [-0.7, -0.7],
   sureste: [0.7, 0.7], sudeste: [0.7, 0.7], suroeste: [-0.7, 0.7], sudoeste: [-0.7, 0.7],
   north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0], northeast: [0.7, -0.7], northwest: [-0.7, -0.7], southeast: [0.7, 0.7], southwest: [-0.7, 0.7],
   nordlich: [0, -1], sudlich: [0, 1], ostlich: [1, 0], westlich: [-1, 0],
+  inside: [0, 0.35],
 };
 const DIR_RE = /\b(?:(?:al|hacia el)\s+(norte|sur|este|oeste|noreste|nordeste|noroeste|sureste|sudeste|suroeste|sudoeste)\s+de(?:l)?|(north|south|east|west|northeast|northwest|southeast|southwest)\s+of|(nordlich|sudlich|ostlich|westlich)\s+(?:von|vom)?)\s+(.{1,50})/;
+
+// Sitio libre junto a un lugar ya ubicado: en la dirección dada ([dx, dy]) o, sin dirección, alrededor sin taparse.
+export function spotNear(anchor, dir = null) {
+  if (dir) return { x: Math.round(anchor.pos.x + dir[0] * 70), y: Math.round(anchor.pos.y + dir[1] * 70) };
+  const taken = C.list('codex').filter((e) => e.pos).map((e) => e.pos);
+  for (let i = 0; i < 12; i++) {
+    const a = (i * Math.PI) / 6 + 0.4;
+    const p = { x: Math.round(anchor.pos.x + Math.cos(a) * 70), y: Math.round(anchor.pos.y + Math.sin(a) * 70) };
+    if (!taken.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 45)) return p;
+  }
+  return { x: anchor.pos.x + 40, y: anchor.pos.y + 40 };
+}
 
 function autoPlace(entry, texts) {
   const placedIn = (text) => C.knownIn(text).map((id) => C.get('codex', id)).filter((e) => e && e.id !== entry.id && e.kind === 'place' && e.pos);
@@ -223,23 +236,12 @@ function autoPlace(entry, texts) {
   for (const text of texts) {
     const m = normalize(text).match(DIR_RE);
     const anchor = m && placedIn(m[4])[0];
-    if (anchor) {
-      const [dx, dy] = DIRS[m[1] || m[2] || m[3]];
-      pos = { x: Math.round(anchor.pos.x + dx * 70), y: Math.round(anchor.pos.y + dy * 70) };
-      break;
-    }
+    if (anchor) { pos = spotNear(anchor, DIRS[m[1] || m[2] || m[3]]); break; }
   }
   if (!pos) {
     const anchor = texts.map(placedIn).find((list) => list.length)?.[0];
     if (!anchor) return false;
-    // Alrededor del lugar vecino, sin taparse con otras fichas.
-    const taken = C.list('codex').filter((e) => e.pos).map((e) => e.pos);
-    for (let i = 0; i < 12 && !pos; i++) {
-      const a = (i * Math.PI) / 6 + 0.4;
-      const p = { x: Math.round(anchor.pos.x + Math.cos(a) * 70), y: Math.round(anchor.pos.y + Math.sin(a) * 70) };
-      if (!taken.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 45)) pos = p;
-    }
-    pos ||= { x: anchor.pos.x + 40, y: anchor.pos.y + 40 };
+    pos = spotNear(anchor);
   }
   C.update('codex', entry.id, { pos }, { debounce: false });
   return true;

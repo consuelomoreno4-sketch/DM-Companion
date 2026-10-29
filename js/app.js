@@ -6,6 +6,9 @@ import * as combatState from './combat-state.js';
 import * as compendium from './compendium.js';
 import * as campaign from './campaign.js';
 import { initClock } from './clock-ui.js';
+import * as ambience from './ambience.js';
+import { renderAiSettings } from './ai-ui.js';
+import { loadAiSettings } from './ai.js';
 import { exportAll, importAll, validateBackup, kvGet, kvSet } from './db.js';
 import { toast, openDialog, closeDialog, wireDialog, confirmDialog, isTyping, esc } from './ui.js';
 import { t, setLang, getLang, applyStatic, LANGS, DEFAULT_LANG } from './i18n.js';
@@ -57,6 +60,7 @@ function showPanel(name) {
   if (name === 'combate') combat.onShow();
   if (name === 'compendio') compendium.onShow();
   if (name === 'campana') campaign.onShow();
+  if (name === 'ambientacion') ambience.onShow();
 }
 
 const currentPanel = () => document.querySelector('.panel:not([hidden])')?.dataset.panel;
@@ -107,6 +111,7 @@ function wireSettings() {
   renderLangPicker();
   $('#btn-settings').addEventListener('click', async () => {
     openDialog(dlg);
+    renderAiSettings($('#ai-settings-body'));
     $('#storage-info').textContent = await storageInfo();
   });
 
@@ -221,6 +226,8 @@ async function start() {
   combat.initCombat();
   compendium.initCompendium();
   campaign.initCampaign();
+  ambience.initAmbience();
+  loadAiSettings().catch(() => {});
   // El reloj de juego (barra superior); "Línea de tiempo" abre Campaña → Tiempo.
   initClock({ onTimeline: () => { campaign.setView('time'); showPanel('campana'); } }).catch(() => {});
   wireShortcuts();

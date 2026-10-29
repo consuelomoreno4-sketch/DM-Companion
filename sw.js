@@ -2,7 +2,7 @@
 // IMPORTANTE: cada vez que publiques cambios, sube el número de VERSION
 // para que las tablets descarguen la versión nueva.
 
-const VERSION = '3.6.0';
+const VERSION = '4.0.0';
 const CACHE = `dm-companion-${VERSION}`;
 
 const FILES = [
@@ -36,6 +36,10 @@ const FILES = [
   './js/clock.js',
   './js/clock-ui.js',
   './js/maps.js',
+  './js/ai.js',
+  './js/ai-ui.js',
+  './js/ambience.js',
+  './js/campaign-ai.js',
   './data/packs/icespire.json',
   './js/campaign.js',
   './data/monsters.json',

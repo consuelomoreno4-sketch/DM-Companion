@@ -10,6 +10,7 @@ import { autosize, dateText } from './campaign-ui.js';
 import { esc, icon, confirmDialog, toast } from './ui.js';
 import { t, tn } from './i18n.js';
 import { openImportDialog } from './campaign-import.js';
+import { openSessionReview } from './campaign-ai.js';
 
 // Une varios textos en uno: cada parte termina en punto (si no tenía signo final) y se separan con un espacio.
 export function joinTexts(texts) {
@@ -60,6 +61,7 @@ export function mountSessions(root, ctx) {
         <label class="field sess-num"><span>${esc(t('camp.number'))}</span><input type="number" inputmode="numeric" min="0" max="9999" data-field="number" value="${esc(s.number ?? '')}"></label>
         <label class="field sess-date"><span>${esc(t('camp.date'))}</span><input type="date" data-field="date" value="${esc(s.date || '')}"></label>
         <label class="field sess-title"><span>${esc(t('camp.title'))}</span><input data-field="title" maxlength="120" value="${esc(s.title || '')}" placeholder="${esc(t('camp.titlePlaceholder'))}"></label>
+        <button class="btn" type="button" data-ai-review>${icon('sparkles')}<span>${esc(t('ai.reviewButton'))}</span></button>
         <button class="btn btn-icon btn-danger" type="button" data-delete aria-label="${esc(t('camp.deleteSession'))}">${icon('trash')}</button>
       </div>
       <label class="field"><span>${esc(t('camp.summary'))}</span><textarea data-field="summary" rows="2" placeholder="${esc(t('camp.summaryPlaceholder'))}">${esc(s.summary || '')}</textarea></label>
@@ -253,6 +255,11 @@ export function mountSessions(root, ctx) {
       renderList();
       renderEditor();
       editor.querySelector('[data-field="title"]')?.focus();
+      return;
+    }
+    if (e.target.closest('[data-ai-review]')) {
+      const s = current();
+      if (s) openSessionReview(s.id, () => { renderList(); renderEditor(); });
       return;
     }
     if (e.target.closest('[data-import]')) {

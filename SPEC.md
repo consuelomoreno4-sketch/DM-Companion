@@ -152,7 +152,7 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
     "Centrar en…" la pone en el centro. Panel con conexiones, registro y enlaces a sesiones, fichas e historias.
   - Arrastrar para mover, dos dedos / rueda / botones para el zoom; los textos se mantienen a 18 px.
 
-### 4. Ambientación — FASE 4
+### 4. Ambientación — FASE 4 (lista en 4.0.0)
 - Generar descripciones de escena con la **API de Anthropic** (requiere internet).
 - La clave de API se guarda **solo en el dispositivo** (IndexedDB); nunca en el repositorio
   ni en la copia de seguridad exportada (salvo que el usuario lo elija explícitamente).
@@ -187,6 +187,10 @@ js/campaign-map.js      Vista Mapa (Lugares / Personajes / Red)
 js/campaign-import.js   Paquetes de aventura e importación de notas
 data/packs/icespire.json  Paquete Dragon of Icespire Peak
 js/campaign-ui.js       Piezas compartidas (enlaces entre fichas, fechas)
+js/ai.js               Conexión con la API de Anthropic (streaming, JSON estructurado, costo)
+js/ai-ui.js            Sección "Claude (IA)" de Ajustes
+js/ambience.js         Panel de Ambientación
+js/campaign-ai.js      Analizar campaña / Revisar sesión con IA
 js/markdown.js          Formato sencillo del texto de entradas propias
 data/monsters.json      Índice de monstruos (id, nombre, tipo, CR, HP, AC, iniciativa)
 data/monsters-full.json Bloque de estadísticas de cada monstruo (HTML)
@@ -309,4 +313,5 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
 - **3.5.1** — Importar notas: más formatos de fecha (fechas sin año ni sesión anterior → la fecha pasada más reciente; "1ro de marzo"; línea que empieza con fecha + título; punto de primer nivel que es solo una fecha; "Jugamos el 15 de marzo…" al inicio de una sesión). Fecha editable en la vista previa. Al volver a importar notas sin número, la sesión se reconoce por su primer punto (no se duplica).
 - **3.5.2** — Notas en párrafos: un párrafo que empieza con la fecha ("01.03.2026. Parten…") abre una sesión y cada frase pasa a ser un punto (sin cortar dentro de comillas). Al volver a importar, una sesión importada antes como un solo bloque se actualiza. Reloj: más formas de descanso largo ("deciden acampar", "arman campamento"…) y "a la mañana" justo después de acampar no suma otro día.
 - **3.6.0** — "Detectar en las notas" más preciso en español: palabras de criaturas y de notas ("hombres rata", "Enganches", "Lore") ya no salen como nombres; "el templo de X" / "la posada X" → lugar; "Caza", "banda", "secta" → facción; sinónimos con una letra distinta (Valanter = Valenter); los nombres que ya son parte de una ficha ("posada Stonehill") no se proponen; descripción breve sacada de la frase ("Valanter, la intrépida líder…"). Los lugares nuevos se ubican solos en el mapa dibujado ("al sur de Conyberry" o junto a otro lugar de la misma frase). Pack: nombres en español/alemán para los lugares, Conyberry y Thundertree como fichas. Mapa: los nombres que se tapan se ocultan (los menos importantes) y reaparecen al acercar.
+- **4.0.0** — Fase 4. Conexión con Claude en Ajustes (clave solo en el dispositivo, modelo Opus/Sonnet/Haiku, prueba de conexión; `fallbacks: "default"` en Opus y Sonnet). Panel de Ambientación (descripciones de escena con streaming, guardadas sin internet). "Analizar campaña con IA" (Códice): lee las sesiones (3 a la vez) con salida JSON estructurada y propone fichas nuevas con datos por sesión, datos y otros nombres para fichas existentes, conexiones (enlaces) y ubicaciones relativas (los lugares nuevos se ponen en el mapa dibujado); costo estimado antes y real al final; marca `aiAnalyzedAt` en las sesiones. "Revisar con IA" (sesión): lo mismo más correcciones de ortografía y redacción, punto por punto.
   tocando el mapa, token del grupo, iconos para el paquete Icespire Peak.

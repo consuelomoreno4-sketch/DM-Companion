@@ -3,7 +3,7 @@
 Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet en horizontal
 (Samsung Galaxy Tab S8 Ultra). Funciona sin internet una vez instalada y guarda todo en el dispositivo.
 
-**Estado:** Fases 1, 2 y 3 listas (Combate, Compendio y Campaña), versión 3.6. Ver [`SPEC.md`](SPEC.md) para el plan completo.
+**Estado:** las 4 fases listas (Combate, Compendio, Campaña y Ambientación), versión 4.0. Ver [`SPEC.md`](SPEC.md) para el plan completo.
 
 **Idiomas:** inglés (por defecto), español y alemán. Se cambia en **Settings / Ajustes** (⚙).
 
@@ -62,6 +62,21 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
 - **Reloj de juego** (arriba a la derecha): fecha del calendario de Harptos, hora y clima; avanza con descansos,
   viajes o tiempo personalizado. **Campaña → Tiempo** muestra la línea de tiempo y la reconstruye desde las notas.
 - **Buscar en toda la campaña** desde la barra de arriba. Todo se guarda solo.
+
+## Funciones con IA (Claude) — necesitan internet y tu clave de API
+
+1. Crea una clave en [platform.claude.com](https://platform.claude.com/settings/keys) (se paga por uso).
+2. En la app: **⚙ Ajustes → Claude (IA)**, pega la clave, elige el modelo y toca **Guardar** y **Probar conexión**.
+   La clave queda **solo en la tablet**: no se sube a GitHub ni va en las copias de seguridad.
+
+- **Analizar campaña con IA** (Campaña → Códice): Claude lee tus sesiones y arma el Códice: personajes, lugares,
+  objetos y facciones con los datos clave de cada sesión, otros nombres, conexiones entre ellos (hilos del mapa) y
+  dónde queda cada lugar (los ubica en el mapa dibujado). Antes de empezar muestra el costo aproximado; al terminar
+  revisas todo y aplicas solo lo que quieras. Las sesiones ya analizadas se saltan la próxima vez.
+- **Revisar con IA** (en cada sesión): lo mismo para una sesión, y además corrige ortografía y redacción de cada
+  punto (ves lo de antes tachado y lo nuevo, y eliges qué aceptar).
+- **Ambientación** (pestaña 4): describe una escena (o elige una ficha del Códice), el ambiente y los sentidos, y
+  Claude escribe un texto para leer en voz alta o notas para el DM. Las descripciones guardadas se ven sin internet.
 
 ### Atajos con teclado
 

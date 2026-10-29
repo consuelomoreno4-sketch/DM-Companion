@@ -1,6 +1,7 @@
 // Vista "Bitácora" de la Campaña: fichas de personajes, lugares, objetos y facciones,
 // con etiquetas, enlaces entre fichas y "Aparece en" (quién la enlaza o la nombra).
 
+import { openCampaignAnalysis } from './campaign-ai.js';
 import * as C from './campaign-data.js';
 import { autosize, kindIcon, kindLabel, linkChips, linkPicker, notesHtml } from './campaign-ui.js';
 import { normalize } from './monsters.js';
@@ -20,7 +21,8 @@ export function mountCodex(root, ctx) {
           <button class="btn btn-primary" type="button" data-new>${icon('plus')}<span>${esc(t('comp.new'))}</span></button>
         </div>
         <ul class="camp-list" data-list></ul>
-        <button class="btn" type="button" data-detect>${icon('sparkles')}<span>${esc(t('det.button'))}</span></button>
+        <button class="btn" type="button" data-detect>${icon('search')}<span>${esc(t('det.button'))}</span></button>
+        <button class="btn" type="button" data-ai-analyze>${icon('sparkles')}<span>${esc(t('ai.analyzeButton'))}</span></button>
         ${PACKS.map((p) => `<button class="btn" type="button" data-pack="${p.id}">${icon('download')}<span>${esc(t('imp.loadPack', { name: p.name }))}</span></button>`).join('')}
       </div>
       <div class="camp-main" data-editor></div>
@@ -134,6 +136,7 @@ export function mountCodex(root, ctx) {
     if (f) { filter = f.dataset.filter; ctx.state.codexFilter = filter; renderFilters(); renderList(); return; }
     const pick = e.target.closest('[data-pick]');
     if (pick) { select(pick.dataset.pick); return; }
+    if (e.target.closest('[data-ai-analyze]')) { openCampaignAnalysis(() => { renderList(); renderEditor(); }); return; }
     if (e.target.closest('[data-detect]')) { openDetectDialog(() => { renderList(); renderEditor(); }); return; }
     const pack = e.target.closest('[data-pack]');
     if (pack) { if (await confirmAndImportPack(pack.dataset.pack, confirmDialog)) renderList(); return; }
