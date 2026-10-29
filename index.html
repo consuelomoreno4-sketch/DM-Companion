@@ -57,6 +57,16 @@
       <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
       <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20zM9 4v13.5M15 6.5V20"/></symbol>
       <symbol id="i-merge" viewBox="0 0 24 24"><path d="M5 4v3a5 5 0 0 0 5 5h4a5 5 0 0 1 5 5v3M19 4v3a5 5 0 0 1-5 5M12 12v8M9 17l3 3 3-3"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+      <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 19h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 11.5 3.8 3.8 0 0 0 7 19z"/></symbol>
+      <symbol id="i-rain" viewBox="0 0 24 24"><path d="M7 15h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 7.5 3.8 3.8 0 0 0 7 15zM8 18l-1 3M12 18l-1 3M16 18l-1 3"/></symbol>
+      <symbol id="i-storm" viewBox="0 0 24 24"><path d="M7 15h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 7.5 3.8 3.8 0 0 0 7 15zM13 15l-3 4h4l-3 4"/></symbol>
+      <symbol id="i-snow" viewBox="0 0 24 24"><path d="M7 14h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 6.5 3.8 3.8 0 0 0 7 14z"/><circle cx="8" cy="18" r="1" fill="currentColor"/><circle cx="12" cy="20" r="1" fill="currentColor"/><circle cx="16" cy="18" r="1" fill="currentColor"/></symbol>
+      <symbol id="i-fog" viewBox="0 0 24 24"><path d="M4 8h16M3 12h18M5 16h14M7 20h10"/></symbol>
+      <symbol id="i-wind" viewBox="0 0 24 24"><path d="M3 9h11a3 3 0 1 0-3-3M3 15h15a3 3 0 1 1-3 3M3 12h8"/></symbol>
+      <symbol id="i-hot" viewBox="0 0 24 24"><path d="M10 4a2 2 0 1 1 4 0v10a4 4 0 1 1-4 0zM12 10v7"/><path d="M18 5l2-1M18 9h2"/></symbol>
+      <symbol id="i-cold" viewBox="0 0 24 24"><path d="M12 2v20M4 7l16 10M4 17L20 7M9 4l3 2 3-2M9 20l3-2 3 2"/></symbol>
       <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
     </defs>
   </svg>
@@ -70,6 +80,7 @@
         <a class="tab" href="#campana" data-panel="campana"><svg class="icon" aria-hidden="true"><use href="#i-scroll"/></svg><span data-i18n="tab.campaign">Campaign</span><kbd>3</kbd></a>
         <a class="tab" href="#ambientacion" data-panel="ambientacion"><svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg><span data-i18n="tab.ambience">Ambience</span><kbd>4</kbd></a>
       </nav>
+      <button class="btn btn-ghost clock-chip" id="btn-clock" type="button"></button>
       <button class="btn btn-ghost" id="btn-settings" type="button">
         <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg><span class="settings-label" data-i18n="btn.settings">Settings</span>
       </button>
@@ -126,11 +137,12 @@
       <section class="panel" id="panel-campana" data-panel="campana" data-i18n-aria="tab.campaign" hidden>
         <div class="camp">
           <div class="camp-bar">
-            <div class="segmented seg-4" id="camp-views" role="radiogroup" data-i18n-aria="tab.campaign">
+            <div class="segmented seg-5" id="camp-views" role="radiogroup" data-i18n-aria="tab.campaign">
               <label class="seg"><input type="radio" name="camp-view" value="sessions" checked><span><svg class="icon" aria-hidden="true"><use href="#i-scroll"/></svg> <span data-i18n="camp.sessions">Sessions</span></span></label>
               <label class="seg"><input type="radio" name="camp-view" value="codex"><span><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg> <span data-i18n="camp.codex">Codex</span></span></label>
               <label class="seg"><input type="radio" name="camp-view" value="storylines"><span><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg> <span data-i18n="camp.storylines">Storylines</span></span></label>
               <label class="seg"><input type="radio" name="camp-view" value="map"><span><svg class="icon" aria-hidden="true"><use href="#i-map"/></svg> <span data-i18n="camp.map">Map</span></span></label>
+              <label class="seg"><input type="radio" name="camp-view" value="time"><span><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> <span data-i18n="clock.view">Time</span></span></label>
             </div>
             <input type="search" id="camp-search" autocomplete="off" data-i18n-placeholder="camp.searchAll" data-i18n-aria="camp.searchAll">
             <span class="camp-saved hint" id="camp-saved" aria-live="polite" hidden></span>
@@ -243,6 +255,16 @@
   <!-- DIALOG: import session notes -->
   <dialog class="dialog dialog-wide" id="dlg-import" aria-labelledby="dlg-import-title">
     <div class="dialog-body" id="import-body"></div>
+  </dialog>
+
+  <!-- DIALOG: game clock -->
+  <dialog class="dialog" id="dlg-clock" aria-labelledby="dlg-clock-title">
+    <div class="dialog-body" id="clock-body"></div>
+  </dialog>
+
+  <!-- DIALOG: detect characters and places in the notes -->
+  <dialog class="dialog dialog-wide" id="dlg-detect" aria-labelledby="dlg-detect-title">
+    <div class="dialog-body" id="detect-body"></div>
   </dialog>
 
   <!-- DIALOG: combat options -->

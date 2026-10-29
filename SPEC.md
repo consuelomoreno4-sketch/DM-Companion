@@ -250,6 +250,19 @@ Importar **reemplaza** todos los datos actuales (se pide confirmación).
   Si el combate no ha empezado, se cuenta al inicio de cada ronda.
 - "Anterior" solo mueve el turno hacia atrás; para revertir efectos se usa "Deshacer".
 
+- **Detectar en las notas (v3.3)**: Bitácora → "Detectar en las notas". Busca nombres propios sin ficha en todas las
+  sesiones; adivina el tipo por pistas (palabras del nombre como Posada/Torre/Gremio/Espada, títulos como Lord/Rey,
+  verbos después como "dice/ofrece", preposiciones antes como "llegan a"); agrupa sinónimos (una parte del nombre o
+  título + apellido) y sugiere otros nombres para fichas existentes. Ventana de revisión: marcar, corregir tipo y
+  nombres, crear todo junto; opción de no volver a sugerir los descartados (kv `ignoredNames`).
+- **Reloj de juego (v3.3)**: kv `clock` = `{ calendar: 'harptos' | 'days', start: { year, dayOfYear, minute },
+  events: [{ kind: 'time' | 'short' | 'long' | 'next-day' | 'travel', minutes, amount, sessionId, auto?, source? }],
+  weather: { [día]: { kind, sessionId, auto?, source? } } }`. Botón en la barra superior (fecha, hora, clima) con
+  ventana para avanzar (+10 min, +1 h, +4 h, descanso corto 1 h, descanso largo hasta las 8:00 si es de tarde/noche
+  o 8 h, mañana siguiente, días de viaje, personalizado), deshacer y clima del día. Vista Campaña → Tiempo: línea de
+  tiempo por días, clima editable, calendario Harptos (meses y festividades, Shieldmeet) y "Reconstruir desde las
+  notas" (en las notas un descanso largo = una noche; el clima de una nota se anota antes de avanzar el tiempo).
+
 ## Pendientes e ideas
 
 Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan al terminar cada fase.
@@ -278,3 +291,7 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
   Dragon of Icespire Peak; importar notas de sesión pegadas o desde archivo.
 - **3.2.1** — Importar notas desde Word (.docx) y varios archivos a la vez; instrucciones para Samsung Notes.
 - **3.2.2** — Google Docs (pegar: el nivel sale de ● ○ ■; o .docx/.txt) e Infomaniak (.docx, títulos "Ttulo1"); instrucciones.
+- **3.3.0** — Fechas en muchos formatos al importar (nombres de meses es/en/de, día de la semana, fecha sola en una
+  línea, sin año), vista previa por sesión y actualizar sesiones con el mismo número; "Detectar en las notas"
+  (personajes, lugares, facciones, objetos y sinónimos, con revisión); reloj de juego (Harptos o días) con descansos,
+  viajes y clima, vista Tiempo y reconstrucción desde las notas.

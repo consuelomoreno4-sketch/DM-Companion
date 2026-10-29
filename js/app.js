@@ -5,6 +5,7 @@ import * as combat from './combat.js';
 import * as combatState from './combat-state.js';
 import * as compendium from './compendium.js';
 import * as campaign from './campaign.js';
+import { initClock } from './clock-ui.js';
 import { exportAll, importAll, validateBackup, kvGet, kvSet } from './db.js';
 import { toast, openDialog, closeDialog, wireDialog, confirmDialog, isTyping, esc } from './ui.js';
 import { t, setLang, getLang, applyStatic, LANGS, DEFAULT_LANG } from './i18n.js';
@@ -220,6 +221,8 @@ async function start() {
   combat.initCombat();
   compendium.initCompendium();
   campaign.initCampaign();
+  // El reloj de juego (barra superior); "Línea de tiempo" abre Campaña → Tiempo.
+  initClock({ onTimeline: () => { campaign.setView('time'); showPanel('campana'); } }).catch(() => {});
   wireShortcuts();
   wireSettings();
   wireInstall();

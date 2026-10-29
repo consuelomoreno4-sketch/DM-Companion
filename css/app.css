@@ -153,7 +153,7 @@ p { margin: 0; }
 .brand { font-size: 24px; color: var(--amber); white-space: nowrap; }
 #btn-settings { flex: none; }
 
-.tabs { display: flex; gap: var(--s1); flex: 1; }
+.tabs { display: flex; gap: var(--s1); flex: 1; min-width: 0; }
 .tab {
   display: inline-flex; align-items: center; gap: var(--s1);
   min-height: 56px; padding: 0 var(--s2);
@@ -677,7 +677,7 @@ mark.mention {
 .story-move { display: flex; justify-content: space-between; padding: 0 var(--s1); }
 
 /* Mapa de la campaña */
-.camp-bar .segmented.seg-4 { width: auto; grid-template-columns: repeat(4, auto); }
+.camp-bar .segmented.seg-4, .camp-bar .segmented.seg-5 { width: auto; grid-template-columns: repeat(5, auto); }
 .camp-bar .seg > span { padding: 0 var(--s2); white-space: nowrap; }
 .map-layout { display: grid; grid-template-columns: 1fr 420px; height: 100%; min-height: 0; }
 .map-stage { position: relative; display: grid; grid-template-rows: auto auto 1fr; min-height: 0; min-width: 0; }
@@ -778,6 +778,52 @@ mark.mention {
 .map-list { display: grid; gap: var(--s1); }
 .map-list .comp-name .icon { width: 20px; height: 20px; vertical-align: -3px; color: var(--amber); }
 
+/* ---------- Reloj de juego ---------- */
+
+.clock-chip { flex: none; gap: var(--s1); padding: 0 var(--s2); border: 1px solid var(--line); background: var(--surface-2); }
+.clock-chip .icon { color: var(--amber); }
+.clock-now { display: flex; align-items: center; gap: var(--s2); }
+.clock-big-icon { color: var(--amber); }
+.clock-time { font-size: 28px; font-weight: 700; margin: var(--s1) 0 0; }
+.clock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s1); }
+.clock-btn, .weather-btn { justify-content: flex-start; text-align: left; white-space: normal; padding-top: var(--s1); padding-bottom: var(--s1); }
+.clock-btn span, .weather-btn span { white-space: normal !important; } /* gana a la regla que no deja partir textos de botones */
+.clock-custom { display: grid; grid-template-columns: repeat(3, minmax(80px, 1fr)) auto; gap: var(--s2); align-items: end; }
+.clock-weather { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s1); }
+.weather-btn { justify-content: flex-start; }
+.weather-btn[aria-pressed="true"] { border-color: var(--amber); background: #4a3a1a; color: #ffe2a8; }
+.time-side { overflow-y: auto; }
+.time-card { display: grid; gap: var(--s1); padding: var(--s2); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); }
+.time-now { font-size: 22px; font-weight: 700; margin: 0; }
+.time-stats { margin: 0; padding-left: var(--s3); display: grid; gap: 4px; }
+.time-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); }
+.time-day { display: grid; gap: var(--s1); padding: var(--s2); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.time-day.today { border-color: var(--amber); box-shadow: inset 4px 0 0 var(--amber); }
+.time-day-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; }
+.time-day-head > div { display: grid; }
+.time-weather { display: flex; align-items: center; gap: var(--s1); color: var(--amber); }
+.time-weather select { width: auto; min-width: 160px; }
+.time-events { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); }
+.time-events li { display: flex; gap: var(--s1); align-items: flex-start; }
+.time-events li > .icon { color: var(--amber); margin-top: 2px; }
+.time-events li > span { display: grid; }
+
+/* Detectar nombres en las notas */
+.det-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); }
+.det-row { display: flex; gap: var(--s2); align-items: flex-start; padding: var(--s1) var(--s2); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); }
+.det-row:has([data-use]:not(:checked)) { opacity: 0.55; }
+.det-check { width: var(--tap); height: var(--tap); display: grid; place-items: center; flex: none; }
+.det-check input { width: 26px; height: 26px; min-height: 0; margin: 0; accent-color: var(--amber); }
+.det-main { display: grid; gap: var(--s1); flex: 1; min-width: 0; }
+.det-line { display: flex; gap: var(--s1); align-items: center; flex-wrap: wrap; }
+.det-line .icon { width: 20px; height: 20px; color: var(--amber); }
+.det-name { flex: 1; min-width: 180px; font-weight: 700; }
+.det-line select { width: auto; }
+.det-example { display: grid; gap: 4px; margin: 0; }
+.imp-sessions { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 280px; overflow-y: auto; }
+.imp-sessions li { display: grid; grid-template-columns: 56px 170px 1fr auto; gap: var(--s1); padding: 4px var(--s1); border-radius: var(--radius); background: var(--surface-2); }
+.imp-sessions li.imp-nodate { background: #4a3a1a; color: #ffe2a8; }
+
 /* ---------- Ventanas (dialog) ---------- */
 
 .dialog {
@@ -840,6 +886,7 @@ input::placeholder { color: #8994a7; }
 
 .segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s1); }
 .segmented.seg-4 { grid-template-columns: repeat(4, 1fr); }
+.segmented.seg-5 { grid-template-columns: repeat(5, 1fr); }
 .seg { position: relative; display: block; cursor: pointer; }
 .seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .seg > span {
@@ -946,6 +993,8 @@ input::placeholder { color: #8994a7; }
 
 @media (max-width: 1320px) {
   :root { --list-w: 420px; }
+  /* Con el reloj en la barra superior no cabe el nombre de la app: se oculta en pantallas como la de la tablet. */
+  .brand { display: none; }
   /* En pantallas más estrechas, Ajustes queda solo con el engranaje (el texto sigue para lectores de pantalla) */
   .settings-label {
     position: absolute; width: 1px; height: 1px; margin: -1px;

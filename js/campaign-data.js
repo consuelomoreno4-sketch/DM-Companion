@@ -1,7 +1,7 @@
 // Datos de la Campaña: sesiones (con notas en punteo), bitácora (personajes, lugares, objetos, facciones)
 // y líneas de historia. Se guardan en IndexedDB; los cambios de texto se guardan solos tras una pausa corta.
 
-import { storeAll, storePut, storeDelete } from './db.js';
+import { storeAll, storePut, storeDelete, kvGet, kvSet } from './db.js';
 import { normalize } from './monsters.js';
 
 export const CODEX_KINDS = ['character', 'place', 'item', 'faction'];
@@ -20,11 +20,25 @@ function emit(what) {
   for (const fn of listeners) fn(what);
 }
 
+// Nombres que el usuario pidió no volver a sugerir (en toda la campaña).
+let ignoredNames = new Set();
+
 export function loadCampaign() {
-  loading ??= Promise.all(Object.keys(data).map(async (name) => { data[name] = await storeAll(name); }))
-    .catch((err) => { loading = null; throw err; });
+  loading ??= Promise.all([
+    ...Object.keys(data).map(async (name) => { data[name] = await storeAll(name); }),
+    kvGet('ignoredNames').then((list) => { ignoredNames = new Set(list || []); }).catch(() => {}),
+  ]).catch((err) => { loading = null; throw err; });
   return loading;
 }
+
+export const isIgnoredName = (name) => ignoredNames.has(normalize(name));
+export function ignoreNames(names) {
+  for (const n of names) ignoredNames.add(normalize(n));
+  return kvSet('ignoredNames', [...ignoredNames]);
+}
+
+// Fichas existentes que nombra un texto (por su nombre o sus otros nombres).
+export const knownIn = (text) => mentionsIn(text, noteIndexMatchers());
 
 export const newId = (prefix) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const now = () => new Date().toISOString();
@@ -260,7 +274,7 @@ export function neighbors(id, g = graph()) {
 
 // ---------- Nombres escritos en las notas que todavía no tienen ficha ----------
 
-const STOP = new Set(['the', 'a', 'an', 'el', 'la', 'los', 'las', 'un', 'una', 'der', 'die', 'das', 'ein', 'eine', 'y', 'and', 'und', 'de', 'del', 'of', 'en', 'in', 'con', 'with', 'mit', 'luego', 'then', 'dann', 'party', 'dm', 'gm', 'pj', 'pjs', 'pc', 'pcs', 'npc', 'pnj']);
+export const STOP = new Set(['the', 'a', 'an', 'el', 'la', 'los', 'las', 'un', 'una', 'der', 'die', 'das', 'ein', 'eine', 'y', 'and', 'und', 'de', 'del', 'of', 'en', 'in', 'con', 'with', 'mit', 'luego', 'then', 'dann', 'party', 'dm', 'gm', 'pj', 'pjs', 'pc', 'pcs', 'npc', 'pnj']);
 
 export function nameCandidates(session) {
   const ms = noteIndexMatchers();
@@ -276,7 +290,7 @@ export function nameCandidates(session) {
       const words = name.split(/\s+/);
       if (sentenceStart && words.length === 1) continue; // "Luego…", "Hacen…": mayúscula por empezar la frase
       const key = normalize(name);
-      if (key.length < 3 || STOP.has(key) || ignored.has(key)) continue;
+      if (key.length < 3 || STOP.has(key) || ignored.has(key) || ignoredNames.has(key)) continue;
       if (mentionsIn(name, ms).length) continue; // ya tiene ficha (o alias)
       counts.set(name, (counts.get(name) || 0) + 1);
     }

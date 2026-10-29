@@ -5,12 +5,13 @@ import { mountSessions } from './campaign-sessions.js';
 import { mountCodex } from './campaign-codex.js';
 import { mountStories } from './campaign-stories.js';
 import { mountMap } from './campaign-map.js';
+import { mountTime } from './campaign-time.js';
 import { kindIcon, dateText } from './campaign-ui.js';
 import { esc, icon, toast } from './ui.js';
 import { t } from './i18n.js';
 
 const $ = (sel) => document.querySelector(sel);
-const MOUNT = { sessions: mountSessions, codex: mountCodex, storylines: mountStories, map: mountMap };
+const MOUNT = { sessions: mountSessions, codex: mountCodex, storylines: mountStories, map: mountMap, time: mountTime };
 
 const state = {
   view: 'sessions',
@@ -114,3 +115,9 @@ function renderSearch() {
 }
 
 export const flush = () => C.flushSaves();
+
+// Elegir la vista que se verá al abrir el panel (por ejemplo, "Tiempo" desde el reloj).
+export function setView(v) {
+  state.view = v;
+  if (ready && !document.querySelector('#panel-campana').hidden) navigate(v);
+}

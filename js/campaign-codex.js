@@ -7,6 +7,7 @@ import { normalize } from './monsters.js';
 import { esc, icon, confirmDialog, toast } from './ui.js';
 import { t } from './i18n.js';
 import { PACKS, confirmAndImportPack } from './campaign-import.js';
+import { openDetectDialog } from './campaign-detect.js';
 
 export function mountCodex(root, ctx) {
   let filter = ctx.state.codexFilter || '';
@@ -19,6 +20,7 @@ export function mountCodex(root, ctx) {
           <button class="btn btn-primary" type="button" data-new>${icon('plus')}<span>${esc(t('comp.new'))}</span></button>
         </div>
         <ul class="camp-list" data-list></ul>
+        <button class="btn" type="button" data-detect>${icon('sparkles')}<span>${esc(t('det.button'))}</span></button>
         ${PACKS.map((p) => `<button class="btn" type="button" data-pack="${p.id}">${icon('download')}<span>${esc(t('imp.loadPack', { name: p.name }))}</span></button>`).join('')}
       </div>
       <div class="camp-main" data-editor></div>
@@ -132,6 +134,7 @@ export function mountCodex(root, ctx) {
     if (f) { filter = f.dataset.filter; ctx.state.codexFilter = filter; renderFilters(); renderList(); return; }
     const pick = e.target.closest('[data-pick]');
     if (pick) { select(pick.dataset.pick); return; }
+    if (e.target.closest('[data-detect]')) { openDetectDialog(() => { renderList(); renderEditor(); }); return; }
     const pack = e.target.closest('[data-pack]');
     if (pack) { if (await confirmAndImportPack(pack.dataset.pack, confirmDialog)) renderList(); return; }
     const go = e.target.closest('[data-go-codex]');
