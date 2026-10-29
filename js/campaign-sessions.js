@@ -9,6 +9,7 @@ import * as C from './campaign-data.js';
 import { autosize, dateText } from './campaign-ui.js';
 import { esc, icon, confirmDialog, toast } from './ui.js';
 import { t, tn } from './i18n.js';
+import { openImportDialog } from './campaign-import.js';
 
 // Une varios textos en uno: cada parte termina en punto (si no tenía signo final) y se separan con un espacio.
 export function joinTexts(texts) {
@@ -21,6 +22,7 @@ export function mountSessions(root, ctx) {
     <div class="camp-split">
       <div class="camp-side">
         <button class="btn btn-primary" type="button" data-new>${icon('plus')}<span>${esc(t('camp.newSession'))}</span></button>
+        <button class="btn" type="button" data-import>${icon('upload')}<span>${esc(t('imp.button'))}</span></button>
         <ul class="camp-list" data-list></ul>
       </div>
       <div class="camp-main" data-editor></div>
@@ -251,6 +253,14 @@ export function mountSessions(root, ctx) {
       renderList();
       renderEditor();
       editor.querySelector('[data-field="title"]')?.focus();
+      return;
+    }
+    if (e.target.closest('[data-import]')) {
+      openImportDialog((created) => {
+        if (created.length) ctx.select('sessions', created.at(-1).id);
+        renderList();
+        renderEditor();
+      });
       return;
     }
     const b = e.target.closest('[data-bullet]');

@@ -121,6 +121,24 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
     contexto del punto padre y los nombres resaltados y tocables).
   - Bajo las notas de cada sesión: **nombres sin ficha** (palabras con mayúscula que no empiezan frase, o nombres
     de varias palabras) para crearlas con un toque; la × los oculta en esa sesión (`ignoredNames`).
+- **Mapa por modos (v3.2)**: tres modos a elegir arriba del mapa.
+  - **Lugares**: mapa dibujado (propio, aproximado) de la Costa de la Espada — mar, costa, Camino Alto, Sendero de
+    Triboar, Bosque de Neverwinter, Montañas de la Espada, Marisma de los Hombres Muertos — con los lugares de la
+    bitácora que tienen posición (`pos: {x, y}` en un mundo de 1000 × 700). Tocar un lugar muestra lo conectado
+    agrupado por tipo y su registro. "Ubicar lugares" permite arrastrarlos; los lugares sin posición que no están
+    dentro de otro lugar ubicado (por enlace) aparecen en "Lugares sin ubicar" para ponerlos en el mapa.
+  - **Personajes**: lista con buscador ordenada por conexiones; de lejos, red solo de personajes. Al elegir uno,
+    vista centrada con filtro por tipo de ficha.
+  - **Red**: todas las fichas (filtro por tipo); de lejos solo se ven los nombres de las 12 más conectadas.
+  - Al cambiar de modo, cada uno empieza en su vista general.
+- **Paquetes de aventura (v3.2)**: `data/packs/*.json` con fichas (personajes, lugares, facciones), otros nombres,
+  descripción corta en en/es/de, enlaces y posición en el mapa. "Cargar Dragon of Icespire Peak" (Bitácora o Mapa)
+  no duplica fichas con el mismo nombre: solo completa otros nombres, posición y enlaces. Textos propios y breves;
+  los datos de la aventura se escribieron de memoria y pueden tener errores (todo es editable).
+- **Importar notas (v3.2)**: Sesiones → "Importar notas": pegar texto o elegir .txt / .md. Una línea con "Sesión" /
+  "Session" / "Sitzung" o con # inicia una sesión (se reconocen número, fecha AAAA-MM-DD o DD/MM/AAAA y título);
+  las demás líneas son puntos (viñetas -, *, •, +, 1. o sin viñeta) y la sangría (espacios o tabulador) da los
+  sub-puntos. Vista previa con el conteo antes de importar.
 - **Mapa (v3.1)**: grafo de la campaña.
   - Nodos = fichas (color e icono por tipo; tamaño según menciones). Hilos = dos fichas en un mismo punto (al menos
     una nombrada en el propio punto), enlaces de la bitácora (línea discontinua) y líneas de historia; grosor
@@ -162,7 +180,9 @@ js/campaign.js          Pantalla de la Campaña (vistas y búsqueda)
 js/campaign-sessions.js Vista Sesiones (notas en punteo)
 js/campaign-codex.js    Vista Bitácora
 js/campaign-stories.js  Vista Líneas de historia (tablero)
-js/campaign-map.js      Vista Mapa (grafo de fichas e hilos)
+js/campaign-map.js      Vista Mapa (Lugares / Personajes / Red)
+js/campaign-import.js   Paquetes de aventura e importación de notas
+data/packs/icespire.json  Paquete Dragon of Icespire Peak
 js/campaign-ui.js       Piezas compartidas (enlaces entre fichas, fechas)
 js/markdown.js          Formato sencillo del texto de entradas propias
 data/monsters.json      Índice de monstruos (id, nombre, tipo, CR, HP, AC, iniciativa)
@@ -201,7 +221,7 @@ y los de la Campaña: `sessions`, `codex`, `storylines`.
   - rule: category
 
 - `sessions`: `{ id, number, date: 'AAAA-MM-DD', title, summary, notes: [{ id, text, depth: 0–4 }], ignoredNames: [], createdAt, updatedAt }`
-- `codex`: `{ id, kind: 'character' | 'place' | 'item' | 'faction', name, aliases: [], subtitle, tags: [], description, links: [ids], … }`
+- `codex`: `{ id, kind: 'character' | 'place' | 'item' | 'faction', name, aliases: [], subtitle, tags: [], description, links: [ids], pos?: { x, y }, … }`
 - `storylines`: `{ id, title, status: 'idea' | 'active' | 'resolved', description, links: [ids de la bitácora], … }`
 
 Fases futuras añadirán almacenes (`scenes`)
@@ -251,3 +271,5 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
   tablero de líneas de historia, búsqueda en toda la campaña, guardado automático). Base de datos v3.
 - **3.1.0** — Fusionar puntos de las notas; alias de fichas; registro en sesiones de cada ficha; sugerencias de
   nombres sin ficha; **Mapa** de la campaña con hilos entre fichas basados en las notas. Avisos agrupados.
+- **3.2.0** — Mapa por modos (Lugares con mapa dibujado de la Costa de la Espada, Personajes, Red); paquete
+  Dragon of Icespire Peak; importar notas de sesión pegadas o desde archivo.

@@ -680,7 +680,46 @@ mark.mention {
 .camp-bar .segmented.seg-4 { width: auto; grid-template-columns: repeat(4, auto); }
 .camp-bar .seg > span { padding: 0 var(--s2); white-space: nowrap; }
 .map-layout { display: grid; grid-template-columns: 1fr 420px; height: 100%; min-height: 0; }
-.map-stage { position: relative; display: grid; grid-template-rows: auto 1fr; min-height: 0; min-width: 0; }
+.map-stage { position: relative; display: grid; grid-template-rows: auto auto 1fr; min-height: 0; min-width: 0; }
+.map-modes { flex: 1; max-width: 640px; }
+.map-subbar {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s1);
+  min-height: 64px; padding: var(--s1) var(--s2);
+  border-bottom: 1px solid var(--line);
+}
+.map-subbar .hint { flex: 1; }
+.map-kinds { display: flex; gap: var(--s1); flex: none; }
+.segmented.seg-2 { grid-template-columns: repeat(2, 1fr); }
+
+/* Mapa dibujado de la Costa de la Espada */
+.geo-sea { fill: #17253a; }
+.geo-land { fill: #283244; stroke: #6b7f9a; stroke-width: 3; }
+.geo-swamp { fill: rgba(120, 160, 110, 0.16); stroke: rgba(150, 190, 140, 0.45); stroke-width: 2; stroke-dasharray: 6 6; }
+.geo-forest circle { fill: #2c4a3a; stroke: #4a7a5c; stroke-width: 2; }
+.geo-mountains path { fill: #3a4357; stroke: #8794ad; stroke-width: 2; stroke-linejoin: round; }
+.geo-road { fill: none; stroke: #b9a070; stroke-width: 3; stroke-dasharray: 12 8; stroke-linecap: round; opacity: 0.8; }
+.geo-path { stroke-width: 2; stroke-dasharray: 6 8; }
+.geo-label {
+  font-family: var(--font-title); font-weight: 700; text-anchor: middle; letter-spacing: 0.06em;
+  font-size: calc(20px * var(--k)); fill: #9fb0c8;
+  paint-order: stroke; stroke: rgba(23, 37, 58, 0.85); stroke-width: calc(4px * var(--k));
+  pointer-events: none;
+}
+.geo-sea-label { fill: #7fa3d0; font-style: italic; }
+.geo-road-label { fill: #d2bb8a; font-family: var(--font-body); font-style: italic; font-weight: 600; font-size: calc(18px * var(--k)); }
+.geo-title { fill: var(--amber); font-size: calc(26px * var(--k)); }
+.geo-compass path { fill: var(--amber); }
+.geo-compass text { fill: var(--text); font: 700 calc(18px * var(--k)) var(--font-body); text-anchor: middle; }
+.map-svg .node.movable { cursor: move; }
+.map-svg.zoomed-out .node.minor .node-label { display: none; }
+.map-svg .node.movable circle { stroke: var(--amber); stroke-dasharray: 6 4; }
+.imp-example {
+  margin: 0; padding: var(--s2);
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+  font: 18px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted);
+  white-space: pre-wrap;
+}
+.imp-preview { color: var(--heal); font-weight: 600; }
 .map-bar {
   display: flex; align-items: center; justify-content: space-between; gap: var(--s1);
   padding: var(--s1) var(--s2);

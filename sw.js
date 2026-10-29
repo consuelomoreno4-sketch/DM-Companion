@@ -2,7 +2,7 @@
 // IMPORTANTE: cada vez que publiques cambios, sube el número de VERSION
 // para que las tablets descarguen la versión nueva.
 
-const VERSION = '3.1.1';
+const VERSION = '3.2.0';
 const CACHE = `dm-companion-${VERSION}`;
 
 const FILES = [
@@ -30,6 +30,8 @@ const FILES = [
   './js/campaign-codex.js',
   './js/campaign-stories.js',
   './js/campaign-map.js',
+  './js/campaign-import.js',
+  './data/packs/icespire.json',
   './js/campaign.js',
   './data/monsters.json',
   './data/monsters-full.json',

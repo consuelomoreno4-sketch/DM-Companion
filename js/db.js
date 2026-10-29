@@ -5,8 +5,13 @@
 const DB_NAME = 'dm-companion';
 // v2: almacén 'homebrew' para las entradas propias del Compendio.
 // v3: almacenes de la Campaña: 'sessions', 'codex' y 'storylines'.
-const DB_VERSION = 3;
-const STORES = ['kv', 'homebrew', 'sessions', 'codex', 'storylines'];
+// v4: 'scenes' (descripciones de Ambientación guardadas).
+const DB_VERSION = 4;
+const STORES = ['kv', 'homebrew', 'sessions', 'codex', 'storylines', 'scenes'];
+
+// La clave de la API de Anthropic (kv 'ai') nunca sale del dispositivo: no va en la copia de seguridad
+// y se conserva al importar una.
+const withoutApiKey = (key, value) => (key === 'ai' && value ? { ...value, apiKey: '' } : value);
 
 export const BACKUP_APP = 'dm-companion';
 export const BACKUP_FORMAT = 1;
@@ -92,7 +97,7 @@ export async function exportAll() {
   for (const name of STORES) {
     const store = tx.objectStore(name);
     const [keys, values] = await Promise.all([request(store.getAllKeys()), request(store.getAll())]);
-    stores[name] = keys.map((key, i) => ({ key, value: values[i] }));
+    stores[name] = keys.map((key, i) => ({ key, value: name === 'kv' ? withoutApiKey(key, values[i]) : values[i] }));
   }
   return { app: BACKUP_APP, format: BACKUP_FORMAT, exportedAt: new Date().toISOString(), stores };
 }
@@ -106,15 +111,20 @@ export function validateBackup(data) {
   }
 }
 
-// Reemplaza todos los datos por los de la copia.
+// Reemplaza todos los datos por los de la copia (salvo la clave de la API, que se conserva).
 export async function importAll(data) {
   validateBackup(data);
+  const keptAi = await kvGet('ai').catch(() => null);
   const db = await open();
   const tx = db.transaction(STORES, 'readwrite');
   for (const name of STORES) {
     const store = tx.objectStore(name);
     store.clear();
     for (const row of data.stores[name] || []) store.put(row.value, row.key);
+  }
+  if (keptAi?.apiKey) {
+    const imported = (data.stores.kv || []).find((r) => r.key === 'ai')?.value || {};
+    tx.objectStore('kv').put({ ...keptAi, ...imported, apiKey: keptAi.apiKey }, 'ai');
   }
   return done(tx);
 }
