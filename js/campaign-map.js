@@ -184,7 +184,6 @@ function geoBackground() {
     return `<text class="geo-label ${cls}" x="${x}" y="${y}"${rotate ? ` transform="rotate(${rotate} ${x} ${y})"` : ''}>${esc(t(`map.geo.${key}`))}</text>`;
   };
   const peak = (pt) => { const [x, y] = F(pt); return `<path class="geo-peak" d="M${x - 11} ${y + 9} L${x} ${y - 11} L${x + 11} ${y + 9} Z"></path>`; };
-  const dot = (pt) => { const [x, y] = F(pt); return `<circle cx="${x}" cy="${y}" r="5"></circle>`; };
   const line = (pts, cls) => `<path class="${cls}" d="${smooth(FL(pts))}"></path>`;
   const shift = (dx) => COAST.map(([x, y]) => [x + dx, y]);
   const trees = scatter(WOOD, 20, 9).map(([x, y]) => `<path d="M${x.toFixed(0)} ${(y - 8).toFixed(0)} l6 11 h-12 Z"></path>`);
@@ -205,14 +204,11 @@ function geoBackground() {
       ${line([[392, 114], [385, 180], [380, 260], [382, 330], [376, 420], [362, 500], [345, 560], [330, 640], [318, 720]], 'geo-road')}
       ${line([[380, 330], [450, 350], [520, 372], [575, 375], [640, 330], [700, 300], [780, 270], [1000, 240]], 'geo-road')}
       ${line([[560, 375], [560, 420]], 'geo-road geo-path')}
-      <g class="geo-ref">${dot([455, 222])}${dot([700, 285])}</g>
       ${label([300, 330], 'sea', 'geo-sea-label', -90)}
       ${label([590, 150], 'wood')}
       ${label([560, 655], 'mountains')}
       ${label([255, 640], 'mere', 'geo-small geo-sea-label', -72)}
       ${label([455, 20], 'hotenow', 'geo-small')}
-      ${label([470, 212], 'thundertree', 'geo-small')}
-      ${label([666, 293], 'conyberry', 'geo-small')}
       ${label([360, 250], 'highRoad', 'geo-road-label', -87)}
       ${label([900, 228], 'triboar', 'geo-road-label', -5)}
       <text class="geo-label geo-title" x="890" y="650">${esc(t('map.geo.coast'))}</text>
@@ -302,7 +298,9 @@ export function mountMap(root, ctx, focusId = null) {
       const cls = ['node', 'place-token', c.id === sel ? 'center' : '', selectedNeighbors?.has(c.id) ? 'selected' : '',
         view.editing ? 'movable' : '', c.id === view.tokenSel ? 'token-sel' : ''].join(' ');
       // tk-inner se escala con el zoom: el token se ve siempre del mismo tamaño en pantalla.
-      return `<g class="${cls}" data-node="${esc(c.id)}" transform="translate(${p.x} ${p.y})"><g class="tk-inner">
+      // Prioridad del nombre cuando se tapan: el elegido, luego las fichas grandes y las más conectadas.
+      const prio = (c.id === sel ? 1000 : 0) + (selectedNeighbors?.has(c.id) ? 500 : 0) + r * 10 + C.neighbors(c.id, g).length;
+      return `<g class="${cls}" data-node="${esc(c.id)}" data-prio="${prio}" transform="translate(${p.x} ${p.y})"><g class="tk-inner">
         <circle r="${r}" style="fill:${fill}"></circle>
         <use href="#i-${tk.icon}" x="${-r * 0.6}" y="${-r * 0.6}" width="${r * 1.2}" height="${r * 1.2}" style="color:${ink}"></use>
         <text class="node-label" y="${r + 4}" dy="1em">${esc(c.name || t('camp.unnamed'))}</text>
@@ -685,6 +683,27 @@ export function mountMap(root, ctx, focusId = null) {
     const k = vb.w / Math.max(1, svg.clientWidth);
     svg.style.setProperty('--k', k); // textos siempre a 18 px en pantalla
     svg.classList.toggle('zoomed-out', k > 1.15); // de lejos se ocultan los nombres menos importantes
+    if (view.mode === 'places') declutterSoon();
+  }
+
+  // Modo Lugares: si dos nombres se tapan, se oculta el de menos prioridad (vuelve a verse al acercar o al tocar la ficha).
+  let declutterFrame = 0;
+  function declutterSoon() {
+    cancelAnimationFrame(declutterFrame);
+    declutterFrame = requestAnimationFrame(() => {
+      const nodes = [...svg.querySelectorAll('.place-token')].sort((a, b) => b.dataset.prio - a.dataset.prio);
+      const boxes = nodes.map((n) => n.querySelector('circle').getBoundingClientRect());
+      const kept = [];
+      nodes.forEach((n, idx) => {
+        const label = n.querySelector('.node-label');
+        label.classList.remove('lbl-hidden');
+        const r = label.getBoundingClientRect();
+        const hit = (b) => r.left < b.right - 2 && r.right > b.left + 2 && r.top < b.bottom - 2 && r.bottom > b.top + 2;
+        const clash = kept.some(hit) || boxes.slice(0, idx).some(hit); // fichas más importantes que esta
+        if (clash) label.classList.add('lbl-hidden');
+        else kept.push(r);
+      });
+    });
   }
 
   function fitView() {

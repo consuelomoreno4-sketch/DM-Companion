@@ -705,7 +705,6 @@ mark.mention {
 .geo-swamp { fill: rgba(120, 160, 110, 0.16); stroke: rgba(150, 190, 140, 0.45); stroke-width: 2; stroke-dasharray: 6 6; }
 .geo-tufts path { fill: none; stroke: rgba(150, 190, 140, 0.55); stroke-width: 1.5; stroke-linecap: round; }
 .geo-river { fill: none; stroke: #4f7fb8; stroke-width: 4; stroke-linecap: round; }
-.geo-ref circle { fill: #9fb0c8; stroke: #17253a; stroke-width: 2; }
 .geo-label.geo-note { fill: var(--muted); font: italic 600 calc(14px * var(--k)) var(--font-body); letter-spacing: 0; }
 .geo-road { fill: none; stroke: #b9a070; stroke-width: 3; stroke-dasharray: 12 8; stroke-linecap: round; opacity: 0.8; }
 .geo-path { stroke-width: 2; stroke-dasharray: 6 8; }
@@ -723,6 +722,7 @@ mark.mention {
 .geo-compass text { fill: var(--text); font: 700 calc(18px * var(--k)) var(--font-body); text-anchor: middle; }
 .map-svg .node.movable { cursor: move; }
 .map-svg.zoomed-out .node.minor .node-label { display: none; }
+.map-svg .node-label.lbl-hidden { display: none; }
 /* Mapas propios y fichas de lugar */
 .map-select { display: flex; align-items: center; gap: var(--s1); flex: none; color: var(--amber); }
 .map-select select { width: auto; max-width: 260px; }

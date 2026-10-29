@@ -3,7 +3,7 @@
 Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet en horizontal
 (Samsung Galaxy Tab S8 Ultra). Funciona sin internet una vez instalada y guarda todo en el dispositivo.
 
-**Estado:** Fases 1, 2 y 3 listas (Combate, Compendio y Campaña), versión 3.5.2. Ver [`SPEC.md`](SPEC.md) para el plan completo.
+**Estado:** Fases 1, 2 y 3 listas (Combate, Compendio y Campaña), versión 3.6. Ver [`SPEC.md`](SPEC.md) para el plan completo.
 
 **Idiomas:** inglés (por defecto), español y alemán. Se cambia en **Settings / Ajustes** (⚙).
 
