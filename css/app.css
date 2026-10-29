@@ -712,6 +712,29 @@ mark.mention {
 .geo-compass text { fill: var(--text); font: 700 calc(18px * var(--k)) var(--font-body); text-anchor: middle; }
 .map-svg .node.movable { cursor: move; }
 .map-svg.zoomed-out .node.minor .node-label { display: none; }
+/* Mapas propios y fichas de lugar */
+.map-select { display: flex; align-items: center; gap: var(--s1); flex: none; color: var(--amber); }
+.map-select select { width: auto; max-width: 260px; }
+.map-image { image-rendering: auto; }
+.map-frame { fill: none; stroke: var(--line); stroke-width: 2; }
+.map-svg .tk-inner { transform: scale(var(--k)); }
+.map-svg .tk-inner .node-label { font-size: 18px; stroke-width: 5px; }
+.map-svg .place-token circle { stroke: rgba(10, 14, 22, 0.75); stroke-width: 3; }
+.map-svg .place-token use { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.map-svg .place-token.center circle, .map-svg .place-token.token-sel circle { stroke: var(--amber); stroke-width: 5; }
+.map-svg .place-token.selected circle { stroke: #ffe2a8; stroke-width: 4; }
+.map-svg .party-token { cursor: grab; }
+.map-svg .party-token circle { fill: var(--blue-deep); stroke: var(--amber); stroke-width: 4; stroke-dasharray: 6 4; }
+.map-svg .party-token use { color: #fff; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.map-svg .party-token .node-label { fill: var(--amber); }
+.token-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: var(--s1); }
+.token-icons .btn[aria-pressed="true"] { border-color: var(--amber); background: #4a3a1a; color: #ffe2a8; }
+.token-colors { display: flex; flex-wrap: wrap; gap: var(--s1); }
+.swatch {
+  width: var(--tap); height: var(--tap); border-radius: 50%;
+  border: 3px solid var(--line); background: var(--swatch); cursor: pointer;
+}
+.swatch[aria-pressed="true"] { border-color: var(--text); box-shadow: 0 0 0 3px var(--amber); }
 .map-svg .node.movable circle { stroke: var(--amber); stroke-dasharray: 6 4; }
 .imp-example {
   margin: 0; padding: var(--s2);

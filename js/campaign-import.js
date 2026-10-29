@@ -35,13 +35,14 @@ export async function importPack(id) {
       const patch = { aliases: [...new Set([...(existing.aliases || []), ...(e.aliases || [])])] };
       if (!existing.subtitle) patch.subtitle = subtitle;
       if (!existing.pos && pos) patch.pos = pos;
+      if (!existing.token && e.token) patch.token = e.token;
       C.update('codex', existing.id, patch, { debounce: false });
       ids.set(e.key, existing.id);
       merged += 1;
     } else {
       const c = C.create('codex', {
         kind: e.kind, name: e.name, aliases: e.aliases || [], subtitle, tags: [pack.tag],
-        description: '', links: [], ...(pos ? { pos } : {}),
+        description: '', links: [], ...(pos ? { pos } : {}), ...(e.token ? { token: e.token } : {}),
       });
       ids.set(e.key, c.id);
       created += 1;

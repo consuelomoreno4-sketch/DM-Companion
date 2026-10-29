@@ -89,6 +89,38 @@ export const homebrewAll = () => storeAll('homebrew');
 export const homebrewPut = (entry) => storePut('homebrew', entry);
 export const homebrewDelete = (id) => storeDelete('homebrew', id);
 
+// Las imágenes (Blob, p. ej. los mapas propios) no caben en JSON: se pasan a texto (data URL) y de vuelta.
+async function blobsToText(value) {
+  if (value instanceof Blob) {
+    const data = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(value);
+    });
+    return { __blob: data };
+  }
+  if (Array.isArray(value)) return Promise.all(value.map(blobsToText));
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = await blobsToText(v);
+    return out;
+  }
+  return value;
+}
+
+function textToBlobs(value) {
+  if (value && typeof value === 'object' && typeof value.__blob === 'string') {
+    const [head, b64] = value.__blob.split(',');
+    const type = head.match(/data:([^;]+)/)?.[1] || 'application/octet-stream';
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    return new Blob([bytes], { type });
+  }
+  if (Array.isArray(value)) return value.map(textToBlobs);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, textToBlobs(v)]));
+  return value;
+}
+
 // Copia de seguridad: todos los almacenes como lista de { key, value }.
 export async function exportAll() {
   const db = await open();
@@ -99,6 +131,7 @@ export async function exportAll() {
     const [keys, values] = await Promise.all([request(store.getAllKeys()), request(store.getAll())]);
     stores[name] = keys.map((key, i) => ({ key, value: name === 'kv' ? withoutApiKey(key, values[i]) : values[i] }));
   }
+  stores.kv = await Promise.all(stores.kv.map(async (row) => ({ key: row.key, value: await blobsToText(row.value) })));
   return { app: BACKUP_APP, format: BACKUP_FORMAT, exportedAt: new Date().toISOString(), stores };
 }
 
@@ -120,7 +153,7 @@ export async function importAll(data) {
   for (const name of STORES) {
     const store = tx.objectStore(name);
     store.clear();
-    for (const row of data.stores[name] || []) store.put(row.value, row.key);
+    for (const row of data.stores[name] || []) store.put(name === 'kv' ? textToBlobs(row.value) : row.value, row.key);
   }
   if (keptAi?.apiKey) {
     const imported = (data.stores.kv || []).find((r) => r.key === 'ai')?.value || {};

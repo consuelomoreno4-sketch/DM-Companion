@@ -10,8 +10,9 @@
 import * as C from './campaign-data.js';
 import { kindLabel, notesHtml, KIND_ICON } from './campaign-ui.js';
 import { PACKS, confirmAndImportPack } from './campaign-import.js';
+import * as M from './maps.js';
 import { normalize } from './monsters.js';
-import { esc, icon, confirmDialog } from './ui.js';
+import { esc, icon, confirmDialog, toast } from './ui.js';
 import { t, tn } from './i18n.js';
 
 const MAX_NEIGHBORS = 18;
@@ -25,7 +26,9 @@ const view = {
   other: null,               // ficha del otro extremo del hilo elegido
   trail: [],
   place: null,               // lugar elegido en el modo Lugares
-  editing: false,            // "Ubicar lugares": arrastrar para mover
+  editing: false,            // "Editar mapa": arrastrar, crear y editar fichas de lugar
+  mapId: M.DRAWN,            // mapa del modo Lugares: el dibujado o uno propio
+  tokenSel: null,            // ficha de lugar que se está editando
   kinds: new Set(C.CODEX_KINDS),
   peopleQuery: '',
 };
@@ -145,7 +148,11 @@ function geoBackground() {
 export function mountMap(root, ctx, focusId = null) {
   if (focusId) {
     const c = C.get('codex', focusId);
-    if (c?.kind === 'place' && c.pos) { view.mode = 'places'; view.place = focusId; }
+    if (c?.kind === 'place' && (M.posOn(c, view.mapId) || c.pos)) {
+      view.mode = 'places';
+      view.place = focusId;
+      if (!M.posOn(c, view.mapId)) view.mapId = M.DRAWN;
+    }
     else if (c) { view.mode = c.kind === 'character' ? 'people' : 'network'; view.focus = focusId; view.other = null; view.trail = [focusId]; }
   }
   if (view.focus && !C.get('codex', view.focus)) { view.focus = null; view.other = null; view.trail = []; }
@@ -166,6 +173,7 @@ export function mountMap(root, ctx, focusId = null) {
         </div>
         <div class="map-subbar" data-subbar></div>
         <svg class="map-svg" data-svg role="img" aria-label="${esc(t('camp.map'))}"></svg>
+        <input type="file" accept="image/*" data-map-file hidden>
       </div>
       <aside class="map-panel" data-panel></aside>
     </div>`;
@@ -175,6 +183,9 @@ export function mountMap(root, ctx, focusId = null) {
   let g = null;      // grafo actual
   let P = null;      // posiciones de lo dibujado
   let vb = { x: 0, y: 0, w: WORLD.w, h: WORLD.h };
+  let fileMode = 'new'; // el selector de imagen sirve para un mapa nuevo o para cambiar la imagen del actual
+  const world = () => M.worldSize(view.mapId);
+  const placedOnMap = () => C.list('codex').filter((c) => c.kind === 'place' && M.posOn(c, view.mapId));
 
   const entryName = (id) => C.get('codex', id)?.name || t('camp.unnamed');
   const shownKinds = (list) => list.filter((n) => view.kinds.has(C.get('codex', n.id)?.kind));
@@ -191,10 +202,10 @@ export function mountMap(root, ctx, focusId = null) {
   }
 
   function renderPlaces() {
-    const placed = C.list('codex').filter((c) => c.kind === 'place' && c.pos);
-    P = new Map(placed.map((c) => [c.id, { x: c.pos.x, y: c.pos.y }]));
+    const W = world();
+    const placed = placedOnMap();
+    P = new Map(placed.map((c) => [c.id, { ...M.posOn(c, view.mapId) }]));
     const edges = [...g.edges.values()].filter((e) => P.has(e.a) && P.has(e.b));
-    const links = (id) => C.neighbors(id, g).length;
     const sel = view.place;
     const selectedNeighbors = sel ? new Set(C.neighbors(sel, g).map((n) => n.id)) : null;
     const edgeHtml = edges.map((e) => {
@@ -203,18 +214,33 @@ export function mountMap(root, ctx, focusId = null) {
       const on = sel && (e.a === sel || e.b === sel);
       return `<line class="edge ${on ? 'selected' : 'edge-side'}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" style="stroke-width:${2 + Math.min(6, e.weight)}"></line>`;
     }).join('');
+    // Fichas de lugar: icono, color y tamaño propios (o adivinados por el nombre).
     const nodeHtml = placed.map((c) => {
       const p = P.get(c.id);
-      const n = links(c.id);
-      const r = 13 + Math.min(9, Math.round(Math.sqrt(n) * 3));
-      const cls = ['node', 'kind-place', c.id === sel ? 'center' : '', selectedNeighbors?.has(c.id) ? 'selected' : '', view.editing ? 'movable' : ''].join(' ');
-      return `<g class="${cls}" data-node="${esc(c.id)}" transform="translate(${p.x} ${p.y})">
-        <circle r="${r}"></circle>
-        <use href="#i-pin" x="${-r * 0.55}" y="${-r * 0.55}" width="${r * 1.1}" height="${r * 1.1}"></use>
-        <text class="node-label" y="${r + 6}" dy="1em">${esc(c.name || t('camp.unnamed'))}</text>
-      </g>`;
+      const tk = M.tokenOf(c, C.neighbors(c.id, g).length);
+      const r = { s: 13, m: 18, l: 25 }[tk.size] || 18;
+      const fill = M.TOKEN_COLORS[tk.color] || M.TOKEN_COLORS.green;
+      const ink = ['white', 'amber'].includes(tk.color) ? '#1a2130' : '#ffffff';
+      const cls = ['node', 'place-token', c.id === sel ? 'center' : '', selectedNeighbors?.has(c.id) ? 'selected' : '',
+        view.editing ? 'movable' : '', c.id === view.tokenSel ? 'token-sel' : ''].join(' ');
+      // tk-inner se escala con el zoom: el token se ve siempre del mismo tamaño en pantalla.
+      return `<g class="${cls}" data-node="${esc(c.id)}" transform="translate(${p.x} ${p.y})"><g class="tk-inner">
+        <circle r="${r}" style="fill:${fill}"></circle>
+        <use href="#i-${tk.icon}" x="${-r * 0.6}" y="${-r * 0.6}" width="${r * 1.2}" height="${r * 1.2}" style="color:${ink}"></use>
+        <text class="node-label" y="${r + 4}" dy="1em">${esc(c.name || t('camp.unnamed'))}</text>
+      </g></g>`;
     }).join('');
-    svg.innerHTML = `${geoBackground()}<g class="edges">${edgeHtml}</g><g class="nodes">${nodeHtml}</g>`;
+    const pp = M.partyOn(view.mapId);
+    const partyHtml = pp ? `<g class="party-token" data-party transform="translate(${pp.x} ${pp.y})"><g class="tk-inner">
+        <circle r="22"></circle><use href="#i-party" x="-13" y="-13" width="26" height="26"></use>
+        <text class="node-label" y="26" dy="1em">${esc(t('map.party'))}</text></g></g>` : '';
+    const map = M.getMap(view.mapId);
+    const bg = map
+      ? `<rect class="geo-sea" x="-2000" y="-2000" width="${W.w + 4000}" height="${W.h + 4000}"></rect>
+         <image class="map-image" href="${M.imageUrl(map)}" x="0" y="0" width="${W.w}" height="${W.h}" preserveAspectRatio="none"></image>
+         <rect class="map-frame" x="0" y="0" width="${W.w}" height="${W.h}"></rect>`
+      : geoBackground();
+    svg.innerHTML = `${bg}<g class="edges">${edgeHtml}</g><g class="nodes">${nodeHtml}</g>${partyHtml}`;
   }
 
   function renderGraph() {
@@ -275,9 +301,18 @@ export function mountMap(root, ctx, focusId = null) {
   // Barra bajo los modos: migas (personajes / red), filtro por tipo, o "Ubicar lugares".
   function renderSubbar() {
     if (view.mode === 'places') {
+      const party = !!M.partyOn(view.mapId);
       subbar.innerHTML = `
-        <span class="hint">${esc(t(view.editing ? 'map.editingHint' : 'map.placesHint'))}</span>
-        <button class="btn ${view.editing ? 'btn-primary' : ''}" type="button" data-edit aria-pressed="${view.editing}">${icon('pin')}<span>${esc(t(view.editing ? 'map.doneEditing' : 'map.editPlaces'))}</span></button>`;
+        <label class="map-select">${icon('map')}
+          <select data-map-select aria-label="${esc(t('map.whichMap'))}">
+            <option value="${M.DRAWN}"${view.mapId === M.DRAWN ? ' selected' : ''}>${esc(t('map.drawnMap'))}</option>
+            ${M.listMaps().map((m) => `<option value="${esc(m.id)}"${view.mapId === m.id ? ' selected' : ''}>${esc(m.name)}</option>`).join('')}
+            <option value="__new">＋ ${esc(t('map.uploadMap'))}</option>
+          </select>
+        </label>
+        <span class="spacer"></span>
+        <button class="btn" type="button" data-party-toggle aria-pressed="${party}">${icon('party')}<span>${esc(t(party ? 'map.partyHide' : 'map.partyShow'))}</span></button>
+        <button class="btn ${view.editing ? 'btn-primary' : ''}" type="button" data-edit aria-pressed="${view.editing}">${icon(view.editing ? 'check' : 'edit')}<span>${esc(t(view.editing ? 'map.doneEditing' : 'map.editMap'))}</span></button>`;
       return;
     }
     const crumbs = [`<button type="button" class="btn ${view.focus ? '' : 'btn-primary'}" data-overview>${icon(view.mode === 'people' ? 'user' : 'map')}<span>${esc(t(view.mode === 'people' ? 'map.allPeople' : 'camp.overview'))}</span></button>`];
@@ -338,7 +373,7 @@ export function mountMap(root, ctx, focusId = null) {
       ${entryHeader(view.focus)}
       <div class="map-actions">
         <button class="btn" type="button" data-open-entry="${esc(view.focus)}">${icon('edit')}<span>${esc(t('camp.openEntry'))}</span></button>
-        ${C.get('codex', view.focus)?.pos ? `<button class="btn" type="button" data-show-place="${esc(view.focus)}">${icon('pin')}<span>${esc(t('map.onMap'))}</span></button>` : ''}
+        ${M.posOn(C.get('codex', view.focus) || {}, view.mapId) ? `<button class="btn" type="button" data-show-place="${esc(view.focus)}">${icon('pin')}<span>${esc(t('map.onMap'))}</span></button>` : ''}
       </div>
       <h4>${esc(t('camp.connections'))}</h4>
       ${list.length ? `<div class="map-list">${list.map((n) => {
@@ -368,20 +403,72 @@ export function mountMap(root, ctx, focusId = null) {
       ${notes.length ? notesHtml(notes) : `<p class="hint">${esc(t('camp.noThreadNotes'))}</p>`}`;
   }
 
-  function renderPlacesPanel() {
-    // Sin posición y sin enlace a un lugar ubicado (una posada enlazada a su pueblo no hace falta ubicarla).
-    const placedIds = new Set(C.list('codex').filter((c) => c.kind === 'place' && c.pos).map((c) => c.id));
-    const inside = (c) => (c.links || []).some((l) => placedIds.has(l))
-      || C.list('codex').some((o) => placedIds.has(o.id) && (o.links || []).includes(c.id));
-    const unplaced = C.list('codex').filter((c) => c.kind === 'place' && !c.pos && !inside(c))
+  function unplacedPlaces() {
+    const onMap = new Set(placedOnMap().map((c) => c.id));
+    // En el mapa dibujado, un lugar enlazado a otro ya ubicado (una posada en su pueblo) no hace falta ubicarlo.
+    const inside = (c) => view.mapId === M.DRAWN && ((c.links || []).some((l) => onMap.has(l))
+      || C.list('codex').some((o) => onMap.has(o.id) && (o.links || []).includes(c.id)));
+    return C.list('codex').filter((c) => c.kind === 'place' && !onMap.has(c.id) && !inside(c))
       .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    const unplacedHtml = unplaced.length && (view.editing || !view.place) ? `
+  }
+
+  function unplacedHtml() {
+    const unplaced = unplacedPlaces();
+    return unplaced.length ? `
       <h4>${icon('pin')} ${esc(t('map.unplaced'))} <span class="badge num">${unplaced.length}</span></h4>
       <p class="hint">${esc(t('map.unplacedHint'))}</p>
       <div class="link-chips">${unplaced.map((c) => `<span class="link-chip"><button type="button" class="link-go" data-place-it="${esc(c.id)}">${icon('plus')}<span>${esc(c.name || t('camp.unnamed'))}</span></button></span>`).join('')}</div>` : '';
+  }
+
+  // Edición de una ficha de lugar: nombre, icono, color, tamaño, quitar del mapa.
+  function tokenEditor(id) {
+    const c = C.get('codex', id);
+    const tk = M.tokenOf(c, C.neighbors(id, g).length);
+    return `
+      <h3>${icon('edit')} ${esc(t('map.editToken'))}</h3>
+      <label class="field"><span>${esc(t('entry.name'))}</span><input data-tk-name value="${esc(c.name || '')}" maxlength="100"></label>
+      <div class="field"><span>${esc(t('map.tokenIcon'))}</span>
+        <div class="token-icons">${M.TOKEN_ICONS.map((i) => `<button type="button" class="btn btn-icon" data-tk-icon="${i}" aria-pressed="${tk.icon === i}" aria-label="${esc(t(`map.icons.${i}`))}" title="${esc(t(`map.icons.${i}`))}">${icon(i)}</button>`).join('')}</div>
+      </div>
+      <div class="field"><span>${esc(t('map.tokenColor'))}</span>
+        <div class="token-colors">${Object.entries(M.TOKEN_COLORS).map(([k, v]) => `<button type="button" class="swatch" data-tk-color="${k}" aria-pressed="${tk.color === k}" aria-label="${esc(t(`map.colors.${k}`))}" title="${esc(t(`map.colors.${k}`))}" style="--swatch:${v}"></button>`).join('')}</div>
+      </div>
+      <div class="field"><span>${esc(t('map.tokenSize'))}</span>
+        <div class="segmented" role="radiogroup">${['s', 'm', 'l'].map((z) => `<label class="seg"><input type="radio" name="tk-size" value="${z}"${tk.size === z ? ' checked' : ''}><span>${esc(t(`map.sizes.${z}`))}</span></label>`).join('')}</div>
+      </div>
+      <div class="map-actions">
+        <button class="btn" type="button" data-open-entry="${esc(id)}">${icon('book')}<span>${esc(t('camp.openEntry'))}</span></button>
+        <button class="btn btn-danger" type="button" data-tk-remove>${icon('trash')}<span>${esc(t('map.removeFromMap'))}</span></button>
+        <button class="btn btn-primary" type="button" data-tk-done>${icon('check')}<span>${esc(t('map.doneEditing'))}</span></button>
+      </div>`;
+  }
+
+  function mapManager() {
+    const map = M.getMap(view.mapId);
+    if (!map) return `<p class="hint">${esc(t('map.ownMapHint'))}</p>
+      <button class="btn" type="button" data-upload-map>${icon('upload')}<span>${esc(t('map.uploadMap'))}</span></button>`;
+    return `
+      <h4>${icon('map')} ${esc(t('map.thisMap'))}</h4>
+      <label class="field"><span>${esc(t('map.mapName'))}</span><input data-map-name value="${esc(map.name)}" maxlength="80"></label>
+      <div class="map-actions">
+        <button class="btn" type="button" data-replace-map>${icon('upload')}<span>${esc(t('map.replaceImage'))}</span></button>
+        <button class="btn btn-danger" type="button" data-delete-map>${icon('trash')}<span>${esc(t('map.deleteMap'))}</span></button>
+      </div>
+      <p class="hint">${esc(t('map.ownMapHint'))}</p>`;
+  }
+
+  function renderPlacesPanel() {
+    if (view.editing) {
+      panel.innerHTML = view.tokenSel && C.get('codex', view.tokenSel)
+        ? tokenEditor(view.tokenSel)
+        : `<h3>${icon('edit')} ${esc(t('map.editMap'))}</h3>
+           <p class="hint">${esc(t('map.editIntro'))}</p>
+           ${unplacedHtml()}
+           ${mapManager()}`;
+      return;
+    }
     if (!view.place) {
-      const placed = C.list('codex').filter((c) => c.kind === 'place' && c.pos)
-        .map((c) => ({ c, n: C.neighbors(c.id, g).length })).sort((a, b) => b.n - a.n).slice(0, 10);
+      const placed = placedOnMap().map((c) => ({ c, n: C.neighbors(c.id, g).length })).sort((a, b) => b.n - a.n).slice(0, 10);
       panel.innerHTML = `
         <h3>${icon('pin')} ${esc(t('map.mode.places'))}</h3>
         <p class="hint">${esc(t('map.placesIntro'))}</p>
@@ -391,7 +478,8 @@ export function mountMap(root, ctx, focusId = null) {
             <span class="comp-name">${esc(c.name)} <span class="badge num">${n}</span></span>
             ${c.subtitle ? `<span class="comp-meta">${esc(c.subtitle)}</span>` : ''}
           </button>`).join('')}</div>` : ''}
-        ${unplacedHtml}
+        ${unplacedHtml()}
+        ${M.getMap(view.mapId) ? '' : `<div class="map-actions"><button class="btn" type="button" data-upload-map>${icon('upload')}<span>${esc(t('map.uploadMap'))}</span></button></div>`}
         ${C.list('codex').length ? `<div class="map-actions">${packButton()}</div>` : ''}`;
       return;
     }
@@ -406,8 +494,7 @@ export function mountMap(root, ctx, focusId = null) {
       <h4>${esc(t('map.connectedHere'))}</h4>
       ${groupedConnections(view.place, 'data-person')}
       <h4>${icon('scroll')} ${esc(t('camp.log'))}</h4>
-      ${log.length ? notesHtml(log) : `<p class="hint">${esc(t('camp.noLog'))}</p>`}
-      ${unplacedHtml}`;
+      ${log.length ? notesHtml(log) : `<p class="hint">${esc(t('camp.noLog'))}</p>`}`;
   }
 
   function renderPeopleList() {
@@ -452,7 +539,7 @@ export function mountMap(root, ctx, focusId = null) {
     view.focus = null; // cada modo empieza en su vista general
     view.other = null;
     view.trail = [];
-    if (mode === 'places') view.editing = false;
+    if (mode === 'places') { view.editing = false; view.tokenSel = null; }
     for (const input of root.querySelectorAll('input[name=map-mode]')) input.checked = input.value === mode;
     render();
   }
@@ -478,10 +565,23 @@ export function mountMap(root, ctx, focusId = null) {
     panel.scrollTop = 0;
   }
 
-  function onTap(target) {
+  function onTap(target, point) {
     const node = target.closest?.('[data-node]');
     if (view.mode === 'places') {
-      if (node && !view.editing) { view.place = node.dataset.node === view.place ? null : node.dataset.node; render({ fit: false }); panel.scrollTop = 0; }
+      if (target.closest?.('[data-party]')) return;
+      if (node && view.editing) { view.tokenSel = node.dataset.node; render({ fit: false }); panel.scrollTop = 0; return; }
+      if (node) { view.place = node.dataset.node === view.place ? null : node.dataset.node; render({ fit: false }); panel.scrollTop = 0; return; }
+      if (view.editing && point) {
+        // Tocar un espacio vacío en modo edición: nuevo lugar ahí mismo.
+        const W = world();
+        const pos = { x: Math.round(Math.max(0, Math.min(W.w, point.x))), y: Math.round(Math.max(0, Math.min(W.h, point.y))) };
+        const c = C.create('codex', { kind: 'place', name: t('map.newPlace'), aliases: [], subtitle: '', tags: [], description: '', links: [], ...M.posPatch({}, view.mapId, pos) });
+        view.tokenSel = c.id;
+        render({ fit: false });
+        const name = panel.querySelector('[data-tk-name]');
+        name?.focus();
+        name?.select();
+      }
       return;
     }
     if (node) {
@@ -514,7 +614,8 @@ export function mountMap(root, ctx, focusId = null) {
     if (!rect.width || !rect.height) return;
     let minX; let maxX; let minY; let maxY;
     if (view.mode === 'places') {
-      [minX, minY, maxX, maxY] = [-10, 20, WORLD.w - 10, WORLD.h];
+      const W = world();
+      [minX, minY, maxX, maxY] = view.mapId === M.DRAWN ? [-10, 20, W.w - 10, W.h] : [-20, -20, W.w + 20, W.h + 20];
     } else {
       const pts = [...(P?.values() || [])];
       minX = Math.min(...pts.map((p) => p.x), -100) - 120;
@@ -546,7 +647,8 @@ export function mountMap(root, ctx, focusId = null) {
   let downTarget = null;
   let moved = false;
   let pinchDist = 0;
-  let dragPlace = null; // { id, el, start } mientras se mueve un lugar
+  let dragPlace = null; // { id, el, pos } mientras se mueve un lugar (o el grupo: id = null)
+  let lastPoint = null;
 
   svg.addEventListener('pointerdown', (e) => {
     svg.setPointerCapture(e.pointerId);
@@ -554,8 +656,11 @@ export function mountMap(root, ctx, focusId = null) {
     if (pointers.size === 1) {
       downTarget = e.target;
       moved = false;
+      lastPoint = toWorld(e.clientX, e.clientY);
       const node = e.target.closest?.('[data-node]');
-      if (view.mode === 'places' && view.editing && node) dragPlace = { id: node.dataset.node, el: node };
+      const partyEl = e.target.closest?.('[data-party]');
+      if (view.mode === 'places' && partyEl) dragPlace = { id: null, el: partyEl }; // el grupo se mueve siempre
+      else if (view.mode === 'places' && view.editing && node) dragPlace = { id: node.dataset.node, el: node };
     }
     if (pointers.size === 2) {
       dragPlace = null;
@@ -575,7 +680,8 @@ export function mountMap(root, ctx, focusId = null) {
       moved = true;
       if (dragPlace) {
         const p = toWorld(cur.x, cur.y);
-        dragPlace.pos = { x: Math.round(Math.max(0, Math.min(WORLD.w, p.x))), y: Math.round(Math.max(0, Math.min(WORLD.h, p.y))) };
+        const W = world();
+        dragPlace.pos = { x: Math.round(Math.max(0, Math.min(W.w, p.x))), y: Math.round(Math.max(0, Math.min(W.h, p.y))) };
         dragPlace.el.setAttribute('transform', `translate(${dragPlace.pos.x} ${dragPlace.pos.y})`);
       } else {
         const r = svg.getBoundingClientRect();
@@ -598,9 +704,14 @@ export function mountMap(root, ctx, focusId = null) {
     if (!pointers.has(e.pointerId)) return;
     pointers.delete(e.pointerId);
     if (dragPlace?.pos && e.type === 'pointerup') {
-      C.update('codex', dragPlace.id, { pos: dragPlace.pos }, { debounce: false }); // vuelve a dibujar el mapa
+      if (dragPlace.id) {
+        const entry = C.get('codex', dragPlace.id);
+        C.update('codex', dragPlace.id, M.posPatch(entry, view.mapId, dragPlace.pos), { debounce: false }); // vuelve a dibujar el mapa
+      } else {
+        M.setParty(view.mapId, dragPlace.pos).then(() => renderSubbar());
+      }
     } else if (pointers.size === 0 && !moved && downTarget && e.type === 'pointerup') {
-      onTap(downTarget);
+      onTap(downTarget, lastPoint);
     }
     if (pointers.size === 0) dragPlace = null;
     if (pointers.size < 2) pinchDist = 0;
@@ -613,8 +724,48 @@ export function mountMap(root, ctx, focusId = null) {
     zoom(e.deltaY > 0 ? 1.15 : 1 / 1.15, p.x, p.y);
   }, { passive: false });
 
-  root.addEventListener('change', (e) => {
-    if (e.target.name === 'map-mode') setMode(e.target.value);
+  root.addEventListener('change', async (e) => {
+    const el = e.target;
+    if (el.name === 'map-mode') { setMode(el.value); return; }
+    if (el.matches('[data-map-select]')) {
+      if (el.value === '__new') { el.value = view.mapId; fileMode = 'new'; root.querySelector('[data-map-file]').click(); return; }
+      view.mapId = el.value;
+      view.place = null;
+      view.tokenSel = null;
+      M.setLastMap(view.mapId);
+      render();
+      return;
+    }
+    if (el.matches('[data-map-file]')) {
+      const file = el.files[0];
+      el.value = '';
+      if (!file) return;
+      try {
+        if (fileMode === 'replace') await M.replaceImage(view.mapId, file);
+        else {
+          const m = await M.addMap(file, file.name.replace(/\.[^.]+$/, ''));
+          view.mapId = m.id;
+          view.editing = true;
+          view.tokenSel = null;
+          M.setLastMap(m.id);
+          toast(t('map.mapAdded'), { duration: 6000, group: 'map' });
+        }
+      } catch (err) {
+        toast(t('imp.fileError', { msg: err.message }), { kind: 'error', duration: 0 });
+      }
+      render();
+      return;
+    }
+    if (el.matches('[data-tk-name]') && view.tokenSel) {
+      C.update('codex', view.tokenSel, { name: el.value.trim() || t('map.newPlace') }, { debounce: false });
+      return;
+    }
+    if (el.name === 'tk-size' && view.tokenSel) {
+      const c = C.get('codex', view.tokenSel);
+      C.update('codex', c.id, { token: { ...(c.token || {}), size: el.value } }, { debounce: false });
+      return;
+    }
+    if (el.matches('[data-map-name]')) { await M.renameMap(view.mapId, el.value.trim() || t('map.untitledMap')); renderSubbar(); }
   });
   root.addEventListener('input', (e) => {
     if (!e.target.matches('[data-people-q]')) return;
@@ -629,7 +780,47 @@ export function mountMap(root, ctx, focusId = null) {
   root.addEventListener('click', async (e) => {
     const z = e.target.closest('[data-zoom]');
     if (z) { if (z.dataset.zoom === 'fit') fitView(); else zoom(z.dataset.zoom === 'in' ? 0.8 : 1.25); return; }
-    if (e.target.closest('[data-edit]')) { view.editing = !view.editing; render({ fit: false }); return; }
+    if (e.target.closest('[data-edit]')) { view.editing = !view.editing; view.tokenSel = null; render({ fit: false }); return; }
+    if (e.target.closest('[data-upload-map]')) { fileMode = 'new'; root.querySelector('[data-map-file]').click(); return; }
+    if (e.target.closest('[data-replace-map]')) { fileMode = 'replace'; root.querySelector('[data-map-file]').click(); return; }
+    if (e.target.closest('[data-delete-map]')) {
+      const map = M.getMap(view.mapId);
+      if (!map || !(await confirmDialog(t('map.deleteMapConfirm', { name: map.name }), { yes: t('map.deleteMap') }))) return;
+      for (const c of C.list('codex')) if (c.mapPos?.[map.id]) C.update('codex', c.id, M.posPatch(c, map.id, null), { debounce: false });
+      await M.deleteMap(map.id);
+      view.mapId = M.DRAWN;
+      M.setLastMap(M.DRAWN);
+      render();
+      return;
+    }
+    if (e.target.closest('[data-party-toggle]')) {
+      if (M.partyOn(view.mapId)) await M.setParty(view.mapId, null);
+      else {
+        const W = world();
+        await M.setParty(view.mapId, { x: Math.round(Math.max(20, Math.min(W.w - 20, vb.x + vb.w / 2))), y: Math.round(Math.max(20, Math.min(W.h - 20, vb.y + vb.h / 2))) });
+      }
+      render({ fit: false });
+      return;
+    }
+    const tkIcon = e.target.closest('[data-tk-icon]');
+    if (tkIcon && view.tokenSel) {
+      const c = C.get('codex', view.tokenSel);
+      C.update('codex', c.id, { token: { ...(c.token || {}), icon: tkIcon.dataset.tkIcon } }, { debounce: false });
+      return;
+    }
+    const tkColor = e.target.closest('[data-tk-color]');
+    if (tkColor && view.tokenSel) {
+      const c = C.get('codex', view.tokenSel);
+      C.update('codex', c.id, { token: { ...(c.token || {}), color: tkColor.dataset.tkColor } }, { debounce: false });
+      return;
+    }
+    if (e.target.closest('[data-tk-remove]') && view.tokenSel) {
+      const c = C.get('codex', view.tokenSel);
+      view.tokenSel = null;
+      C.update('codex', c.id, M.posPatch(c, view.mapId, null), { debounce: false });
+      return;
+    }
+    if (e.target.closest('[data-tk-done]')) { view.tokenSel = null; render({ fit: false }); return; }
     if (e.target.closest('[data-overview]')) { view.focus = null; view.other = null; view.trail = []; render(); return; }
     const kind = e.target.closest('[data-kind]');
     if (kind) {
@@ -647,17 +838,19 @@ export function mountMap(root, ctx, focusId = null) {
     const placeIt = e.target.closest('[data-place-it]');
     if (placeIt) {
       // Lo pone en el centro de lo que se ve; luego se arrastra a su sitio.
-      const cx = Math.round(Math.max(20, Math.min(WORLD.w - 20, vb.x + vb.w / 2)));
-      const cy = Math.round(Math.max(20, Math.min(WORLD.h - 20, vb.y + vb.h / 2)));
+      const W = world();
+      const cx = Math.round(Math.max(20, Math.min(W.w - 20, vb.x + vb.w / 2)));
+      const cy = Math.round(Math.max(20, Math.min(W.h - 20, vb.y + vb.h / 2)));
       view.editing = true;
-      view.place = placeIt.dataset.placeIt;
-      C.update('codex', placeIt.dataset.placeIt, { pos: { x: cx, y: cy } }, { debounce: false });
+      view.tokenSel = placeIt.dataset.placeIt;
+      const entry = C.get('codex', placeIt.dataset.placeIt);
+      C.update('codex', entry.id, M.posPatch(entry, view.mapId, { x: cx, y: cy }), { debounce: false });
       return;
     }
     const person = e.target.closest('[data-person]');
     if (person) {
       const c = C.get('codex', person.dataset.person);
-      if (c?.kind === 'place' && c.pos) { view.place = c.id; render({ fit: false }); }
+      if (c?.kind === 'place' && M.posOn(c, view.mapId)) { view.place = c.id; render({ fit: false }); }
       else focusOn(person.dataset.person, c?.kind === 'character' ? 'people' : 'network');
       return;
     }
@@ -671,7 +864,7 @@ export function mountMap(root, ctx, focusId = null) {
     const mention = e.target.closest('[data-go-codex]');
     if (mention) {
       const c = C.get('codex', mention.dataset.goCodex);
-      if (view.mode === 'places' && c?.kind === 'place' && c.pos) { view.place = c.id; render({ fit: false }); }
+      if (view.mode === 'places' && c?.kind === 'place' && M.posOn(c, view.mapId)) { view.place = c.id; render({ fit: false }); }
       else focusOn(mention.dataset.goCodex, c?.kind === 'character' ? 'people' : 'network');
       return;
     }
@@ -685,6 +878,12 @@ export function mountMap(root, ctx, focusId = null) {
 
   new ResizeObserver(() => fitView()).observe(svg);
   render();
+  // Mapas propios: se cargan de la tablet y se vuelve al último mapa usado.
+  M.loadMaps().then(async () => {
+    if (!focusId) view.mapId = (await M.lastMap()) || view.mapId;
+    if (view.mapId !== M.DRAWN && !M.getMap(view.mapId)) view.mapId = M.DRAWN;
+    if (root.isConnected) render();
+  });
 
   return {
     update(what) {
