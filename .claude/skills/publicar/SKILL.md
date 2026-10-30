@@ -1,6 +1,6 @@
 ---
 name: publicar
-description: Publica una versión nueva de DM Companion en GitHub Pages (verifica, sube VERSION en sw.js, anota el cambio en SPEC.md y README.md, hace commit y push a main y comprueba el deploy). Con "prueba" hace todo menos commit y push. Solo cuando la dueña escribe /publicar.
+description: Publica una versión nueva de DM Companion en GitHub Pages (verifica, sube VERSION en sw.js, anota el cambio en CHANGELOG.md y la versión en README.md, hace commit y push a main y comprueba el deploy). Con "prueba" hace todo menos commit y push. Solo cuando la dueña escribe /publicar.
 disable-model-invocation: true
 ---
 

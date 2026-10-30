@@ -12,7 +12,7 @@ bash "$dir/verificar.sh" || { echo "PRUEBA DETENIDA en el paso 1: la verificaci√
 echo; echo "### 2. Versi√≥n y notas (en una copia temporal; el proyecto no cambia)"
 copia="$(mktemp -d)"; trap 'rm -rf "$copia"' EXIT
 cp -a . "$copia/repo"
-( cd "$copia/repo" && python3 .claude/skills/publicar/scripts/version.py "$tipo" "$nota" && git --no-pager diff --stat -- sw.js SPEC.md README.md ) \
+( cd "$copia/repo" && python3 .claude/skills/publicar/scripts/version.py "$tipo" "$nota" && git --no-pager diff --stat -- sw.js CHANGELOG.md README.md ) \
   || { echo "PRUEBA DETENIDA en el paso 2."; exit 1; }
 
 echo; echo "### 3. Commit y push (simulado: no se hace)"

@@ -1,8 +1,8 @@
 # DM Companion — guía para Claude
 
 App web para dirigir partidas de D&D (reglas 2024) en una tablet Android grande, en horizontal,
-con dedo, S Pen y teclado opcional. Especificación completa y registro de cambios: `SPEC.md`.
-Guía para la usuaria: `README.md`.
+con dedo, S Pen y teclado opcional. Cómo funciona la app hoy: `SPEC.md`. Registro de cambios:
+`CHANGELOG.md`. Guía para la usuaria: `README.md`.
 
 ## Con quién trabajas
 
@@ -56,6 +56,8 @@ variables en `:root`), `sw.js` (caché sin internet), `data/` (SRD), `tools/buil
   números con `tabular-nums`; botones ≥ 44 px; espacios en múltiplos de 8 px; radio 6 px;
   nada que dependa de pasar el mouse por encima; respetar `prefers-reduced-motion`.
 - Atajos de teclado: nunca activos mientras se escribe ni con una ventana abierta.
-- `node --check` siempre; prueba en el navegador (skill `probar-app`) solo si cambió algo visible o
-  el comportamiento de la app.
+- Nunca leas completos los archivos de `data/` (son muy grandes): busca solo lo que necesitas con
+  `grep`, `jq` o un script corto.
+- Prueba en el navegador (skill `probar-app`) solo si cambió algo visible o el comportamiento de la
+  app. La revisión de sintaxis de los `.js` la hace sola un hook al editarlos.
 - Commits y pushes solo cuando la dueña lo pide o con `/publicar`.

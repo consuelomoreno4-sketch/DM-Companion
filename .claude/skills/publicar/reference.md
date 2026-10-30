@@ -6,7 +6,7 @@
 |---|---|---|
 | `verificar.sh` | `node --check` de todos los JS; `archivos_app.py`; si existe la skill `agregar-traducciones`, que los tres diccionarios tengan las mismas claves | No |
 | `archivos_app.py` | Lee lo que la app carga (`index.html`, iconos del manifest, `url()` del CSS, `import` de los JS, rutas a `data/`, `fonts/`, `icons/`) y comprueba que exista y esté en `FILES` de `sw.js`; también que cada archivo de esas carpetas esté en `FILES` y que nada de `FILES` falte en disco | No |
-| `version.py` | Sube `VERSION` en `sw.js`, agrega `- **X.Y.Z** — nota` al final de "Historial de cambios" en `SPEC.md` y cambia "versión X.Y.Z." en la línea **Estado** de `README.md` | Sí |
+| `version.py` | Sube `VERSION` en `sw.js`, agrega `- **X.Y.Z** — nota` arriba de todo en `CHANGELOG.md` y cambia "versión X.Y.Z." en la línea **Estado** de `README.md` | Sí |
 | `subir.sh` | Si no estás en `main`, se detiene con un aviso (sin commit ni push). En `main`: `git add -A`, commit con `PUBLICAR_NOMBRE` / `PUBLICAR_EMAIL`, push con hasta 4 reintentos (2, 4, 8, 16 s) y dice si cambió `data/packs/` | Git |
 | `cambio_pack.sh` | Dice `PACK CAMBIADO: sí/no` comparando con lo último publicado | No |
 | `comprobar_deploy.sh` | Espera (máx. ~5 min) el workflow de Pages del commit actual y compara la `VERSION` publicada con la local | No |
