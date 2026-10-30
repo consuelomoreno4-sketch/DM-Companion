@@ -121,6 +121,12 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
     contexto del punto padre y los nombres resaltados y tocables).
   - Bajo las notas de cada sesión: **nombres sin ficha** (palabras con mayúscula que no empiezan frase, o nombres
     de varias palabras) para crearlas con un toque; la × los oculta en esa sesión (`ignoredNames`).
+  - **En esta sesión (v4.1)**, encima de los nombres sin ficha: las fichas nombradas en los puntos de la sesión
+    (por tipo y cantidad de puntos); tocar abre la ficha, el pin abre el mapa centrado en ella; botón "Detectar en
+    las notas". Sin ninguna, un aviso explica que la sesión no sale en el mapa.
+  - **Siguientes pasos al importar (v4.1)**: tras importar, la ventana muestra 1) cargar el pack (si no está
+    cargado), 2) "Detectar en las notas" (al terminar vuelve a los pasos) y 3) abrir el mapa en Lugares, vista
+    general, con "Lugares sin ubicar".
 - **Mapa por modos (v3.2)**: tres modos a elegir arriba del mapa.
   - **Lugares**: mapa dibujado (propio, aproximado) de la Costa de la Espada — mar, costa, Camino Alto, Sendero de
     Triboar, Bosque de Neverwinter, Montañas de la Espada, Marisma de los Hombres Muertos — con los lugares de la
@@ -153,6 +159,9 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
   - Arrastrar para mover, dos dedos / rueda / botones para el zoom; los textos se mantienen a 18 px.
 
 ### 4. Ambientación — FASE 4 (lista en 4.0.0)
+- **Oculta por defecto (v4.1)**: Ajustes → "Mostrar las funciones con IA" (kv `settings.ai`). Apagado, la clase
+  `no-ai` en `body` oculta la pestaña Ambientación, "Revisar con IA", "Analizar campaña con IA" y la configuración
+  de la clave; la tecla 4 y `#ambientacion` llevan a Combate.
 - Generar descripciones de escena con la **API de Anthropic** (requiere internet).
 - La clave de API se guarda **solo en el dispositivo** (IndexedDB); nunca en el repositorio
   ni en la copia de seguridad exportada (salvo que el usuario lo elija explícitamente).

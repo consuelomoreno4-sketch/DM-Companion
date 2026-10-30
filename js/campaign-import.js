@@ -501,7 +501,7 @@ export function openImportDialog(onDone) {
   go.addEventListener('click', () => {
     const created = importSessions(parsed, { replaceSameNumber: body.querySelector('[data-imp-replace]').checked });
     closeDialog(dlg);
-    toast(t('imp.done', { n: created.length }), { duration: 5000, group: 'import' });
+    if (!created.length) toast(t('imp.done', { n: 0 }), { duration: 5000, group: 'import' }); // si no, siguen los pasos
     onDone?.(created);
   });
   openDialog(dlg);

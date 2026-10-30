@@ -7,10 +7,12 @@
 
 import * as C from './campaign-data.js';
 import { kvGet, kvSet } from './db.js';
-import { autosize, dateText } from './campaign-ui.js';
-import { esc, icon, confirmDialog, toast } from './ui.js';
+import { autosize, dateText, kindIcon } from './campaign-ui.js';
+import { esc, icon, confirmDialog, toast, openDialog, closeDialog } from './ui.js';
 import { t, tn } from './i18n.js';
-import { openImportDialog } from './campaign-import.js';
+import { openImportDialog, PACKS, confirmAndImportPack } from './campaign-import.js';
+import { openDetectDialog } from './campaign-detect.js';
+import { showPlacesOverview } from './campaign-map.js';
 import { openSessionReview } from './campaign-ai.js';
 
 // Une varios textos en uno: cada parte termina en punto (si no tenía signo final) y se separan con un espacio.
@@ -167,6 +169,7 @@ export function mountSessions(root, ctx) {
       </div>
       <ul class="bullets" data-bullets></ul>
       <p class="hint" data-notes-hint>${esc(t('camp.notesHint'))}</p>
+      <div class="stack" data-mentions></div>
       <div class="stack" data-candidates></div>`;
     renderTools();
     renderBullets();
@@ -216,7 +219,31 @@ export function mountSessions(root, ctx) {
     }
   }
 
+  // "En esta sesión": las fichas que nombran las notas, para ver si la sesión quedó unida a la bitácora y al mapa.
+  function renderMentions() {
+    const s = current();
+    const box = editor.querySelector('[data-mentions]');
+    if (!s || !box) return;
+    const count = new Map();
+    for (const it of C.noteIndex()) {
+      if (it.session.id === s.id) for (const id of it.own) count.set(id, (count.get(id) || 0) + 1);
+    }
+    const order = C.CODEX_KINDS;
+    const entries = [...count.keys()].map((id) => C.get('codex', id)).filter(Boolean)
+      .sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || count.get(b.id) - count.get(a.id) || a.name.localeCompare(b.name));
+    const hasNotes = s.notes.some((n) => n.text.trim());
+    box.innerHTML = `
+      <h3>${icon('map')} ${esc(t('sess.inSession'))}${entries.length ? ` <span class="badge num">${entries.length}</span>` : ''}</h3>
+      ${entries.length ? `<p class="hint">${esc(t('sess.inSessionHint'))}</p>
+      <div class="link-chips">${entries.map((c) => `<span class="link-chip">
+        <button type="button" class="link-go" data-go-entry="${esc(c.id)}">${kindIcon(c.kind)}<span>${esc(c.name || t('camp.unnamed'))}</span><span class="hint num">${count.get(c.id)}</span></button>
+        <button type="button" class="link-x" data-go-map="${esc(c.id)}" aria-label="${esc(t('sess.showOnMap', { name: c.name }))}">${icon('pin')}</button>
+      </span>`).join('')}</div>` : hasNotes ? `<p class="hint">${esc(t('sess.inSessionNone'))}</p>` : ''}
+      ${hasNotes ? `<div class="map-actions"><button class="btn" type="button" data-detect-here>${icon('search')}<span>${esc(t('det.button'))}</span></button></div>` : ''}`;
+  }
+
   function renderCandidates() {
+    renderMentions();
     const s = current();
     const box = editor.querySelector('[data-candidates]');
     if (!s || !box) return;
@@ -378,6 +405,7 @@ export function mountSessions(root, ctx) {
         if (created.length) ctx.select('sessions', created.at(-1).id);
         renderList();
         renderEditor();
+        if (created.length) openNextSteps(created.length);
       });
       return;
     }
@@ -394,6 +422,11 @@ export function mountSessions(root, ctx) {
         return;
       }
     }
+    const goEntry = e.target.closest('[data-go-entry]');
+    if (goEntry) { ctx.navigate('codex', goEntry.dataset.goEntry); return; }
+    const goMap = e.target.closest('[data-go-map]');
+    if (goMap) { ctx.navigate('map', goMap.dataset.goMap); return; }
+    if (e.target.closest('[data-detect-here]')) { openDetectDialog(() => renderEditor()); return; }
     const cand = e.target.closest('[data-candidate]');
     if (cand) {
       const entry = C.create('codex', { kind: 'character', name: cand.dataset.candidate, aliases: [], subtitle: '', tags: [], description: '', links: [] });
@@ -463,6 +496,45 @@ export function mountSessions(root, ctx) {
     else if (e.key === 'Backspace' && ta.value === '' && current().notes.length > 1) { e.preventDefault(); bulletAction('delete'); }
     else if (e.key === 'Backspace' && ta.selectionStart === 0 && ta.selectionEnd === 0 && mergeIntoPrevious(ta)) e.preventDefault();
   });
+
+  // Después de importar: los pasos para que las sesiones se unan a la bitácora y al mapa
+  // (cargar la aventura, detectar nombres, ubicar los lugares nuevos). Usa la ventana de importar.
+  function openNextSteps(n, done = {}) {
+    const dlg = document.getElementById('dlg-import');
+    const body = document.getElementById('import-body');
+    const pack = PACKS[0];
+    const packLoaded = C.list('codex').some((c) => (c.tags || []).includes(pack.id));
+    const steps = [...(!packLoaded || done.pack ? ['pack'] : []), 'detect', 'map'];
+    const next = steps.find((k) => !done[k]);
+    body.innerHTML = `
+      <header class="dialog-head">
+        <h2 id="dlg-import-title">${esc(t('steps.title'))}</h2>
+        <button class="btn btn-icon" type="button" data-close aria-label="${esc(t('common.close'))}">${icon('close')}</button>
+      </header>
+      <p>${esc(tn('steps.intro', n))}</p>
+      <ol class="next-steps">${steps.map((k) => `
+        <li>
+          <button class="btn${k === next ? ' btn-primary' : ''}" type="button" data-step="${k}">${icon(done[k] ? 'check' : { pack: 'download', detect: 'search', map: 'pin' }[k])}<span>${esc(t(`steps.${k}`, { name: pack.name }))}</span></button>
+          <p class="hint">${esc(t(`steps.${k}Hint`))}</p>
+        </li>`).join('')}</ol>
+      <footer class="dialog-foot"><button class="btn" type="button" data-close>${esc(t('common.close'))}</button></footer>`;
+    body.onclick = async (e) => {
+      const b = e.target.closest('[data-step]');
+      if (!b) return;
+      const step = b.dataset.step;
+      if (step === 'pack') {
+        if (await confirmAndImportPack(pack.id, confirmDialog)) { renderEditor(); openNextSteps(n, { ...done, pack: true }); }
+      } else if (step === 'detect') {
+        closeDialog(dlg);
+        openDetectDialog(() => { renderList(); renderEditor(); openNextSteps(n, { ...done, detect: true }); });
+      } else {
+        closeDialog(dlg);
+        showPlacesOverview();
+        ctx.navigate('map');
+      }
+    };
+    openDialog(dlg);
+  }
 
   renderList();
   renderEditor();

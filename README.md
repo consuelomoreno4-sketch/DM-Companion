@@ -3,7 +3,7 @@
 Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet en horizontal
 (Samsung Galaxy Tab S8 Ultra). Funciona sin internet una vez instalada y guarda todo en el dispositivo.
 
-**Estado:** las 4 fases listas (Combate, Compendio, Campaña y Ambientación), versión 4.0.2. Ver [`SPEC.md`](SPEC.md) para cómo funciona y [`CHANGELOG.md`](CHANGELOG.md) para los cambios.
+**Estado:** las 4 fases listas (Combate, Compendio, Campaña y Ambientación), versión 4.1.0. Ver [`SPEC.md`](SPEC.md) para cómo funciona y [`CHANGELOG.md`](CHANGELOG.md) para los cambios.
 
 **Idiomas:** inglés (por defecto), español y alemán. Se cambia en **Settings / Ajustes** (⚙).
 
@@ -37,8 +37,10 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
 
 - **Sesiones**: número, fecha, título, resumen y **notas en punteo**. Enter crea un punto nuevo; los botones de
   arriba de las notas cambian la sangría, mueven o borran el punto donde está el cursor.
-  **Seleccionar → Fusionar** une varios puntos en uno (con Deshacer). Debajo aparecen los **nombres sin ficha**
-  para crearlas con un toque.
+  **Seleccionar → Fusionar** une varios puntos en uno (con Deshacer). Debajo, **En esta sesión** muestra las fichas
+  que nombran las notas (tocar abre la ficha; el pin la muestra en el mapa) y los **nombres sin ficha** para
+  crearlas con un toque. Al **importar notas** aparecen los siguientes pasos: cargar la aventura, detectar nombres
+  y ubicar los lugares nuevos en el mapa.
 - **Bitácora**: fichas de personajes, lugares, objetos y facciones, con etiquetas y **enlaces** entre fichas.
   "Aparece en" muestra dónde se menciona cada ficha (otras fichas, historias y notas de sesión).
 - **Líneas de historia**: tablero Idea / Activa / Resuelta; ◀ ▶ mueven cada tarjeta.
@@ -66,6 +68,8 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
 - **Buscar en toda la campaña** desde la barra de arriba. Todo se guarda solo.
 
 ## Funciones con IA (Claude) — necesitan internet y tu clave de API
+
+Están **ocultas** salvo que actives **⚙ Ajustes → Claude (IA) → Mostrar las funciones con IA**.
 
 1. Crea una clave en [platform.claude.com](https://platform.claude.com/settings/keys) (se paga por uso).
 2. En la app: **⚙ Ajustes → Claude (IA)**, pega la clave, elige el modelo y toca **Guardar** y **Probar conexión**.

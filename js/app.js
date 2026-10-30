@@ -49,8 +49,15 @@ function renderLangPicker() {
 
 // ---------- Paneles ----------
 
+// Funciones con IA (de pago, con clave propia): ocultas salvo que se activen en Ajustes.
+const aiOn = () => !document.body.classList.contains('no-ai');
+function setAi(on) {
+  document.body.classList.toggle('no-ai', !on);
+  if (!on && currentPanel() === 'ambientacion') showPanel('combate');
+}
+
 function showPanel(name) {
-  if (!PANELS.includes(name)) name = 'combate';
+  if (!PANELS.includes(name) || (name === 'ambientacion' && !aiOn())) name = 'combate';
   for (const p of document.querySelectorAll('.panel')) p.hidden = p.dataset.panel !== name;
   for (const tab of document.querySelectorAll('.tab')) {
     if (tab.dataset.panel === name) tab.setAttribute('aria-current', 'page');
@@ -109,7 +116,13 @@ function wireSettings() {
   const dlg = $('#dlg-settings');
   wireDialog(dlg);
   renderLangPicker();
+  $('#ai-enabled').addEventListener('change', async (e) => {
+    setAi(e.target.checked);
+    const settings = await loadSettings();
+    await kvSet('settings', { ...settings, ai: e.target.checked });
+  });
   $('#btn-settings').addEventListener('click', async () => {
+    $('#ai-enabled').checked = aiOn();
     openDialog(dlg);
     renderAiSettings($('#ai-settings-body'));
     $('#storage-info').textContent = await storageInfo();
@@ -222,6 +235,7 @@ async function start() {
   const settings = await loadSettings();
   setLang(settings.lang || DEFAULT_LANG);
   translatePage();
+  setAi(settings.ai === true);
 
   combat.initCombat();
   compendium.initCompendium();

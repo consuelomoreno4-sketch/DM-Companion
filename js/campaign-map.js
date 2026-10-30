@@ -219,6 +219,13 @@ function geoBackground() {
 
 // ---------- Vista ----------
 
+/** Vista general del modo Lugares, con la lista de lugares sin ubicar (paso siguiente tras importar). */
+export function showPlacesOverview() {
+  view.mode = 'places';
+  view.place = null;
+  view.editing = false;
+}
+
 export function mountMap(root, ctx, focusId = null) {
   if (focusId) {
     const c = C.get('codex', focusId);

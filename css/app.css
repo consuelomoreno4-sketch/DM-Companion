@@ -517,6 +517,8 @@ p { margin: 0; }
   background: var(--bg); cursor: pointer;
 }
 .check input { width: 24px; height: 24px; min-height: 0; margin: 0; accent-color: var(--amber); }
+/* IA desactivada en Ajustes: se ocultan la pestaña Ambientación y los botones que usan la IA */
+body.no-ai .tab[data-panel="ambientacion"], body.no-ai [data-ai-review], body.no-ai [data-ai-analyze], body.no-ai #ai-settings-body { display: none; }
 .check:has(input:checked) { border-color: var(--amber); background: #4a3a1a; }
 textarea { resize: vertical; line-height: 1.5; min-height: 96px; }
 select { appearance: auto; }
@@ -1120,3 +1122,8 @@ input::placeholder { color: #8994a7; }
 .sess-grip { flex: none; align-self: center; touch-action: none; cursor: grab; color: var(--muted); }
 .sess-item.dragging { opacity: 0.85; outline: 2px dashed var(--amber); outline-offset: 2px; border-radius: var(--radius); }
 .sess-item.dragging .sess-grip { cursor: grabbing; color: var(--amber); }
+
+/* Siguientes pasos tras importar notas */
+.next-steps { display: grid; gap: var(--s2); margin: 0; padding-left: var(--s3); }
+.next-steps li { display: grid; gap: var(--s1); justify-items: start; }
+.next-steps .hint { margin: 0; }
