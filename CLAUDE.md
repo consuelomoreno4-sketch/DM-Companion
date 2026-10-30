@@ -14,6 +14,16 @@ con dedo, S Pen y teclado opcional. Cómo funciona la app hoy: `SPEC.md`. Regist
 - Al terminar, resume en pocas líneas qué cambió y qué debe hacer ella; no repitas código que ya
   mostraste.
 
+## Cómo opinar
+
+- Evalúa con honestidad. No elogies el proyecto, sus ideas ni tu propio trabajo: describe lo que
+  funciona y lo que no, con el mismo peso.
+- Si una idea suya tiene problemas (complejidad, rendimiento, mantenimiento, algo que choca con las
+  restricciones fijas), dilo **antes** de construirla, aunque ya la haya pedido.
+- Si hay una forma más simple de lograr lo mismo, propónla.
+- No digas que algo quedó "perfecto" o "robusto": di qué se probó y qué no.
+- Si no estás seguro de algo, dilo en vez de sonar convencido.
+
 ## Restricciones fijas
 
 - **Sin paso de compilación**: HTML, CSS y módulos ES nativos. Nada de npm, bundlers ni frameworks.
