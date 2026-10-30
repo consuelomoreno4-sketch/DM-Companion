@@ -259,6 +259,10 @@ Importar **reemplaza** todos los datos actuales (se pide confirmación).
   verbos después como "dice/ofrece", preposiciones antes como "llegan a"); agrupa sinónimos (una parte del nombre o
   título + apellido) y sugiere otros nombres para fichas existentes. Ventana de revisión: marcar, corregir tipo y
   nombres, crear todo junto; opción de no volver a sugerir los descartados (kv `ignoredNames`).
+  Las pistas se buscan solo dentro de la misma frase. No propone criaturas: monstruos del Compendio ("Ankhegs") ni
+  plurales con cantidad ("9 Twig Blights"). Una palabra a inicio de frase cuenta como nombre si sigue un verbo de
+  acción ("Excelsior compra…"). Dos nombres nuevos con una letra distinta se unen solo desde 6 letras (Corin ≠
+  Corwin); con una letra distinta que el nombre de una ficha existente se sugiere como otro nombre (Gorthoc → Gorthok).
 - **Reloj de juego (v3.3)**: kv `clock` = `{ calendar: 'harptos' | 'days', start: { year, dayOfYear, minute },
   events: [{ kind: 'time' | 'short' | 'long' | 'next-day' | 'travel', minutes, amount, sessionId, auto?, source? }],
   weather: { [día]: { kind, sessionId, auto?, source? } } }`. Botón en la barra superior (fecha, hora, clima) con

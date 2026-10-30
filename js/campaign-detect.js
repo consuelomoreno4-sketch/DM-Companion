@@ -4,7 +4,7 @@
 // Funciona sin internet; es una estimación, por eso siempre se revisa.
 
 import * as C from './campaign-data.js';
-import { normalize } from './monsters.js';
+import { normalize, loadMonsters, allMonsters } from './monsters.js';
 import { kindIcon } from './campaign-ui.js';
 import { esc, icon, toast, openDialog, closeDialog, wireDialog } from './ui.js';
 import { t, tn } from './i18n.js';
@@ -48,15 +48,28 @@ const CHAR_AFTER = ['dice', 'dijo', 'les', 'le', 'pide', 'pidio', 'ofrece', 'ofr
   'responde', 'grita', 'huye', 'muere', 'murio', 'sonrie', 'miente', 'contrata', 'envia', 'envio', 'confiesa', 'revela', 'traiciona', 'saluda', 'habla', 'hablo',
   'says', 'said', 'asks', 'asked', 'offers', 'offered', 'tells', 'told', 'wants', 'attacks', 'attacked', 'reveals', 'hires', 'sends', 'sent', 'dies', 'died', 'lies',
   'sagt', 'fragt', 'bietet', 'will', 'greift', 'stirbt', 'erzahlt'];
+// Tras un nombre al inicio de frase ("Excelsior compra…", "Corin baja…"): es un nombre, no solo la mayúscula.
+const CHAR_VERBS = ['compra', 'compran', 'vende', 'lanza', 'toca', 'baja', 'sube', 'va', 'lleva', 'entrega', 'recibe', 'intenta', 'decide', 'encuentra',
+  'buys', 'sells', 'casts', 'goes', 'takes', 'tries', 'finds', 'kauft', 'geht', 'nimmt'];
+// "los héroes de Stötteritz" → el nombre es de un grupo.
+const GROUP_NOUNS = ['heroes', 'caballeros', 'knights', 'guardianes', 'guardians', 'hijos', 'sons', 'children', 'seguidores', 'followers', 'helden', 'ritter'];
 const CHAR_BEFORE = ['con', 'hablan con', 'habla con', 'conocen a', 'conoce a', 'ayudan a', 'ayuda a', 'matan a', 'mata a', 'salvan a', 'rescatan a',
   'with', 'meet', 'met', 'help', 'helped', 'kill', 'killed', 'save', 'saved', 'rescue', 'rescued', 'talk to', 'talked to', 'mit', 'treffen'];
 
 const words = (s) => normalize(s).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 const endsWithAny = (text, list) => list.some((cue) => text === cue || text.endsWith(` ${cue}`));
 
+// Criaturas, no fichas: monstruos del Compendio ("Ankhegs") o un plural con cantidad ("los 9 Twig Blights").
+function isCreature(name, before, monsters) {
+  const key = normalize(name);
+  if (monsters.has(key) || monsters.has(key.replace(/e?s$/, ''))) return true;
+  return /s$/.test(key) && /(?:^|\s)(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|varios|varias|muchos|two|three|four|five|several|many)$/i.test(before);
+}
+
 /** Lee todas las notas y devuelve { candidates, aliasSuggestions }. */
 export function detectNames() {
   const found = new Map(); // clave normalizada → candidato
+  const monsters = new Set(allMonsters().map((m) => m.key));
   const sessions = [...C.sessionsSorted()].reverse();
   for (const session of sessions) {
     for (const note of session.notes || []) {
@@ -84,15 +97,20 @@ export function detectNames() {
         const key = normalize(name);
         if (key.length < 3 || COMMON.has(key) || C.STOP.has(key) || C.isIgnoredName(name)) continue;
         if (C.knownIn(name).length) continue; // ya tiene ficha (o es otro nombre de una)
+        if (isCreature(name, text.slice(0, start).trimEnd(), monsters)) continue;
         // Una sola palabra al inicio de frase puede ser solo la mayúscula de la frase:
         // cuenta como nombre si en algún otro punto aparece en medio de una frase.
-        const atStart = sentenceStart && parts.length === 1 && start === m.index;
+        const next = words(text.slice(start + name.length, start + name.length + 20))[0];
+        const atStart = sentenceStart && parts.length === 1 && start === m.index && !CHAR_VERBS.includes(next);
         pending(found, key, name, session, note, text, start, atStart);
       }
     }
   }
   return groupSynonyms([...found.values()]);
 }
+
+// "el ancorita interrumpe…": artículo + palabra + verbo conjugado → es una frase nueva, no una descripción.
+const CLAUSE_VERB = /^\S+\s+\S+\s+(?:interrumpe|ataca|huye|muere|dice|grita|aparece|llega|cae|se|les|le|is|was|attacks|says)\b/i;
 
 function pending(found, key, name, session, note, text, index, atStart) {
   let c = found.get(key);
@@ -108,14 +126,17 @@ function pending(found, key, name, session, note, text, index, atStart) {
     const ap = text.slice(index + name.length).match(/^\s*,\s*((?:el|la|los|las|un|una|the|a|an|der|die|das|ein|eine)\s[^,.;:()"“”]{4,80})/i);
     // No sirve si es una lista ("…, la Reina del Crepúsculo, los pactos") o si sigue otro nombre.
     const inList = /,\s*(?:(?:el|la|los|las|the|der|die|das)\s+)?$/i.test(text.slice(0, index));
-    if (ap && !inList && !/^\S+\s+\p{Lu}/u.test(ap[1])) c.subtitle = ap[1].trim();
+    // Tampoco una oración que sigue ("…, los cuales son asesinados", "…, el ancorita interrumpe el ritual").
+    const clause = ap && (/^\S+\s+(?:cual|cuales|que|which|who|der|die)\b/i.test(ap[1]) || CLAUSE_VERB.test(ap[1]));
+    if (ap && !inList && !clause && !/^\S+\s+\p{Lu}/u.test(ap[1])) c.subtitle = ap[1].trim();
   }
   scoreOccurrence(c, text, index, name);
 }
 
 // Pistas alrededor de cada aparición: qué palabras van antes y después, y qué palabras lleva el nombre.
 function scoreOccurrence(c, text, index, name) {
-  const before = words(text.slice(Math.max(0, index - 40), index)).slice(-3).join(' ');
+  // Solo dentro de la misma frase ("…en Dragon Barrow. Phrygis intenta" no hace de Phrygis un lugar).
+  const before = words(text.slice(Math.max(0, index - 40), index).split(/[.!?;:]\s/).at(-1)).slice(-3).join(' ');
   const after = words(text.slice(index + name.length, index + name.length + 30))[0] || '';
   const inName = c.words;
   if (inName.some((w) => PLACE_WORDS.includes(w))) c.score.place += 3;
@@ -125,10 +146,11 @@ function scoreOccurrence(c, text, index, name) {
   const bw = before.split(' ');
   const nounBefore = bw.at(-1) === 'de' || bw.at(-1) === 'del' || bw.at(-1) === 'of' ? bw.at(-2) : bw.at(-1);
   if (PLACE_WORDS.includes(nounBefore)) c.score.place += 2.5; // "el templo de Zavras", "la posada Stonehill"
+  if (GROUP_NOUNS.includes(nounBefore)) c.score.faction += 2.5; // "los héroes de Stötteritz"
   if (endsWithAny(before, PLACE_BEFORE_STRONG)) c.score.place += 2;
   else if (endsWithAny(before, PLACE_BEFORE_WEAK)) c.score.place += 0.6;
   if (endsWithAny(before, CHAR_BEFORE)) c.score.character += 1.5;
-  if (CHAR_AFTER.includes(after)) c.score.character += 1.5;
+  if (CHAR_AFTER.includes(after) || CHAR_VERBS.includes(after)) c.score.character += 1.5;
   if (['los', 'las', 'the', 'die'].some((w) => before.endsWith(w)) && /s$/.test(normalize(name))) c.score.faction += 1; // "los Zhentarim"
 }
 
@@ -141,8 +163,8 @@ export function guessKind(c) {
 // Sinónimos: "Dagult" o "Lord Neverember" se agrupan con "Dagult Neverember";
 // y un nombre que es parte del de una ficha existente ("Thornton" → Halia Thornton) se sugiere como otro nombre.
 // Casi iguales (una letra de diferencia, como "Valanter" y "Valenter"): suele ser un error de tipeo.
-function oneEdit(a, b) {
-  if (a === b || Math.abs(a.length - b.length) > 1 || Math.min(a.length, b.length) < 5) return false;
+function oneEdit(a, b, min = 5) {
+  if (a === b || Math.abs(a.length - b.length) > 1 || Math.min(a.length, b.length) < min) return false;
   let i = 0;
   while (i < a.length && a[i] === b[i]) i++;
   return a.slice(i + 1) === b.slice(i + 1) || a.slice(i + 1) === b.slice(i) || a.slice(i) === b.slice(i + 1);
@@ -151,7 +173,8 @@ function oneEdit(a, b) {
 function mergeTypos(list) {
   const out = [];
   for (const c of [...list].sort((a, b) => b.midSentence - a.midSentence || b.count - a.count)) {
-    const home = c.words.length === 1 && out.find((k) => k.words.length === 1 && oneEdit(k.key, c.key));
+    // Dos nombres nuevos: solo desde 6 letras, porque los cortos suelen ser personas distintas (Corin y Corwin).
+    const home = c.words.length === 1 && out.find((k) => k.words.length === 1 && oneEdit(k.key, c.key, 6));
     if (home) {
       home.aliases.push(c.name);
       home.count += c.count;
@@ -188,10 +211,14 @@ function groupSynonyms(raw) {
     if (c.words.length > 2) continue;
     const core = c.words.filter((w) => !TITLES.includes(w));
     if (!core.length) continue;
-    const owners = entries.filter((e) => {
+    let owners = entries.filter((e) => {
       const ew = words(e.name || '');
       return ew.length > core.length && core.every((w) => ew.includes(w));
     });
+    // Escrito con una letra distinta que un nombre de una ficha ("Gorthoc" → Gorthok, "Thalos" → Talos).
+    if (!owners.length && core.length === 1) {
+      owners = entries.filter((e) => [e.name, ...(e.aliases || [])].some((n) => words(n || '').some((w) => oneEdit(w, core[0]))));
+    }
     if (owners.length === 1) {
       aliasSuggestions.push({ alias: c.name, entry: owners[0], count: c.count, example: c.examples[0], mid: c.midSentence > 0 });
       kept.splice(kept.indexOf(c), 1);
@@ -251,10 +278,11 @@ function autoPlace(entry, texts) {
 
 let wired = false;
 
-export function openDetectDialog(onDone) {
+export async function openDetectDialog(onDone) {
   const dlg = document.getElementById('dlg-detect');
   const body = document.getElementById('detect-body');
   if (!wired) { wireDialog(dlg); wired = true; }
+  await loadMonsters().catch(() => {}); // para no proponer monstruos del Compendio como fichas
   const { candidates, aliasSuggestions } = detectNames();
   const sessions = C.list('sessions').length;
   const row = (c, i) => `

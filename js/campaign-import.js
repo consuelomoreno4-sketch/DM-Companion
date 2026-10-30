@@ -78,6 +78,7 @@ export async function confirmAndImportPack(id, confirmDialog) {
 
 const HEADING = /^(?:#{1,6}\s+)(.+)$/;
 const SESSION_WORD = /^(?:sesi[oó]n|session|sitzung)\b/i;
+const SEPARATOR = /^[-–—_=*~·.•\s]{3,}$/; // líneas divisorias ("-------", "* * *")
 // Viñetas: guiones, puntos, casillas de verificación (☐ ☑ de Samsung Notes) y listas numeradas.
 const GLYPH_DEPTH = { '○': 1, '◦': 1, '■': 2, '▪': 2 };
 const BULLET = /^([ \t]*)(?:(?:[-*+]|\d+[.)])\s+|[•·▪◦‣○●■□☐☑☒✓✔]\s*)(.*)$/;
@@ -201,10 +202,11 @@ export function splitSentences(text) {
 
 // "Sesión 12 — 03/05/2025: La emboscada" → { number: 12, date: '2025-05-03', title: 'La emboscada' }
 function parseHeading(text, defaultYear) {
-  // Primero el número de sesión (así "Sesión 12 - 5 de mayo" no se lee como la fecha 12/5).
+  // Primero el número de sesión (así "Sesión 12 - 5 de mayo" no se lee como la fecha 12/5),
+  // pero no si es el día de una fecha pegada ("Sesión 26.04.2026").
   let rest = text;
   let number = null;
-  const m = rest.match(/(?:sesi[oó]n|session|sitzung)\s*(?:n[º°o]?\.?\s*)?#?\s*(\d+)/i) || rest.match(/^\s*#?(\d+)\b(?!\s*[/.-]\s*\d)(?!\s*(?:de\s+)?[a-zA-Z]{3})/);
+  const m = rest.match(/(?:sesi[oó]n|session|sitzung)\s*(?:n[º°o]?\.?\s*)?#?\s*(\d+)(?!\d|[/.-]\d)/i) || rest.match(/^\s*#?(\d+)\b(?!\s*[/.-]\s*\d)(?!\s*(?:de\s+)?[a-zA-Z]{3})/);
   if (m) {
     number = Number(m[1]);
     rest = rest.replace(m[0], ' ');
@@ -212,7 +214,8 @@ function parseHeading(text, defaultYear) {
   const { date, raw } = parseDate(rest, defaultYear);
   if (raw) rest = removeLoose(rest, raw).replace(WEEKDAYS_FULL, ' ');
   rest = rest.replace(SESSION_WORD, ' ');
-  const title = rest.replace(/^[\s\-–—:|·,.()]+|[\s\-–—:|·,()]+$/g, '').replace(/\s{2,}/g, ' ');
+  let title = rest.replace(/^[\s\-–—:|·,.()]+|[\s\-–—:|·,()]+$/g, '').replace(/\s{2,}/g, ' ');
+  if (date && /^(?:del?|el|vom|am|on|of|from)$/i.test(title)) title = ''; // "Sesión del 06.09.26"
   return { number, date, title };
 }
 
@@ -245,7 +248,7 @@ export function parseNotes(text) {
   for (const raw of lines) {
     const line = raw.trimEnd();
     const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!trimmed || SEPARATOR.test(trimmed)) continue;
     const h = trimmed.match(HEADING);
     if (h || SESSION_WORD.test(trimmed)) {
       start(parseHeading(h ? h[1] : trimmed, lastYear));
