@@ -11,6 +11,8 @@ Guía para la usuaria: `README.md`.
 - Dirige *Dragon of Icespire Peak*. Sus notas vienen de Samsung Notes, Google Docs o Infomaniak
   (.docx), a veces en párrafos que empiezan con la fecha (`01.03.2026. …`).
 - El repositorio es **público**: no escribas datos personales en archivos, commits ni PRs.
+- Al terminar, resume en pocas líneas qué cambió y qué debe hacer ella; no repitas código que ya
+  mostraste.
 
 ## Restricciones fijas
 
@@ -54,6 +56,6 @@ variables en `:root`), `sw.js` (caché sin internet), `data/` (SRD), `tools/buil
   números con `tabular-nums`; botones ≥ 44 px; espacios en múltiplos de 8 px; radio 6 px;
   nada que dependa de pasar el mouse por encima; respetar `prefers-reduced-motion`.
 - Atajos de teclado: nunca activos mientras se escribe ni con una ventana abierta.
-- Antes de dar algo por terminado: `node --check` de cada JS tocado y prueba en el navegador a
-  ancho de tablet (skill `probar-app`).
+- `node --check` siempre; prueba en el navegador (skill `probar-app`) solo si cambió algo visible o
+  el comportamiento de la app.
 - Commits y pushes solo cuando la dueña lo pide o con `/publicar`.
