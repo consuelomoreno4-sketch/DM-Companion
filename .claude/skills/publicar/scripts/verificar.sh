@@ -16,27 +16,8 @@ for f in js/*.js js/i18n/*.js sw.js; do
 done
 [ "$fallos" = 0 ] && echo "ok"
 
-echo "== Archivos en la caché sin internet (FILES de sw.js) =="
-python3 - <<'PY' || fallos=1
-import os, re, sys
-src = open('sw.js', encoding='utf-8').read()
-listed = set(re.findall(r"'\./([^']*)'", src.split('const FILES = [')[1].split('];')[0]))
-listed.discard('')
-on_disk = set()
-for folder in ('js', 'css', 'data', 'fonts', 'icons'):
-    for root, _, files in os.walk(folder):
-        for name in files:
-            if name.endswith(('.txt', '.md')):  # licencias y notas: no hacen falta sin internet
-                continue
-            on_disk.add(os.path.join(root, name).replace(os.sep, '/'))
-on_disk |= {'index.html', 'manifest.webmanifest'}
-missing = sorted(on_disk - listed)
-gone = sorted(p for p in listed if not os.path.exists(p))
-for p in missing: print(f"FALTA en FILES: ./{p}")
-for p in gone: print(f"En FILES pero no existe: ./{p}")
-if missing or gone: sys.exit(1)
-print("ok")
-PY
+echo "== Archivos que carga la app, en la caché sin internet (FILES de sw.js) =="
+python3 .claude/skills/publicar/scripts/archivos_app.py || fallos=1
 
 claves=".claude/skills/agregar-traducciones/scripts/verificar_claves.py"
 if [ -f "$claves" ]; then

@@ -8,7 +8,12 @@ mensaje="${1:-}"
 [ -n "$mensaje" ] && [ -s "$mensaje" ] || { echo "Falta el archivo con el mensaje del commit."; exit 1; }
 [ -n "${PUBLICAR_NOMBRE:-}" ] && [ -n "${PUBLICAR_EMAIL:-}" ] || { echo "Faltan PUBLICAR_NOMBRE y PUBLICAR_EMAIL (identidad de la dueña)."; exit 1; }
 rama="$(git branch --show-current)"
-[ "$rama" = "main" ] || { echo "Estás en la rama '$rama'. Solo se publica desde main."; exit 1; }
+if [ "$rama" != "main" ]; then
+  echo "DETENIDO: estás en la rama '$rama', no en 'main'."
+  echo "La app publicada sale de 'main'; no se hizo commit ni push. Lleva primero los cambios a 'main'."
+  exit 1
+fi
+base="$(git rev-parse origin/main 2>/dev/null || echo '')"  # lo último publicado, para comparar después
 
 git add -A
 if git diff --cached --quiet; then echo "No hay cambios para publicar."; exit 1; fi
@@ -17,7 +22,11 @@ echo "Commit: $(git log --oneline -1)"
 
 espera=2
 for intento in 1 2 3 4 5; do
-  if git push -q -u origin main; then echo "Subido a main."; exit 0; fi
+  if git push -q -u origin main; then
+    echo "Subido a main."
+    bash "$(dirname "$0")/cambio_pack.sh" "${base:-HEAD~1}" HEAD
+    exit 0
+  fi
   [ "$intento" = 5 ] && break
   echo "El push falló; reintento en ${espera}s…"; sleep "$espera"; espera=$((espera * 2))
 done
