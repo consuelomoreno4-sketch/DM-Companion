@@ -698,4 +698,13 @@ export default {
   'amb.saved': 'Descripciones guardadas (disponibles sin internet)',
   'amb.noSaved': 'Todavía no hay nada guardado.',
   'amb.needScene': 'Escribe primero una escena (o elige una ficha del Códice).',
+  'camp.outOfOrder.one': '{n} sesión tiene un número que no sigue el orden de las fechas.',
+  'camp.outOfOrder.other': '{n} sesiones tienen números que no siguen el orden de las fechas.',
+  'camp.renumber': 'Numerar por fecha',
+  'camp.renumberConfirm': '¿Renumerar todas las sesiones 1, 2, 3… en el orden de sus fechas? Las sesiones sin fecha quedan detrás de la sesión anterior. Puedes deshacerlo justo después.',
+  'camp.renumbered': 'Sesiones numeradas por fecha.',
+  'camp.dragSession': 'Mover la sesión {n} (arrastra, o usa las flechas del teclado)',
+  'camp.keepOrder': 'Dejar así',
+  'camp.dragHint': 'También puedes arrastrar una sesión desde su asa ⠿ para ponerla en otro lugar.',
+  'camp.reordered': 'Sesiones renumeradas en el nuevo orden.',
 };

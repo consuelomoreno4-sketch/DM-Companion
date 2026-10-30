@@ -312,6 +312,12 @@ export function parseNotes(text) {
  * la actualiza (fecha, título y notas) en vez de duplicarla: sirve para volver a importar tras corregir.
  */
 export function importSessions(parsed, { replaceSameNumber = false } = {}) {
+  // Notas sin número de sesión: se numeran en el orden de las fechas (aunque los archivos vengan en otro orden).
+  if (parsed.every((p) => p.number == null)) {
+    let last = '';
+    parsed = parsed.map((p, i) => { if (p.date) last = p.date; return { p, date: p.date || last, i }; })
+      .sort((a, b) => a.date.localeCompare(b.date) || a.i - b.i).map((x) => x.p);
+  }
   let next = Math.max(0, ...C.list('sessions').map((s) => Number(s.number) || 0));
   const created = [];
   const used = new Set();

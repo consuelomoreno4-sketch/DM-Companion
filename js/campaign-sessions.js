@@ -6,6 +6,7 @@
 // Debajo de las notas se sugieren los nombres escritos que todavía no tienen ficha en la bitácora.
 
 import * as C from './campaign-data.js';
+import { kvGet, kvSet } from './db.js';
 import { autosize, dateText } from './campaign-ui.js';
 import { esc, icon, confirmDialog, toast } from './ui.js';
 import { t, tn } from './i18n.js';
@@ -24,6 +25,7 @@ export function mountSessions(root, ctx) {
       <div class="camp-side">
         <button class="btn btn-primary" type="button" data-new>${icon('plus')}<span>${esc(t('camp.newSession'))}</span></button>
         <button class="btn" type="button" data-import>${icon('upload')}<span>${esc(t('imp.button'))}</span></button>
+        <div data-order></div>
         <ul class="camp-list" data-list></ul>
       </div>
       <div class="camp-main" data-editor></div>
@@ -36,14 +38,108 @@ export function mountSessions(root, ctx) {
 
   const current = () => C.get('sessions', ctx.selected('sessions')) ?? C.sessionsSorted()[0] ?? null;
 
+  // Aviso cuando los números no siguen las fechas, con un botón para ordenarlas.
+  // "Dejar así" (o un orden puesto a mano) guarda cómo están los números: el aviso no vuelve hasta que algo cambie.
+  let orderAck = null;
+  kvGet('sessionOrderAck').then((v) => { orderAck = v || null; renderOrder(); }).catch(() => {});
+  const orderSig = () => C.sessionsSorted().map((s) => `${s.id}:${s.number}:${s.date}`).join('|');
+  function renderOrder() {
+    const box = root.querySelector('[data-order]');
+    const n = C.sessionsOutOfOrder();
+    box.innerHTML = n && orderAck !== orderSig() ? `<div class="order-warn"><p>${icon('clock')} ${esc(tn('camp.outOfOrder', n))}</p>
+      <div class="map-actions">
+        <button class="btn" type="button" data-renumber>${icon('refresh')}<span>${esc(t('camp.renumber'))}</span></button>
+        <button class="btn" type="button" data-order-ok>${icon('check')}<span>${esc(t('camp.keepOrder'))}</span></button>
+      </div>
+      <p class="hint">${esc(t('camp.dragHint'))}</p></div>` : '';
+  }
+  function ackOrder() {
+    orderAck = orderSig();
+    kvSet('sessionOrderAck', orderAck).catch(() => {});
+    renderOrder();
+  }
+
+  // Nuevo orden de la lista (de arriba abajo = de la última a la primera sesión): números N … 1.
+  function applyOrder(ids) {
+    const before = new Map(C.list('sessions').map((s) => [s.id, s.number]));
+    const total = ids.length;
+    let changed = 0;
+    ids.forEach((id, i) => {
+      const s = C.get('sessions', id);
+      if (s && s.number !== total - i) { C.update('sessions', id, { number: total - i }, { debounce: false }); changed += 1; }
+    });
+    if (!changed) return;
+    ackOrder();
+    renderList();
+    renderEditor();
+    toast(t('camp.reordered'), {
+      duration: 8000,
+      group: 'renumber',
+      action: { label: t('combat.undo'), run: () => { C.restoreNumbers(before); renderList(); renderEditor(); } },
+    });
+  }
+
+  // Arrastrar con el dedo, el lápiz o el mouse desde el asa ⠿ de cada sesión.
+  let drag = null;
+  listEl.addEventListener('pointerdown', (e) => {
+    const grip = e.target.closest('[data-drag]');
+    if (!grip || e.button > 0) return;
+    e.preventDefault();
+    const li = grip.closest('[data-sess]');
+    // Se escucha en la ventana: al mover el elemento en la lista el navegador suelta la captura del puntero.
+    drag = { li, grip, startY: e.clientY, moved: false, scroll: listEl };
+    li.classList.add('dragging');
+    window.addEventListener('pointermove', onDragMove);
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+  });
+  function onDragMove(e) {
+    if (!drag) return;
+    if (Math.abs(e.clientY - drag.startY) > 4) drag.moved = true;
+    // El elemento va cambiando de lugar cuando el dedo pasa la mitad de su vecino.
+    const prev = drag.li.previousElementSibling;
+    const next = drag.li.nextElementSibling;
+    if (prev && e.clientY < prev.getBoundingClientRect().top + prev.offsetHeight / 2) listEl.insertBefore(drag.li, prev);
+    else if (next && e.clientY > next.getBoundingClientRect().top + next.offsetHeight / 2) listEl.insertBefore(next, drag.li);
+    // Cerca de los bordes, la lista se desplaza sola.
+    const box = drag.scroll.getBoundingClientRect();
+    if (e.clientY < box.top + 40) drag.scroll.scrollTop -= 12;
+    else if (e.clientY > box.bottom - 40) drag.scroll.scrollTop += 12;
+  }
+  function endDrag() {
+    window.removeEventListener('pointermove', onDragMove);
+    window.removeEventListener('pointerup', endDrag);
+    window.removeEventListener('pointercancel', endDrag);
+    if (!drag) return;
+    drag.li.classList.remove('dragging');
+    const moved = drag.moved;
+    drag = null;
+    if (moved) applyOrder([...listEl.querySelectorAll('[data-sess]')].map((li) => li.dataset.sess));
+  }
+  // Con teclado: flechas sobre el asa mueven la sesión un lugar.
+  listEl.addEventListener('keydown', (e) => {
+    const grip = e.target.closest('[data-drag]');
+    if (!grip || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    e.preventDefault();
+    const ids = [...listEl.querySelectorAll('[data-sess]')].map((li) => li.dataset.sess);
+    const i = ids.indexOf(grip.dataset.drag);
+    const j = e.key === 'ArrowUp' ? i - 1 : i + 1;
+    if (j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    applyOrder(ids);
+    listEl.querySelector(`[data-drag="${CSS.escape(ids[j])}"]`)?.focus();
+  });
+
   function renderList() {
+    renderOrder();
     const cur = current();
     const items = C.sessionsSorted();
     listEl.innerHTML = items.length ? items.map((s) => `
-      <li><button type="button" class="comp-item" data-pick="${esc(s.id)}" aria-current="${s.id === cur?.id}">
+      <li class="sess-item" data-sess="${esc(s.id)}"><button type="button" class="comp-item" data-pick="${esc(s.id)}" aria-current="${s.id === cur?.id}">
         <span class="comp-name"><span class="num">#${esc(s.number ?? '')}</span> ${esc(s.title || t('camp.untitled'))}</span>
         <span class="comp-meta">${esc(dateText(s.date))}${s.summary ? ` · ${esc(s.summary.slice(0, 60))}` : ''}</span>
-      </button></li>`).join('') : `<li class="comp-msg">${esc(t('camp.noSessions'))}</li>`;
+      </button>
+      ${items.length > 1 ? `<button type="button" class="btn btn-icon btn-ghost sess-grip" data-drag="${esc(s.id)}" aria-label="${esc(t('camp.dragSession', { n: s.number ?? '' }))}">${icon('grip')}</button>` : ''}</li>`).join('') : `<li class="comp-msg">${esc(t('camp.noSessions'))}</li>`;
   }
 
   function renderEditor() {
@@ -255,6 +351,21 @@ export function mountSessions(root, ctx) {
       renderList();
       renderEditor();
       editor.querySelector('[data-field="title"]')?.focus();
+      return;
+    }
+    if (e.target.closest('[data-order-ok]')) { ackOrder(); return; }
+    if (e.target.closest('[data-renumber]')) {
+      const ok = await confirmDialog(t('camp.renumberConfirm'), { yes: t('camp.renumber') });
+      if (!ok) return;
+      const before = C.renumberByDate();
+      ackOrder();
+      renderList();
+      renderEditor();
+      toast(t('camp.renumbered'), {
+        duration: 10000,
+        group: 'renumber',
+        action: { label: t('combat.undo'), run: () => { C.restoreNumbers(before); renderList(); renderEditor(); } },
+      });
       return;
     }
     if (e.target.closest('[data-ai-review]')) {

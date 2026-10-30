@@ -3,7 +3,7 @@
 Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet en horizontal
 (Samsung Galaxy Tab S8 Ultra). Funciona sin internet una vez instalada y guarda todo en el dispositivo.
 
-**Estado:** las 4 fases listas (Combate, Compendio, Campaña y Ambientación), versión 4.0. Ver [`SPEC.md`](SPEC.md) para el plan completo.
+**Estado:** las 4 fases listas (Combate, Compendio, Campaña y Ambientación), versión 4.0.1. Ver [`SPEC.md`](SPEC.md) para el plan completo.
 
 **Idiomas:** inglés (por defecto), español y alemán. Se cambia en **Settings / Ajustes** (⚙).
 
@@ -57,6 +57,8 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
   Desde Samsung Notes: ⋮ → «Guardar como archivo» → Microsoft Word, y luego «Elegir archivos» en la app.
   Desde Google Docs: copiar y pegar (se respetan los niveles ● ○ ■) o descargar como .docx / .txt. Infomaniak: sus
   documentos ya son .docx. No hace falta tener Microsoft Word.
+- **Orden de las sesiones** (Sesiones): si los números no siguen las fechas aparece un aviso con «Numerar por fecha».
+  También puedes arrastrar cada sesión por su asa ⠿ (con el dedo o el mouse) para ponerla en otro lugar.
 - **Detectar en las notas** (Bitácora): encuentra personajes, lugares, facciones y objetos sin ficha, con sus otros
   nombres, para revisarlos y crearlos de una vez.
 - **Reloj de juego** (arriba a la derecha): fecha del calendario de Harptos, hora y clima; avanza con descansos,

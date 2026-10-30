@@ -710,4 +710,13 @@ export default {
   'amb.saved': 'Saved descriptions (available offline)',
   'amb.noSaved': 'Nothing saved yet.',
   'amb.needScene': 'Write a scene first (or choose a codex entry).',
+  'camp.outOfOrder.one': '{n} session\'s number does not follow the dates.',
+  'camp.outOfOrder.other': '{n} sessions have numbers that do not follow the dates.',
+  'camp.renumber': 'Number by date',
+  'camp.renumberConfirm': 'Renumber all sessions 1, 2, 3… in order of their dates? Sessions without a date stay after the session before them. You can undo it right after.',
+  'camp.renumbered': 'Sessions numbered by date.',
+  'camp.dragSession': 'Move session {n} (drag, or use the arrow keys)',
+  'camp.keepOrder': 'Keep as is',
+  'camp.dragHint': 'You can also drag a session by its ⠿ handle to put it in another place.',
+  'camp.reordered': 'Sessions renumbered in the new order.',
 };

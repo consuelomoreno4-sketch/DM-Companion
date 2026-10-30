@@ -698,4 +698,13 @@ export default {
   'amb.saved': 'Gespeicherte Beschreibungen (offline verfügbar)',
   'amb.noSaved': 'Noch nichts gespeichert.',
   'amb.needScene': 'Schreibe zuerst eine Szene (oder wähle einen Kodex-Eintrag).',
+  'camp.outOfOrder.one': 'Bei {n} Sitzung passt die Nummer nicht zur Reihenfolge der Daten.',
+  'camp.outOfOrder.other': 'Bei {n} Sitzungen passen die Nummern nicht zur Reihenfolge der Daten.',
+  'camp.renumber': 'Nach Datum nummerieren',
+  'camp.renumberConfirm': 'Alle Sitzungen in der Reihenfolge ihrer Daten neu nummerieren (1, 2, 3 …)? Sitzungen ohne Datum bleiben hinter der vorherigen Sitzung. Du kannst es direkt danach rückgängig machen.',
+  'camp.renumbered': 'Sitzungen nach Datum nummeriert.',
+  'camp.dragSession': 'Sitzung {n} verschieben (ziehen oder Pfeiltasten)',
+  'camp.keepOrder': 'So lassen',
+  'camp.dragHint': 'Du kannst eine Sitzung auch an ihrem Griff ⠿ an eine andere Stelle ziehen.',
+  'camp.reordered': 'Sitzungen in der neuen Reihenfolge nummeriert.',
 };

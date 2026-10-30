@@ -1108,3 +1108,15 @@ input::placeholder { color: #8994a7; }
 .amb-card-open { flex: 1; min-width: 0; display: grid; gap: 2px; text-align: left; background: none; border: 0; color: inherit; padding: var(--s1); min-height: var(--tap); cursor: pointer; font: inherit; }
 .amb-card-open .comp-meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 1100px) { .amb { grid-template-columns: 1fr; } }
+
+/* Aviso: números de sesión fuera del orden de las fechas */
+.order-warn { display: grid; gap: var(--s1); padding: var(--s1) var(--s2); border: 1px solid var(--amber); border-radius: var(--radius); background: #3a3020; }
+.order-warn p { margin: 0; color: #ffe2a8; }
+.order-warn .icon { color: var(--amber); vertical-align: -3px; }
+
+/* Lista de sesiones: asa para arrastrar */
+.sess-item { display: flex; gap: 4px; align-items: stretch; }
+.sess-item .comp-item { flex: 1; min-width: 0; }
+.sess-grip { flex: none; align-self: center; touch-action: none; cursor: grab; color: var(--muted); }
+.sess-item.dragging { opacity: 0.85; outline: 2px dashed var(--amber); outline-offset: 2px; border-radius: var(--radius); }
+.sess-item.dragging .sess-grip { cursor: grabbing; color: var(--amber); }

@@ -127,6 +127,30 @@ export function sessionsSorted() {
   return [...data.sessions].sort((a, b) => (b.number || 0) - (a.number || 0) || String(b.date).localeCompare(String(a.date)));
 }
 
+// Orden por fecha: las sesiones sin fecha se quedan detrás de la sesión con fecha que las precede (por número).
+function chronological() {
+  const byNumber = [...data.sessions].sort((a, b) => (a.number || 0) - (b.number || 0) || String(a.date).localeCompare(String(b.date)));
+  let last = '';
+  const keyed = byNumber.map((s, i) => { if (s.date) last = s.date; return { s, date: s.date || last, i }; });
+  return keyed.sort((a, b) => a.date.localeCompare(b.date) || a.i - b.i).map((x) => x.s);
+}
+
+/** ¿Hay sesiones cuyo número no sigue el orden de las fechas? */
+export function sessionsOutOfOrder() {
+  return chronological().filter((s, i) => Number(s.number) !== i + 1).length;
+}
+
+/** Renumera las sesiones 1, 2, 3… según la fecha. Devuelve los números anteriores (para deshacer). */
+export function renumberByDate() {
+  const before = new Map(data.sessions.map((s) => [s.id, s.number]));
+  chronological().forEach((s, i) => { if (s.number !== i + 1) update('sessions', s.id, { number: i + 1 }, { debounce: false }); });
+  return before;
+}
+
+export function restoreNumbers(before) {
+  for (const [id, number] of before) if (get('sessions', id) && get('sessions', id).number !== number) update('sessions', id, { number }, { debounce: false });
+}
+
 export function newSession() {
   const number = Math.max(0, ...data.sessions.map((s) => Number(s.number) || 0)) + 1;
   return create('sessions', { number, date: today(), title: '', summary: '', notes: [{ id: newId('n'), text: '', depth: 0 }] });
