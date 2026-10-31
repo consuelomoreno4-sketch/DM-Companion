@@ -698,35 +698,82 @@ mark.mention {
 .map-kinds { display: flex; gap: var(--s1); flex: none; }
 .segmented.seg-2 { grid-template-columns: repeat(2, 1fr); }
 
-/* Mapa dibujado de la Costa de la Espada */
-.geo-sea { fill: #17253a; }
-.geo-land { fill: #283244; stroke: #6b7f9a; stroke-width: 3; }
-.geo-depth { fill: none; stroke: #2a3d5a; stroke-width: 2; stroke-dasharray: 4 8; }
-.geo-contour { stroke: #8794ad; stroke-width: 1.5; }
-.geo-contour.l1 { fill: #2f394c; }
-.geo-contour.l2 { fill: #374258; }
-.geo-contour.l3 { fill: #414d66; }
-.geo-peak { fill: #c9d3e3; stroke: #17253a; stroke-width: 1.5; }
-.geo-wood { fill: #263f34; stroke: #4a7a5c; stroke-width: 2; }
-.geo-trees path { fill: #3f6b52; }
-.geo-swamp { fill: rgba(120, 160, 110, 0.16); stroke: rgba(150, 190, 140, 0.45); stroke-width: 2; stroke-dasharray: 6 6; }
-.geo-tufts path { fill: none; stroke: rgba(150, 190, 140, 0.55); stroke-width: 1.5; stroke-linecap: round; }
-.geo-river { fill: none; stroke: #4f7fb8; stroke-width: 4; stroke-linecap: round; }
-.geo-label.geo-note { fill: var(--muted); font: italic 600 calc(14px * var(--k)) var(--font-body); letter-spacing: 0; }
-.geo-road { fill: none; stroke: #b9a070; stroke-width: 3; stroke-dasharray: 12 8; stroke-linecap: round; opacity: 0.8; }
+/* Mapa dibujado de la Costa de la Espada: atlas nocturno, un color por terreno (ver la leyenda) */
+.map-stage {
+  --geo-grass: #3a4a30; --geo-hills: #5f5537; --geo-mount: #5e5a53; --geo-peak: #7a756c;
+  --geo-wood: #1f3a29; --geo-swamp: #2b4840; --geo-sea: #17304d; --geo-river: #5b9ad8; --geo-road: #d4b47a;
+}
+.geo-sea { fill: #17253a; } /* fondo alrededor de un mapa propio */
+.geo-wave { fill: none; stroke: rgba(140, 180, 230, 0.12); stroke-width: 1.5; stroke-linecap: round; }
+.geo-depth { fill: none; stroke: rgba(120, 165, 220, 0.22); stroke-width: 2; stroke-dasharray: 3 9; }
+.geo-shallow { fill: none; stroke: #23476f; stroke-width: 34; stroke-linejoin: round; opacity: 0.8; }
+.geo-land { fill: var(--geo-grass); }
+.geo-grass-tuft { fill: none; stroke: #50683d; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.geo-grass-dot { fill: #4a5f39; }
+.geo-beach { fill: none; stroke: #c2ab78; stroke-width: 3; stroke-linejoin: round; }
+.geo-contour { stroke-linejoin: round; }
+.geo-contour.l1 { fill: var(--geo-hills); stroke: #75664a; stroke-width: 2; }
+.geo-contour.l2 { fill: var(--geo-mount); stroke: #827b70; stroke-width: 1.5; }
+.geo-contour.l3 { fill: var(--geo-peak); stroke: #9a9488; stroke-width: 1.5; }
+.geo-relief { stroke: none; }
+.geo-hatch-line { stroke: rgba(20, 18, 15, 0.28); stroke-width: 2; }
+.geo-peak .lit { fill: #a49d90; stroke: #2a2723; stroke-width: 1.5; stroke-linejoin: round; }
+.geo-peak .shade { fill: #5b554c; }
+.geo-peak.snow .lit { fill: #b5ad9f; }
+.geo-peak .cap { fill: #f1f4f8; }
+.geo-smoke { fill: rgba(200, 200, 205, 0.25); }
+.geo-wood { fill: var(--geo-wood); stroke: #2f5a3d; stroke-width: 3; stroke-linejoin: round; }
+.geo-trees .t1 { fill: #2f6a44; }
+.geo-trees .t2 { fill: #20503a; }
+.geo-swamp { fill: var(--geo-swamp); stroke: #4e7a68; stroke-width: 2; stroke-dasharray: 5 5; }
+.geo-tufts path { fill: none; stroke: #79a68c; stroke-width: 1.5; stroke-linecap: round; }
+.geo-river-bank { fill: none; stroke: #1d3a5a; stroke-width: 8; stroke-linecap: round; }
+.geo-river { fill: none; stroke: var(--geo-river); stroke-width: 4; stroke-linecap: round; }
+.geo-stream { stroke-width: 3; }
+.geo-road-casing { fill: none; stroke: rgba(20, 16, 10, 0.55); stroke-width: 6; stroke-linecap: round; }
+.geo-road { fill: none; stroke: var(--geo-road); stroke-width: 3; stroke-dasharray: 12 8; stroke-linecap: round; }
 .geo-path { stroke-width: 2; stroke-dasharray: 6 8; }
 .geo-label {
-  font-family: var(--font-title); font-weight: 700; text-anchor: middle; letter-spacing: 0.06em;
-  font-size: calc(20px * var(--k)); fill: #9fb0c8;
-  paint-order: stroke; stroke: rgba(23, 37, 58, 0.85); stroke-width: calc(4px * var(--k));
+  font-family: var(--font-title); font-weight: 700; text-anchor: middle; letter-spacing: 0.08em;
+  font-size: calc(20px * var(--k)); fill: #c7d2e2;
+  paint-order: stroke; stroke: rgba(12, 20, 32, 0.85); stroke-width: calc(4px * var(--k));
   pointer-events: none;
 }
-.geo-sea-label { fill: #7fa3d0; font-style: italic; }
-.geo-road-label { fill: #d2bb8a; font-family: var(--font-body); font-style: italic; font-weight: 600; font-size: calc(18px * var(--k)); }
-.geo-title { fill: var(--amber); font-size: calc(26px * var(--k)); }
+.geo-sea-label { fill: #8fb6e3; font-style: italic; }
+.geo-wood-label { fill: #a6d6b4; }
+.geo-mount-label { fill: #e0d6c4; }
+.geo-river-label { fill: #9cc6ef; font-family: var(--font-body); font-style: italic; font-weight: 600; letter-spacing: 0; }
+.geo-road-label { fill: #e2c995; font-family: var(--font-body); font-style: italic; font-weight: 600; font-size: calc(18px * var(--k)); }
+.geo-cartouche rect { fill: rgba(16, 22, 34, 0.82); stroke: var(--amber); stroke-width: 2; }
+.geo-title { fill: var(--amber); font-size: 26px; }
+.geo-cartouche .geo-note { fill: var(--muted); font: italic 600 14px var(--font-body); letter-spacing: 0; stroke-width: 0; }
 .geo-small { font-size: calc(15px * var(--k)); }
-.geo-compass path { fill: var(--amber); }
-.geo-compass text { fill: var(--text); font: 700 calc(18px * var(--k)) var(--font-body); text-anchor: middle; }
+.geo-compass circle { fill: rgba(16, 22, 34, 0.7); stroke: var(--amber); stroke-width: 1.5; }
+.geo-compass circle.inner { fill: none; stroke-dasharray: 2 4; }
+.geo-compass .ew { fill: #8794ad; }
+.geo-compass .ns { fill: #c7d2e2; }
+.geo-compass .north { fill: var(--amber); }
+.geo-compass text { fill: var(--amber); font: 700 18px var(--font-title); text-anchor: middle; }
+/* De lejos, solo los nombres grandes del terreno */
+.map-svg.zoomed-out .geo-small, .map-svg.zoomed-out .geo-road-label { display: none; }
+/* Leyenda del mapa dibujado (plegable) */
+.map-legend {
+  position: absolute; left: var(--s2); bottom: var(--s2); z-index: 2; max-width: min(360px, calc(100% - 32px));
+  background: rgba(16, 22, 34, 0.92); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.map-legend summary {
+  display: flex; align-items: center; gap: var(--s1); min-height: var(--tap); padding: 0 var(--s2);
+  font: 700 18px var(--font-title); color: var(--amber); cursor: pointer; list-style: none;
+}
+.map-legend summary::-webkit-details-marker { display: none; }
+.map-legend .legend-body { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s1) var(--s2); padding: 0 var(--s2) var(--s2); max-height: 50vh; overflow: auto; }
+.map-legend h4 { grid-column: 1 / -1; margin: var(--s1) 0 0; font-size: 16px; color: var(--muted); }
+.legend-item { display: flex; align-items: center; gap: var(--s1); font-size: 16px; line-height: 1.25; }
+.legend-swatch { flex: none; width: 24px; height: 24px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.18); }
+.legend-swatch.line { height: 6px; border: 0; border-radius: 3px; }
+.legend-swatch.dash { height: 0; border: 0; border-top: 3px dashed var(--geo-road); border-radius: 0; }
+.legend-dot { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(10, 14, 22, 0.75); }
+.legend-dot .icon { width: 16px; height: 16px; color: #1a2130; }
 .map-svg .node.movable { cursor: move; }
 .map-svg.zoomed-out .node.minor .node-label { display: none; }
 .map-svg .node-label.lbl-hidden { display: none; }
@@ -735,12 +782,17 @@ mark.mention {
 .map-select select { width: auto; max-width: 260px; }
 .map-image { image-rendering: auto; }
 .map-frame { fill: none; stroke: var(--line); stroke-width: 2; }
-.map-svg .tk-inner { transform: scale(var(--k)); }
 .map-svg .tk-inner .node-label { font-size: 18px; stroke-width: 5px; }
-.map-svg .place-token circle { stroke: rgba(10, 14, 22, 0.75); stroke-width: 3; }
-.map-svg .place-token use { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
-.map-svg .place-token.center circle, .map-svg .place-token.token-sel circle { stroke: var(--amber); stroke-width: 5; }
-.map-svg .place-token.selected circle { stroke: #ffe2a8; stroke-width: 4; }
+.map-svg .place-token .tk-body { stroke: rgba(10, 14, 22, 0.8); stroke-width: 3; }
+.map-svg .place-token .tk-shadow { fill: rgba(0, 0, 0, 0.45); }
+.map-svg .place-token .tk-ring { fill: rgba(16, 22, 34, 0.85); stroke: var(--amber); stroke-width: 2.5; }
+.map-svg .place-token use { color: #1a2130; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.map-svg .place-token.tk-city .node-label { font-family: var(--font-title); font-size: 20px; fill: #ffe2a8; letter-spacing: 0.04em; }
+.map-svg .place-token.center .tk-body, .map-svg .place-token.token-sel .tk-body { stroke: var(--amber); stroke-width: 5; }
+.map-svg .place-token.selected .tk-body { stroke: #ffe2a8; stroke-width: 4; }
+/* Nombres según el zoom: de lejos solo pueblos y ciudades; muy de lejos, solo las ciudades grandes */
+.map-svg.zoomed-out .place-token.tier-3 .node-label, .map-svg.zoomed-far .place-token.tier-2 .node-label { display: none; }
+.map-svg .place-token.center .node-label, .map-svg .place-token.selected .node-label { display: inline; }
 .map-svg .party-token { cursor: grab; }
 .map-svg .party-token circle { fill: var(--blue-deep); stroke: var(--amber); stroke-width: 4; stroke-dasharray: 6 4; }
 .map-svg .party-token use { color: #fff; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
@@ -753,7 +805,7 @@ mark.mention {
   border: 3px solid var(--line); background: var(--swatch); cursor: pointer;
 }
 .swatch[aria-pressed="true"] { border-color: var(--text); box-shadow: 0 0 0 3px var(--amber); }
-.map-svg .node.movable circle { stroke: var(--amber); stroke-dasharray: 6 4; }
+.map-svg .node.movable .tk-body, .map-svg .node.movable > circle { stroke: var(--amber); stroke-dasharray: 6 4; }
 .imp-example {
   margin: 0; padding: var(--s2);
   background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
@@ -773,6 +825,7 @@ mark.mention {
 .map-zoom { display: flex; gap: var(--s1); flex: none; }
 .map-svg {
   width: 100%; height: 100%; min-height: 0; display: block;
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.55); /* viñeta: bordes más oscuros */
   touch-action: none; user-select: none; cursor: grab;
   background:
     radial-gradient(circle at 50% 45%, rgba(110, 168, 255, 0.06), transparent 60%),

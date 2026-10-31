@@ -124,7 +124,7 @@ function F([x, y]) {
 }
 const FL = (pts) => pts.map(F);
 
-const COAST = FL([[360, -300], [372, 0], [380, 60], [392, 105], [378, 180], [370, 260], [375, 330], [372, 420], [352, 500], [330, 560], [300, 640], [290, 720], [280, 1000]]);
+const COAST = FL([[340, -1600], [355, -700], [360, -300], [372, 0], [380, 60], [392, 105], [378, 180], [370, 260], [375, 330], [372, 420], [352, 500], [330, 560], [300, 640], [290, 720], [280, 1000], [270, 1700], [260, 2600]]);
 const WOOD = FL([[420, 170], [470, 130], [560, 120], [650, 140], [700, 180], [690, 240], [640, 270], [560, 280], [480, 275], [430, 245]]);
 const MERE = FL([[330, 560], [380, 560], [400, 610], [380, 680], [330, 690], [300, 640]]);
 const RELIEF = [
@@ -178,43 +178,119 @@ function scatter(poly, step, margin) {
   return out;
 }
 
+// Río de Neverwinter: de la desembocadura hacia el este por el bosque, hasta pasar el pabellón de Falcon.
+const RIVER = [[392, 114], [418, 132], [450, 162], [490, 196], [535, 222], [585, 244], [615, 250], [655, 238], [700, 212], [735, 196]];
+const STREAM = [[470, 90], [445, 100], [420, 104], [392, 110]]; // arroyo que baja del Monte Hotenow
+
 function geoBackground() {
   const label = (pt, key, cls = '', rotate = 0) => {
     const [x, y] = F(pt);
     return `<text class="geo-label ${cls}" x="${x}" y="${y}"${rotate ? ` transform="rotate(${rotate} ${x} ${y})"` : ''}>${esc(t(`map.geo.${key}`))}</text>`;
   };
-  const peak = (pt) => { const [x, y] = F(pt); return `<path class="geo-peak" d="M${x - 11} ${y + 9} L${x} ${y - 11} L${x + 11} ${y + 9} Z"></path>`; };
+  // Pico con ladera en sombra (y nieve en los más altos).
+  const peak = ([x, y], s = 1, snow = false) => `<g class="geo-peak${snow ? ' snow' : ''}" transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) scale(${s})">
+    <path class="lit" d="M-14 10 L0 -12 L14 10 Z"></path><path class="shade" d="M0 -12 L14 10 L3 10 L-1 0 Z"></path>
+    ${snow ? '<path class="cap" d="M-5 -4 L0 -12 L5 -4 L2 -6 L0 -3 L-2 -6 Z"></path>' : ''}</g>`;
   const line = (pts, cls) => `<path class="${cls}" d="${smooth(FL(pts))}"></path>`;
   const shift = (dx) => COAST.map(([x, y]) => [x + dx, y]);
-  const trees = scatter(WOOD, 20, 9).map(([x, y]) => `<path d="M${x.toFixed(0)} ${(y - 8).toFixed(0)} l6 11 h-12 Z"></path>`);
-  const tufts = scatter(MERE, 18, 8).map(([x, y]) => `<path d="M${(x - 6).toFixed(0)} ${y.toFixed(0)} l3 -6 M${x.toFixed(0)} ${y.toFixed(0)} v-8 M${(x + 6).toFixed(0)} ${y.toFixed(0)} l-3 -6"></path>`);
+  // Árboles de dos tonos (copa iluminada a un lado) y matas del pantano, siempre en el mismo sitio.
+  const trees = scatter(WOOD, 18, 9).map(([x, y], i) => {
+    const s = 0.8 + ((i * 37) % 10) / 25;
+    return `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) scale(${s.toFixed(2)})"><path class="t1" d="M0 -10 L7 4 H-7 Z"></path><path class="t2" d="M0 -10 L7 4 H1 Z"></path></g>`;
+  });
+  const tufts = scatter(MERE, 16, 7).map(([x, y]) => `<path d="M${(x - 6).toFixed(0)} ${y.toFixed(0)} l3 -6 M${x.toFixed(0)} ${y.toFixed(0)} v-8 M${(x + 6).toFixed(0)} ${y.toFixed(0)} l-3 -6"></path>`);
+  // Cordillera: picos repartidos dentro de la curva de nivel media; el Pico Icespire más grande y nevado.
+  const range = scatter(RELIEF[1][1], 34, 14).map((p, i) => peak(p, 0.7 + ((i * 53) % 10) / 30, i % 3 === 0));
+  const hotenow = F([445, 62]);
   return `
+    <defs>
+      <linearGradient id="geo-sea-grad" gradientUnits="userSpaceOnUse" x1="-600" y1="0" x2="420" y2="0">
+        <stop offset="0" stop-color="#0b1628"></stop><stop offset="1" stop-color="#1b3655"></stop>
+      </linearGradient>
+      <pattern id="geo-grass" patternUnits="userSpaceOnUse" width="74" height="62">
+        <path d="M8 14 l2 -5 l2 5 M47 9 l1.5 -4 l1.5 4 M28 41 l2 -5 l2 5 M61 50 l1.5 -4 l1.5 4" class="geo-grass-tuft"></path>
+        <circle cx="19" cy="27" r="1.2" class="geo-grass-dot"></circle><circle cx="58" cy="30" r="1" class="geo-grass-dot"></circle><circle cx="9" cy="54" r="1" class="geo-grass-dot"></circle>
+      </pattern>
+      <pattern id="geo-waves" patternUnits="userSpaceOnUse" width="60" height="44">
+        <path d="M6 14 q6 -5 12 0 t12 0 M36 36 q6 -5 12 0 t12 0" class="geo-wave"></path>
+      </pattern>
+      <pattern id="geo-hatch" patternUnits="userSpaceOnUse" width="9" height="9" patternTransform="rotate(35)">
+        <line x1="0" y1="0" x2="0" y2="9" class="geo-hatch-line"></line>
+      </pattern>
+    </defs>
     <g class="geo">
-      <rect class="geo-sea" x="-400" y="-300" width="1800" height="1300"></rect>
-      <path class="geo-depth" d="${smooth(shift(-22))}"></path>
-      <path class="geo-depth" d="${smooth(shift(-55))}"></path>
-      <path class="geo-land" d="${smooth(COAST)} L1400 1000 L1400 -300 Z"></path>
-      ${RELIEF.map(([lvl, pts]) => `<path class="geo-contour l${lvl}" d="${smooth(pts, true)}"></path>`).join('')}
-      <path class="geo-wood" d="${smooth(WOOD, true)}"></path>
-      <g class="geo-trees">${trees.join('')}</g>
+      <rect x="-3000" y="-2500" width="7000" height="6000" fill="url(#geo-sea-grad)"></rect>
+      <rect x="-3000" y="-2500" width="3400" height="6000" fill="url(#geo-waves)"></rect>
+      <path class="geo-depth" d="${smooth(shift(-30))}"></path>
+      <path class="geo-depth" d="${smooth(shift(-70))}"></path>
+      <path class="geo-shallow" d="${smooth(COAST)}"></path>
+      <path class="geo-land" d="${smooth(COAST)} L4000 3500 L4000 -2500 Z"></path>
+      <path class="geo-grass" d="${smooth(COAST)} L4000 3500 L4000 -2500 Z" fill="url(#geo-grass)"></path>
+      <path class="geo-beach" d="${smooth(COAST)}"></path>
+      ${RELIEF.map(([lvl, pts]) => `<path class="geo-contour l${lvl}" d="${smooth(pts, true)}"></path>${lvl > 1 ? `<path class="geo-relief" d="${smooth(pts, true)}" fill="url(#geo-hatch)"></path>` : ''}`).join('')}
       <path class="geo-swamp" d="${smooth(MERE, true)}"></path>
       <g class="geo-tufts">${tufts.join('')}</g>
-      ${line([[470, 90], [445, 100], [420, 104], [392, 110]], 'geo-river')}
-      ${peak([454, 526])}${peak([445, 62])}
-      ${line([[392, 114], [385, 180], [380, 260], [382, 330], [376, 420], [362, 500], [345, 560], [330, 640], [318, 720]], 'geo-road')}
-      ${line([[380, 330], [450, 350], [520, 372], [575, 375], [640, 330], [700, 300], [780, 270], [1000, 240]], 'geo-road')}
-      ${line([[560, 375], [560, 420]], 'geo-road geo-path')}
+      <path class="geo-wood" d="${smooth(WOOD, true)}"></path>
+      <path class="geo-river-bank" d="${smooth(FL(RIVER))}"></path>
+      <path class="geo-river" d="${smooth(FL(RIVER))}"></path>
+      ${line(STREAM, 'geo-river geo-stream')}
+      <g class="geo-trees">${trees.join('')}</g>
+      <g class="geo-range">${range.join('')}</g>
+      ${peak(F([454, 526]), 1.6, true)}
+      ${peak(hotenow, 1.2)}<circle class="geo-smoke" cx="${hotenow[0] + 2}" cy="${hotenow[1] - 22}" r="5"></circle><circle class="geo-smoke" cx="${hotenow[0] + 8}" cy="${hotenow[1] - 32}" r="7"></circle>
+      <g class="geo-roads">
+        ${line([[392, 114], [385, 180], [380, 260], [382, 330], [376, 420], [362, 500], [345, 560], [330, 640], [318, 720]], 'geo-road-casing')}
+        ${line([[380, 330], [450, 350], [520, 372], [575, 375], [640, 330], [700, 300], [780, 270], [1000, 240]], 'geo-road-casing')}
+        ${line([[392, 114], [385, 180], [380, 260], [382, 330], [376, 420], [362, 500], [345, 560], [330, 640], [318, 720]], 'geo-road')}
+        ${line([[380, 330], [450, 350], [520, 372], [575, 375], [640, 330], [700, 300], [780, 270], [1000, 240]], 'geo-road')}
+        ${line([[560, 375], [560, 420]], 'geo-road geo-path')}
+      </g>
       ${label([300, 330], 'sea', 'geo-sea-label', -90)}
-      ${label([590, 150], 'wood')}
-      ${label([560, 655], 'mountains')}
+      ${label([615, 150], 'wood', 'geo-wood-label')}
+      ${label([560, 668], 'mountains', 'geo-mount-label')}
       ${label([255, 640], 'mere', 'geo-small geo-sea-label', -72)}
-      ${label([455, 20], 'hotenow', 'geo-small')}
+      ${label([455, 14], 'hotenow', 'geo-small geo-mount-label')}
       ${label([360, 250], 'highRoad', 'geo-road-label', -87)}
       ${label([900, 228], 'triboar', 'geo-road-label', -5)}
-      <text class="geo-label geo-title" x="890" y="650">${esc(t('map.geo.coast'))}</text>
-      <text class="geo-label geo-note" x="890" y="680">${esc(t('map.geo.scale'))}</text>
-      <g class="geo-compass" transform="translate(950 560)"><path d="M0 -36 L10 0 L0 -8 L-10 0 Z"></path><text y="24">N</text></g>
+      ${label([690, 236], 'river', 'geo-small geo-river-label', -24)}
+      <g class="geo-cartouche" transform="translate(890 640)">
+        <rect x="-150" y="-34" width="300" height="72" rx="6"></rect>
+        <text class="geo-label geo-title" y="2">${esc(t('map.geo.coast'))}</text>
+        <text class="geo-label geo-note" y="26">${esc(t('map.geo.scale'))}</text>
+      </g>
+      <g class="geo-compass" transform="translate(950 520)">
+        <circle r="30"></circle><circle r="22" class="inner"></circle>
+        <path class="ew" d="M-34 0 L0 -5 L34 0 L0 5 Z"></path>
+        <path class="ns" d="M0 -42 L6 0 L0 42 L-6 0 Z"></path>
+        <path class="north" d="M0 -42 L6 0 L-6 0 Z"></path>
+        <text y="-50">N</text>
+      </g>
     </g>`;
+}
+
+// Ancho de un texto en pantalla (para repartir los nombres del mapa sin que se tapen).
+const textCtx = document.createElement('canvas').getContext('2d');
+const textWidths = new Map();
+function textWidth(text, font) {
+  const key = `${font}|${text}`;
+  if (!textWidths.has(key)) { textCtx.font = font; textWidths.set(key, textCtx.measureText(text).width); }
+  return textWidths.get(key);
+}
+
+// Leyenda del mapa dibujado: terrenos y tipos de lugar.
+function legendHtml() {
+  const terrain = [['grass', 'var(--geo-grass)'], ['hills', 'var(--geo-hills)'], ['mountains', 'var(--geo-peak)'], ['wood', 'var(--geo-wood)'],
+    ['swamp', 'var(--geo-swamp)'], ['sea', 'var(--geo-sea)']];
+  return `
+    <summary>${icon('map')}<span>${esc(t('map.legend'))}</span></summary>
+    <div class="legend-body">
+      <h4>${esc(t('map.legendTerrain'))}</h4>
+      ${terrain.map(([k, c]) => `<span class="legend-item"><span class="legend-swatch" style="background:${c}"></span>${esc(t(`map.terrain.${k}`))}</span>`).join('')}
+      <span class="legend-item"><span class="legend-swatch line" style="background:var(--geo-river)"></span>${esc(t('map.terrain.river'))}</span>
+      <span class="legend-item"><span class="legend-swatch dash"></span>${esc(t('map.terrain.road'))}</span>
+      <h4>${esc(t('map.legendPlaces'))}</h4>
+      ${M.PLACE_TYPES.map((p) => `<span class="legend-item"><span class="legend-dot" style="background:${M.TOKEN_COLORS[p.color]}">${icon(p.icons[0])}</span>${esc(t(`map.ptype.${p.key}`))}</span>`).join('')}
+    </div>`;
 }
 
 // ---------- Vista ----------
@@ -254,11 +330,13 @@ export function mountMap(root, ctx, focusId = null) {
         </div>
         <div class="map-subbar" data-subbar></div>
         <svg class="map-svg" data-svg role="img" aria-label="${esc(t('camp.map'))}"></svg>
+        <details class="map-legend" data-legend hidden>${legendHtml()}</details>
         <input type="file" accept="image/*" data-map-file hidden>
       </div>
       <aside class="map-panel" data-panel></aside>
     </div>`;
   const svg = root.querySelector('[data-svg]');
+  const legend = root.querySelector('[data-legend]');
   const panel = root.querySelector('[data-panel]');
   const subbar = root.querySelector('[data-subbar]');
   let g = null;      // grafo actual
@@ -295,24 +373,29 @@ export function mountMap(root, ctx, focusId = null) {
       const on = sel && (e.a === sel || e.b === sel);
       return `<line class="edge ${on ? 'selected' : 'edge-side'}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" style="stroke-width:${2 + Math.min(6, e.weight)}"></line>`;
     }).join('');
-    // Fichas de lugar: icono, color y tamaño propios (o adivinados por el nombre).
+    // Fichas de lugar: icono, color y tamaño propios (o adivinados por el nombre); el color por defecto es el del tipo.
     const nodeHtml = placed.map((c) => {
       const p = P.get(c.id);
-      const tk = M.tokenOf(c, C.neighbors(c.id, g).length);
+      const links = C.neighbors(c.id, g).length;
+      const tk = M.tokenOf(c, links);
       const r = { s: 13, m: 18, l: 25 }[tk.size] || 18;
       const fill = M.TOKEN_COLORS[tk.color] || M.TOKEN_COLORS.green;
-      const ink = ['white', 'amber'].includes(tk.color) ? '#1a2130' : '#ffffff';
-      const cls = ['node', 'place-token', c.id === sel ? 'center' : '', selectedNeighbors?.has(c.id) ? 'selected' : '',
+      const city = tk.type === 'settlement';
+      // Nivel del nombre según el zoom: 1 = ciudades grandes (siempre), 2 = pueblos y fichas medianas, 3 = el resto.
+      const tier = tk.size === 'l' ? 1 : city || tk.size === 'm' ? 2 : 3;
+      const cls = ['node', 'place-token', `tier-${tier}`, city ? 'tk-city' : '', c.id === sel ? 'center' : '', selectedNeighbors?.has(c.id) ? 'selected' : '',
         view.editing ? 'movable' : '', c.id === view.tokenSel ? 'token-sel' : ''].join(' ');
       // tk-inner se escala con el zoom: el token se ve siempre del mismo tamaño en pantalla.
-      // Prioridad del nombre cuando se tapan: el elegido, luego las fichas grandes y las más conectadas.
-      const prio = (c.id === sel ? 1000 : 0) + (selectedNeighbors?.has(c.id) ? 500 : 0) + r * 10 + C.neighbors(c.id, g).length;
-      return `<g class="${cls}" data-node="${esc(c.id)}" data-prio="${prio}" transform="translate(${p.x} ${p.y})"><g class="tk-inner">
-        <circle r="${r}" style="fill:${fill}"></circle>
-        <use href="#i-${tk.icon}" x="${-r * 0.6}" y="${-r * 0.6}" width="${r * 1.2}" height="${r * 1.2}" style="color:${ink}"></use>
-        <text class="node-label" y="${r + 4}" dy="1em">${esc(c.name || t('camp.unnamed'))}</text>
-      </g></g>`;
-    }).join('');
+      // Prioridad del nombre cuando se tapan: el elegido, luego las ciudades, las fichas grandes y las más conectadas.
+      const prio = (c.id === sel ? 1000 : 0) + (selectedNeighbors?.has(c.id) ? 500 : 0) + (city ? 200 : 0) + r * 10 + links;
+      return { prio, html: `<g class="${cls}" data-node="${esc(c.id)}" data-prio="${prio}" data-r="${r}" data-off="${city ? 9 : 4}" transform="translate(${p.x} ${p.y})"><g class="tk-inner">
+        <circle class="tk-shadow" r="${r}" cx="2" cy="3"></circle>
+        ${city ? `<circle class="tk-ring" r="${r + 5}"></circle>` : ''}
+        <circle class="tk-body" r="${r}" style="fill:${fill}"></circle>
+        <use href="#i-${tk.icon}" x="${-r * 0.6}" y="${-r * 0.6}" width="${r * 1.2}" height="${r * 1.2}"></use>
+        <text class="node-label" y="${r + (city ? 9 : 4)}" dy="1em">${esc(c.name || t('camp.unnamed'))}</text>
+      </g></g>` };
+    }).sort((a, b) => a.prio - b.prio).map((x) => x.html).join(''); // los más importantes encima (su nombre no queda tapado)
     const pp = M.partyOn(view.mapId);
     const partyHtml = pp ? `<g class="party-token" data-party transform="translate(${pp.x} ${pp.y})"><g class="tk-inner">
         <circle r="22"></circle><use href="#i-party" x="-13" y="-13" width="26" height="26"></use>
@@ -323,6 +406,7 @@ export function mountMap(root, ctx, focusId = null) {
          <image class="map-image" href="${M.imageUrl(map)}" x="0" y="0" width="${W.w}" height="${W.h}" preserveAspectRatio="none"></image>
          <rect class="map-frame" x="0" y="0" width="${W.w}" height="${W.h}"></rect>`
       : geoBackground();
+    legend.hidden = !!map; // la leyenda describe el mapa dibujado
     svg.innerHTML = `${bg}<g class="edges">${edgeHtml}</g><g class="nodes">${nodeHtml}</g>${partyHtml}`;
   }
 
@@ -689,7 +773,11 @@ export function mountMap(root, ctx, focusId = null) {
     svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
     const k = vb.w / Math.max(1, svg.clientWidth);
     svg.style.setProperty('--k', k); // textos siempre a 18 px en pantalla
+    // Fichas de lugar a tamaño fijo en pantalla. Va como atributo SVG: con una transformación CSS, Chrome mide los
+    // nombres con la escala anterior hasta el siguiente pintado y el reparto de nombres (declutter) se equivoca.
+    for (const el of svg.querySelectorAll('.tk-inner')) el.setAttribute('transform', `scale(${k})`);
     svg.classList.toggle('zoomed-out', k > 1.15); // de lejos se ocultan los nombres menos importantes
+    svg.classList.toggle('zoomed-far', k > 1.8);  // muy de lejos, solo las ciudades grandes
     if (view.mode === 'places') declutterSoon();
   }
 
@@ -697,19 +785,36 @@ export function mountMap(root, ctx, focusId = null) {
   let declutterFrame = 0;
   function declutterSoon() {
     cancelAnimationFrame(declutterFrame);
-    declutterFrame = requestAnimationFrame(() => {
-      const nodes = [...svg.querySelectorAll('.place-token')].sort((a, b) => b.dataset.prio - a.dataset.prio);
-      const boxes = nodes.map((n) => n.querySelector('circle').getBoundingClientRect());
-      const kept = [];
-      nodes.forEach((n, idx) => {
-        const label = n.querySelector('.node-label');
-        label.classList.remove('lbl-hidden');
-        const r = label.getBoundingClientRect();
-        const hit = (b) => r.left < b.right - 2 && r.right > b.left + 2 && r.top < b.bottom - 2 && r.bottom > b.top + 2;
-        const clash = kept.some(hit) || boxes.slice(0, idx).some(hit); // fichas más importantes que esta
-        if (clash) label.classList.add('lbl-hidden');
-        else kept.push(r);
-      });
+    declutterFrame = requestAnimationFrame(declutter);
+  }
+  // Las cajas se calculan con la posición en el mapa y el ancho del texto: justo después de un zoom, Chrome devuelve
+  // medidas viejas para los textos del SVG (getBoundingClientRect) y se ocultarían los nombres equivocados.
+  function declutter() {
+    const W = svg.clientWidth;
+    const H = svg.clientHeight;
+    if (!W || !H || !P) return;
+    const toScreen = (p) => ({ x: ((p.x - vb.x) / vb.w) * W, y: ((p.y - vb.y) / vb.h) * H });
+    const nodes = [...svg.querySelectorAll('.place-token')].sort((a, b) => b.dataset.prio - a.dataset.prio);
+    const boxes = nodes.map((n) => {
+      const c = toScreen(P.get(n.dataset.node) || { x: 0, y: 0 });
+      const r = Number(n.dataset.r);
+      return { c, r, left: c.x - r, right: c.x + r, top: c.y - r, bottom: c.y + r };
+    });
+    const kept = [];
+    nodes.forEach((n, idx) => {
+      const label = n.querySelector('.node-label');
+      label.classList.remove('lbl-hidden');
+      const cs = getComputedStyle(label);
+      if (cs.display === 'none') return; // oculto por el nivel de zoom
+      const size = parseFloat(cs.fontSize);
+      const w = textWidth(label.textContent, `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`);
+      const { c, r } = boxes[idx];
+      const top = c.y + r + Number(n.dataset.off) + size * 0.15;
+      const box = { left: c.x - w / 2, right: c.x + w / 2, top, bottom: top + size * 1.1 };
+      const hit = (b) => box.left < b.right - 2 && box.right > b.left + 2 && box.top < b.bottom - 2 && box.bottom > b.top + 2;
+      const clash = kept.some(hit) || boxes.slice(0, idx).some(hit); // fichas más importantes que esta
+      if (clash) label.classList.add('lbl-hidden');
+      else kept.push(box);
     });
   }
 
@@ -736,7 +841,7 @@ export function mountMap(root, ctx, focusId = null) {
   }
 
   function zoom(factor, cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2) {
-    const w = Math.min(20000, Math.max(150, vb.w * factor));
+    const w = Math.min(view.mode === 'places' ? 2400 : 20000, Math.max(150, vb.w * factor));
     const f = w / vb.w;
     vb = { x: cx - (cx - vb.x) * f, y: cy - (cy - vb.y) * f, w, h: vb.h * f };
     applyViewBox();

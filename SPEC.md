@@ -133,6 +133,13 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
     bitácora que tienen posición (`pos: {x, y}` en un mundo de 1000 × 700). Tocar un lugar muestra lo conectado
     agrupado por tipo y su registro. "Ubicar lugares" permite arrastrarlos; los lugares sin posición que no están
     dentro de otro lugar ubicado (por enlace) aparecen en "Lugares sin ubicar" para ponerlos en el mapa.
+    **Aspecto (v4.2)**: un color por terreno (pradera con textura, colinas, montañas con trama y picos, Pico Icespire
+    nevado, bosque con árboles, pantano, mar con olas y aguas poco profundas, playa, Río Neverwinter hasta el
+    pabellón de Falcon, caminos con borde), cartela y rosa de los vientos, viñeta y leyenda plegable. Color del
+    token por tipo de lugar (`PLACE_TYPES` en `maps.js`) salvo color propio; las ciudades llevan anillo ámbar.
+    Nombres por nivel según el zoom (de lejos solo ciudades y pueblos; muy de lejos, solo las grandes) y reparto sin
+    solapes calculado con la posición y el ancho del texto. Los lugares importantes se dibujan encima. El zoom se
+    detiene a ~2,4 veces el mapa.
   - **Personajes**: lista con buscador ordenada por conexiones; de lejos, red solo de personajes. Al elegir uno,
     vista centrada con filtro por tipo de ficha.
   - **Red**: todas las fichas (filtro por tipo); de lejos solo se ven los nombres de las 12 más conectadas.

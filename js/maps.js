@@ -119,8 +119,21 @@ const ICON_WORDS = [
   ['mountain', /\b(monta[ñn]a|mountain|pico|peak|colina|hill|berg|circle|c[ií]rculo)\b/i],
   ['town', /\b(ciudad|city|pueblo|town|aldea|village|stadt|dorf)\b/i],
 ];
+// Tipos de lugar (leyenda del mapa): cada icono pertenece a uno, que da el color si la ficha no tiene uno propio.
+export const PLACE_TYPES = [
+  { key: 'settlement', icons: ['town', 'castle'], color: 'amber' },
+  { key: 'rural', icons: ['farm', 'inn', 'camp', 'anchor'], color: 'green' },
+  { key: 'ruins', icons: ['ruins', 'tower'], color: 'purple' },
+  { key: 'dungeon', icons: ['cave', 'mine'], color: 'red' },
+  { key: 'sacred', icons: ['temple', 'tree', 'mountain'], color: 'teal' },
+  { key: 'other', icons: ['pin'], color: 'gray' },
+];
+export const placeType = (iconName) => PLACE_TYPES.find((p) => p.icons.includes(iconName)) || PLACE_TYPES.at(-1);
+
 export function tokenOf(entry, links = 0) {
   const tk = entry.token || {};
   const guess = ICON_WORDS.find(([, re]) => re.test(entry.name || ''))?.[0] || (links >= 4 ? 'town' : 'pin');
-  return { icon: tk.icon || guess, color: tk.color || 'green', size: tk.size || 'm' };
+  const iconName = tk.icon || guess;
+  const type = placeType(iconName);
+  return { icon: iconName, color: tk.color || type.color, size: tk.size || 'm', type: type.key };
 }
