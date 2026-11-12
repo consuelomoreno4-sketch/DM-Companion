@@ -47,7 +47,7 @@ con dedo, S Pen y teclado opcional. Cómo funciona la app hoy: `SPEC.md`. Regist
 | Campaña: datos y vistas | `campaign.js`, `campaign-data.js`, `campaign-ui.js` |
 | Campaña: sesiones, códice, historias | `campaign-sessions.js`, `campaign-codex.js`, `campaign-stories.js` |
 | Campaña: mapa | `campaign-map.js` (mapa dibujado + vistas), `maps.js` (mapas propios y fichas) |
-| Campaña: importar y detectar | `campaign-import.js`, `campaign-detect.js`, `data/packs/*.json` |
+| Campaña: importar y detectar | `campaign-import.js`, `campaign-text.js` (fichas e historias en texto), `campaign-detect.js`, `data/packs/*.json` |
 | Reloj de juego | `clock.js`, `clock-ui.js`, `campaign-time.js` |
 | IA (opcional, con clave) | `ai.js`, `ai-ui.js`, `ambience.js`, `campaign-ai.js` |
 

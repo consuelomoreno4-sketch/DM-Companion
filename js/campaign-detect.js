@@ -20,7 +20,10 @@ const COMMON = new Set(['el', 'la', 'los', 'las', 'un', 'una', 'en', 'al', 'del'
   'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
   'party', 'grupo', 'gruppe', 'heroes', 'heroe', 'personajes', 'hombres', 'hombre', 'mujer', 'mujeres', 'rata', 'ratas', 'gigante', 'gigantes', 'orco', 'orcos',
   'ogro', 'ogros', 'goblin', 'goblins', 'trasgos', 'kobold', 'kobolds', 'lobo', 'lobos', 'esqueleto', 'esqueletos', 'zombi', 'zombis', 'lore', 'info', 'enganches',
-  'enganche', 'gancho', 'ganchos', 'pendiente', 'pendientes', 'hooks', 'hook', 'todo', 'nada', 'algo', 'alguien', 'aqui', 'alli', 'ahi', 'ahora', 'hoy', 'ayer']);
+  'enganche', 'gancho', 'ganchos', 'pendiente', 'pendientes', 'hooks', 'hook', 'todo', 'nada', 'algo', 'alguien', 'aqui', 'alli', 'ahi', 'ahora', 'hoy', 'ayer',
+  // palabras de juego que se escriben con mayúscula sin ser nombres
+  'quest', 'quests', 'mision', 'loot', 'botin', 'healing', 'potion', 'pocion', 'pociones', 'heroic', 'inspiration', 'inspiracion', 'nivel', 'level', 'xp',
+  'round', 'ronda', 'combate', 'combat', 'initiative', 'iniciativa', 'boss', 'bbeg', 'dungeon', 'short', 'long', 'rest', 'fin', 'end', 'ende']);
 
 const TITLES = ['lord', 'lady', 'sir', 'dame', 'rey', 'reina', 'king', 'queen', 'principe', 'princesa', 'prince', 'princess', 'hermana', 'hermano',
   'sister', 'brother', 'capitan', 'captain', 'sargento', 'sergeant', 'maestro', 'maestra', 'master', 'senor', 'senora', 'don', 'dona', 'padre', 'madre',
@@ -257,7 +260,7 @@ export function spotNear(anchor, dir = null) {
   return { x: anchor.pos.x + 40, y: anchor.pos.y + 40 };
 }
 
-function autoPlace(entry, texts) {
+export function autoPlace(entry, texts) {
   const placedIn = (text) => C.knownIn(text).map((id) => C.get('codex', id)).filter((e) => e && e.id !== entry.id && e.kind === 'place' && e.pos);
   let pos = null;
   for (const text of texts) {

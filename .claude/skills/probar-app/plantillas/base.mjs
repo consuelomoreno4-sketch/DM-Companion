@@ -86,6 +86,8 @@ export async function cambiarIdioma(page, idioma) {
 
 // Va a un panel tocando su pestaña (como el dedo en la tablet).
 export async function irA(page, panel) {
+  // Ambientación está oculta salvo que se activen las funciones con IA en Ajustes: para probarla se muestra.
+  if (panel === 'ambientacion') await page.evaluate(() => document.body.classList.remove('no-ai'));
   await page.tap(`.tab[data-panel="${panel}"]`);
   await page.waitForSelector(`#panel-${panel}:not([hidden])`);
 }

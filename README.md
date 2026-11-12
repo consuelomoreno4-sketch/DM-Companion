@@ -3,7 +3,7 @@
 Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet en horizontal
 (Samsung Galaxy Tab S8 Ultra). Funciona sin internet una vez instalada y guarda todo en el dispositivo.
 
-**Estado:** las 4 fases listas (Combate, Compendio, Campaña y Ambientación), versión 4.2.0. Ver [`SPEC.md`](SPEC.md) para cómo funciona y [`CHANGELOG.md`](CHANGELOG.md) para los cambios.
+**Estado:** las 4 fases listas (Combate, Compendio, Campaña y Ambientación), versión 4.3.0. Ver [`SPEC.md`](SPEC.md) para cómo funciona y [`CHANGELOG.md`](CHANGELOG.md) para los cambios.
 
 **Idiomas:** inglés (por defecto), español y alemán. Se cambia en **Settings / Ajustes** (⚙).
 
@@ -59,6 +59,10 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
   Desde Samsung Notes: ⋮ → «Guardar como archivo» → Microsoft Word, y luego «Elegir archivos» en la app.
   Desde Google Docs: copiar y pegar (se respetan los niveles ● ○ ■) o descargar como .docx / .txt. Infomaniak: sus
   documentos ya son .docx. No hace falta tener Microsoft Word.
+- **Importar con una IA** (Sesiones → Importar notas → «Con una IA»): copia las instrucciones, pégalas en la IA que
+  uses (Claude, ChatGPT, Gemini…) con tus notas y pega su respuesta en la app. Además de las sesiones, crea las
+  fichas (con la party marcada), sus otros nombres y enlaces, los lugares en el mapa y las líneas de historia, sin
+  borrar nada de lo que ya tienes. Tus notas las recibe esa IA, no esta app. Revisa las «Dudas» que te deja al final.
 - **Orden de las sesiones** (Sesiones): si los números no siguen las fechas aparece un aviso con «Numerar por fecha».
   También puedes arrastrar cada sesión por su asa ⠿ (con el dedo o el mouse) para ponerla en otro lugar.
 - **Detectar en las notas** (Bitácora): encuentra personajes, lugares, facciones y objetos sin ficha, con sus otros

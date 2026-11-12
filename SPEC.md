@@ -155,6 +155,16 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
   "Session" / "Sitzung" o con # inicia una sesión (se reconocen número, fecha AAAA-MM-DD o DD/MM/AAAA y título);
   las demás líneas son puntos (viñetas -, *, •, +, 1. o sin viñeta) y la sangría (espacios o tabulador) da los
   sub-puntos. Vista previa con el conteo antes de importar.
+- **Fichas e historias en el texto (v4.3)** (`campaign-text.js`): después de las sesiones, una sección `## Fichas`
+  (o Entries / Einträge) con líneas `- Nombre (tipo, grupo, al norte de X): descripción. Otros nombres: a, b.
+  Enlaces: c.` y una `## Historias` (Storylines / Handlungsstränge) con `- Título (activa | idea | resuelta): texto.
+  Implicados: …`. `## Dudas` no se importa; un título de sesión cierra la sección. Subtítulos como `### Lugares` dan
+  el tipo por defecto. Todo se une por nombre u otro nombre con lo existente (nunca borra ni reescribe: solo agrega
+  otros nombres, etiquetas, enlaces y campos vacíos); importar dos veces no duplica. Lugares sin posición se ubican
+  con la pista ("al norte de X", "en X") o junto a un lugar enlazado. "Con una IA": instrucciones para copiar
+  (`imp.aiPrompt`, ejemplo inventado) que piden ese formato, nombres completos fijos, la party con "grupo", el
+  tiempo en frases explícitas y las dudas aparte. El pack también se une por otros nombres ("Falcon" ↔ Falcon the
+  Hunter). La detección ignora palabras de juego (Quest, Loot, Healing…).
 - **Mapa (v3.1)**: grafo de la campaña.
   - Nodos = fichas (color e icono por tipo; tamaño según menciones). Hilos = dos fichas en un mismo punto (al menos
     una nombrada en el propio punto), enlaces de la bitácora (línea discontinua) y líneas de historia; grosor
@@ -201,6 +211,7 @@ js/campaign-codex.js    Vista Bitácora
 js/campaign-stories.js  Vista Líneas de historia (tablero)
 js/campaign-map.js      Vista Mapa (Lugares / Personajes / Red)
 js/campaign-import.js   Paquetes de aventura e importación de notas
+js/campaign-text.js     Secciones Fichas / Historias del texto importado (unir por nombre)
 data/packs/icespire.json  Paquete Dragon of Icespire Peak
 js/campaign-ui.js       Piezas compartidas (enlaces entre fichas, fechas)
 js/ai.js               Conexión con la API de Anthropic (streaming, JSON estructurado, costo)

@@ -2,6 +2,7 @@
 
 Lo más reciente arriba. Cada versión publicada agrega una línea (lo hace `/publicar`).
 
+- **4.3.0** — Importar con una IA: instrucciones para copiar en la IA que uses y secciones «Fichas» e «Historias» en el texto importado, que crean fichas (con la party marcada), otros nombres, enlaces, lugares en el mapa e historias sin borrar nada. El pack ya no duplica fichas con otro nombre (Falcon ↔ Falcon the Hunter) y «Detectar en las notas» ignora palabras de juego.
 - **4.2.0** — Mapa dibujado con un color por terreno (pradera, colinas, montañas, bosque, pantano, mar), Río Neverwinter, leyenda plegable y lugares con color según su tipo (ciudades con anillo ámbar). Los nombres se muestran según el zoom y ya no se superponen al alejar o volver a la vista completa.
 - **4.1.0** — Funciones con IA ocultas por defecto (se activan en Ajustes → Claude (IA)). Sesiones: «En esta sesión» muestra las fichas que nombran las notas, con acceso a la ficha y al mapa. Al importar notas, «Siguientes pasos»: cargar la aventura, detectar nombres y ubicar los lugares nuevos en el mapa.
 - **4.0.2** — Importar notas: «Sesión 26.04.2026» y «Sesión del 06.09.26» se leen con su fecha (sin número ni título falsos) y las líneas divisorias ya no entran como puntos. Detectar en las notas: no propone monstruos («Ankhegs», «9 Twig Blights»), no une nombres cortos distintos (Corin y Corwin), reconoce nombres al inicio de frase con verbo («Excelsior compra…»), sugiere variantes de una letra como otro nombre de una ficha (Gorthoc → Gorthok) y busca las pistas solo dentro de la misma frase.

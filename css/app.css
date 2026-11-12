@@ -1180,3 +1180,4 @@ input::placeholder { color: #8994a7; }
 .next-steps { display: grid; gap: var(--s2); margin: 0; padding-left: var(--s3); }
 .next-steps li { display: grid; gap: var(--s1); justify-items: start; }
 .next-steps .hint { margin: 0; }
+.imp-prompt { font: 16px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }

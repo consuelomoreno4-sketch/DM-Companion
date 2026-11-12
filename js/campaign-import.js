@@ -7,6 +7,7 @@ import * as C from './campaign-data.js';
 import { normalize } from './monsters.js';
 import { esc, icon, toast, openDialog, closeDialog, wireDialog } from './ui.js';
 import { t, tn, getLang } from './i18n.js';
+import { sectionOf, parseEntryLine, parseStoryLine, previewCampaign, applyCampaign, findEntry } from './campaign-text.js';
 
 export const PACKS = [{ id: 'icespire', name: 'Dragon of Icespire Peak', file: 'data/packs/icespire.json' }];
 
@@ -23,16 +24,17 @@ export async function importPack(id) {
   const pack = await res.json();
   await C.loadCampaign();
   const lang = getLang();
-  const byName = new Map(C.list('codex').map((c) => [normalize(c.name || ''), c]));
+  // Una ficha propia con otro nombre de la del paquete ("Falcon" ↔ Falcon the Hunter) es la misma: no se duplica.
+  const sameAs = (e) => findEntry(e.name) || (e.aliases || []).map((a) => findEntry(a)).find(Boolean);
   const ids = new Map();
   let created = 0;
   let merged = 0;
   for (const e of pack.entries) {
     const subtitle = e.subtitle?.[lang] || e.subtitle?.en || '';
     const pos = e.pos ? { x: e.pos[0], y: e.pos[1] } : null;
-    const existing = byName.get(normalize(e.name));
+    const existing = sameAs(e);
     if (existing) {
-      const patch = { aliases: [...new Set([...(existing.aliases || []), ...(e.aliases || [])])] };
+      const patch = { aliases: [...new Set([...(existing.aliases || []), ...(e.aliases || []), e.name])].filter((a) => normalize(a) !== normalize(existing.name)) };
       if (!existing.subtitle) patch.subtitle = subtitle;
       // Las fichas que nunca se movieron siguen a la nueva versión del mapa dibujado (prevPos = posiciones antiguas).
       const untouched = existing.pos && (e.prevPos || []).some(([x, y]) => existing.pos.x === x && existing.pos.y === y);
@@ -226,13 +228,23 @@ function removeLoose(text, raw) {
   return i === -1 ? text : `${text.slice(0, i)} ${text.slice(i + raw.length)}`;
 }
 
-export function parseNotes(text) {
+export const parseNotes = (text) => parseCampaignText(text).sessions;
+
+/**
+ * Notas de sesión y, si las hay, las secciones "Fichas" e "Historias" (ver campaign-text.js).
+ * Devuelve { sessions, entries, stories }.
+ */
+export function parseCampaignText(text) {
   const lines = String(text || '').replace(/\r/g, '').replace(/\t/g, '    ').split('\n');
   const indents = lines.map((l) => l.match(BULLET)?.[1].length).filter((n) => n > 0);
   const unit = indents.length ? Math.min(...indents) : 2;
   const sessions = [];
   let current = null;
   let lastYear = null; // para fechas sin año ("3 de mayo")
+  const entries = [];
+  const stories = [];
+  let mode = null;        // sección actual: 'entries' | 'stories' | 'skip' | null (notas)
+  let defaultKind = null; // tipo dado por un subtítulo ("### Lugares") dentro de Fichas
   const ensure = () => {
     if (!current) {
       current = { number: null, date: '', title: '', notes: [] };
@@ -249,6 +261,17 @@ export function parseNotes(text) {
     const line = raw.trimEnd();
     const trimmed = line.trim();
     if (!trimmed || SEPARATOR.test(trimmed)) continue;
+    // Secciones de fichas e historias: sus líneas no son notas. Terminan con el título de una sesión.
+    const sec = sectionOf(trimmed);
+    if (sec && typeof sec === 'string') { mode = sec; defaultKind = null; continue; }
+    if (sec && mode === 'entries') { defaultKind = sec.kind; continue; }
+    if (mode && !SESSION_WORD.test(trimmed.replace(/^#{1,6}\s*/, '')) && !(dateOnly(trimmed.replace(/^#{1,6}\s*/, ''), lastYear))) {
+      const item = trimmed.replace(/^(?:[-*+•·▪◦‣○●■□]|\d+[.)])\s*/, '').replace(/^#{1,6}\s*/, '');
+      if (mode === 'entries') { const e = parseEntryLine(item, defaultKind); if (e) entries.push(e); }
+      else if (mode === 'stories') { const st = parseStoryLine(item); if (st) stories.push(st); }
+      continue;
+    }
+    mode = null;
     const h = trimmed.match(HEADING);
     if (h || SESSION_WORD.test(trimmed)) {
       start(parseHeading(h ? h[1] : trimmed, lastYear));
@@ -307,7 +330,7 @@ export function parseNotes(text) {
     const depth = Math.min(C.MAX_DEPTH, Math.max(Math.round(indent / unit), glyph), prev ? prev.depth + 1 : 0);
     s.notes.push({ text: (b ? b[2] : line).trim(), depth });
   }
-  return sessions.filter((x) => x.notes.length || x.title);
+  return { sessions: sessions.filter((x) => x.notes.length || x.title), entries, stories };
 }
 
 /**
@@ -444,6 +467,12 @@ export function openImportDialog(onDone) {
       <summary>${icon('book')}<span>${esc(t('imp.samsungTitle'))}</span></summary>
       <ol class="imp-steps">${t('imp.samsungSteps').split('\n').map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
     </details>
+    <details class="comp-filter-box imp-samsung" data-imp-ai>
+      <summary>${icon('sparkles')}<span>${esc(t('imp.aiTitle'))}</span></summary>
+      <ol class="imp-steps">${t('imp.aiSteps').split('\n').map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
+      <div class="map-actions"><button class="btn btn-primary" type="button" data-imp-copy>${icon('copy')}<span>${esc(t('imp.aiCopy'))}</span></button></div>
+      <label class="field"><span>${esc(t('imp.aiPromptLabel'))}</span><textarea class="imp-prompt" rows="8" readonly data-imp-prompt>${esc(t('imp.aiPrompt'))}</textarea></label>
+    </details>
     <label class="field"><span>${esc(t('imp.paste'))}</span><textarea data-imp-text rows="12" spellcheck="false"></textarea></label>
     <div class="map-actions">
       <label class="btn">${icon('upload')}<span>${esc(t('imp.file'))}</span><input type="file" multiple accept=".txt,.md,.docx,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document" data-imp-file hidden></label>
@@ -459,14 +488,21 @@ export function openImportDialog(onDone) {
   const preview = body.querySelector('[data-imp-preview]');
   const go = body.querySelector('[data-imp-go]');
   let parsed = [];
+  let extra = { entries: [], stories: [] }; // secciones Fichas e Historias
   const list = body.querySelector('[data-imp-list]');
   const update = () => {
-    parsed = parseNotes(area.value);
+    const all = parseCampaignText(area.value);
+    parsed = all.sessions;
+    extra = { entries: all.entries, stories: all.stories };
     const points = parsed.reduce((n, s) => n + s.notes.length, 0);
     const noDate = parsed.filter((s) => !s.date).length;
-    preview.textContent = parsed.length
-      ? `${tn('imp.sessionsFound', parsed.length)} · ${tn('imp.pointsFound', points)}${noDate ? ` · ${tn('imp.noDateCount', noDate)}` : ''}`
-      : '';
+    const pv = previewCampaign(extra);
+    preview.textContent = [
+      parsed.length ? `${tn('imp.sessionsFound', parsed.length)} · ${tn('imp.pointsFound', points)}` : '',
+      pv.entries ? tn('imp.entriesFound', pv.entries, { new: pv.newEntries }) : '',
+      pv.stories ? tn('imp.storiesFound', pv.stories, { new: pv.newStories }) : '',
+      noDate ? tn('imp.noDateCount', noDate) : '',
+    ].filter(Boolean).join(' · ');
     // Detalle de cada sesión para revisar fechas y títulos antes de importar.
     list.innerHTML = parsed.map((s, i) => `
       <li class="${s.date ? '' : 'imp-nodate'}">
@@ -475,7 +511,7 @@ export function openImportDialog(onDone) {
         <span>${esc(s.title || '—')}</span>
         <span class="hint num">${esc(tn('imp.pointsFound', s.notes.length))}</span>
       </li>`).join('');
-    go.disabled = !parsed.length;
+    go.disabled = !parsed.length && !extra.entries.length && !extra.stories.length;
   };
   area.addEventListener('input', update);
   // Fecha corregida a mano en la lista (solo para esta importación).
@@ -498,10 +534,26 @@ export function openImportDialog(onDone) {
     }
     update();
   });
+  // Copiar las instrucciones para una IA (si el navegador no deja, el texto queda seleccionado para copiarlo a mano).
+  body.querySelector('[data-imp-copy]').addEventListener('click', async () => {
+    const box = body.querySelector('[data-imp-prompt]');
+    try {
+      await navigator.clipboard.writeText(box.value);
+      toast(t('imp.aiCopied'), { duration: 4000, group: 'import' });
+    } catch {
+      box.focus();
+      box.select();
+      toast(t('imp.aiCopyManual'), { duration: 6000, group: 'import' });
+    }
+  });
   go.addEventListener('click', () => {
-    const created = importSessions(parsed, { replaceSameNumber: body.querySelector('[data-imp-replace]').checked });
+    const created = parsed.length ? importSessions(parsed, { replaceSameNumber: body.querySelector('[data-imp-replace]').checked }) : [];
+    const r = extra.entries.length || extra.stories.length ? applyCampaign(extra) : null;
     closeDialog(dlg);
-    if (!created.length) toast(t('imp.done', { n: 0 }), { duration: 5000, group: 'import' }); // si no, siguen los pasos
+    if (r) {
+      toast(`${t('imp.campaignDone', { created: r.created, completed: r.completed, stories: r.stories, placed: r.placed })}${r.missing.length ? ` ${t('imp.missingLinks', { names: r.missing.slice(0, 8).join(', ') })}` : ''}`, { duration: 9000, group: 'import-extra' });
+    }
+    if (!created.length && !r) toast(t('imp.done', { n: 0 }), { duration: 5000, group: 'import' }); // si no, siguen los pasos
     onDone?.(created);
   });
   openDialog(dlg);

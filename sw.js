@@ -2,7 +2,7 @@
 // IMPORTANTE: cada vez que publiques cambios, sube el número de VERSION
 // para que las tablets descarguen la versión nueva.
 
-const VERSION = '4.2.0';
+const VERSION = '4.3.0';
 const CACHE = `dm-companion-${VERSION}`;
 
 const FILES = [
@@ -31,6 +31,7 @@ const FILES = [
   './js/campaign-stories.js',
   './js/campaign-map.js',
   './js/campaign-import.js',
+  './js/campaign-text.js',
   './js/campaign-detect.js',
   './js/campaign-time.js',
   './js/clock.js',
