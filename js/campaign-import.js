@@ -334,6 +334,21 @@ export function parseCampaignText(text) {
 }
 
 /**
+ * La sesión ya guardada que corresponde a una importada: la del mismo número, o, sin número, la que empieza con el
+ * mismo primer punto (también si antes se importó como un solo párrafo: el primer punto viejo contiene al nuevo).
+ */
+export function sameSession(p, used = new Set()) {
+  if (p.number != null) return C.list('sessions').find((s) => Number(s.number) === p.number) || null;
+  const first = normalize(p.notes[0]?.text || '');
+  if (!first) return null;
+  return C.list('sessions').find((s) => {
+    if (used.has(s.id)) return false;
+    const old = normalize(s.notes?.[0]?.text || '');
+    return old === first || (first.length >= 20 && old.includes(first));
+  }) || null;
+}
+
+/**
  * Crea las sesiones. Con replaceSameNumber, una sesión importada con el mismo número que una existente
  * la actualiza (fecha, título y notas) en vez de duplicarla: sirve para volver a importar tras corregir.
  */
@@ -350,16 +365,7 @@ export function importSessions(parsed, { replaceSameNumber = false } = {}) {
   for (const p of parsed) {
     let number = p.number ?? next + 1;
     const notes = (p.notes.length ? p.notes : [{ text: '', depth: 0 }]).map((n) => ({ id: C.newId('n'), text: n.text, depth: n.depth }));
-    // Sin número en las notas: se reconoce la sesión ya importada por su primer punto.
-    // (También si antes se importó como un solo párrafo: el primer punto viejo contiene al nuevo.)
-    const first = normalize(p.notes[0]?.text || '');
-    const sameStart = (s) => {
-      const old = normalize(s.notes?.[0]?.text || '');
-      return old === first || (first.length >= 20 && old.includes(first));
-    };
-    const existing = !replaceSameNumber ? null : p.number != null
-      ? C.list('sessions').find((s) => Number(s.number) === number)
-      : first && C.list('sessions').find((s) => !used.has(s.id) && sameStart(s));
+    const existing = !replaceSameNumber ? null : sameSession(p, used);
     if (existing) used.add(existing.id);
     if (existing) number = Number(existing.number) || number;
     next = Math.max(next, number);
@@ -504,16 +510,22 @@ export function openImportDialog(onDone) {
       noDate ? tn('imp.noDateCount', noDate) : '',
     ].filter(Boolean).join(' · ');
     // Detalle de cada sesión para revisar fechas y títulos antes de importar.
-    list.innerHTML = parsed.map((s, i) => `
+    const replace = body.querySelector('[data-imp-replace]').checked;
+    list.innerHTML = parsed.map((s, i) => {
+      const old = replace ? sameSession(s) : null;
+      return `
       <li class="${s.date ? '' : 'imp-nodate'}">
         <span class="num">${s.number != null ? `#${s.number}` : '#?'}</span>
         <input type="date" class="num" data-imp-date="${i}" value="${esc(s.date)}" aria-label="${esc(t('imp.dateOf', { n: s.number ?? '?' }))}">
         <span>${esc(s.title || '—')}</span>
         <span class="hint num">${esc(tn('imp.pointsFound', s.notes.length))}</span>
-      </li>`).join('');
+        ${old ? `<span class="badge badge-warn imp-replaces">${icon('refresh')} ${esc(t('imp.replaces', { n: old.number ?? '?' }))}</span>` : ''}
+      </li>`;
+    }).join('');
     go.disabled = !parsed.length && !extra.entries.length && !extra.stories.length;
   };
   area.addEventListener('input', update);
+  body.querySelector('[data-imp-replace]').addEventListener('change', update);
   // Fecha corregida a mano en la lista (solo para esta importación).
   list.addEventListener('change', (e) => {
     const inp = e.target.closest('[data-imp-date]');

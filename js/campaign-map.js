@@ -341,6 +341,7 @@ export function mountMap(root, ctx, focusId = null) {
   const subbar = root.querySelector('[data-subbar]');
   let g = null;      // grafo actual
   let P = null;      // posiciones de lo dibujado
+  let fitIds = null; // fichas que encuadra la vista general (Personajes y Red)
   let vb = { x: 0, y: 0, w: WORLD.w, h: WORLD.h };
   let fileMode = 'new'; // el selector de imagen sirve para un mapa nuevo o para cambiar la imagen del actual
   const world = () => M.worldSize(view.mapId);
@@ -354,9 +355,9 @@ export function mountMap(root, ctx, focusId = null) {
   function render({ fit = true } = {}) {
     g = C.graph();
     if (view.mode === 'places') renderPlaces();
-    else renderGraph();
+    else { renderGraph(); legend.hidden = true; }
     renderSubbar();
-    renderPanel();
+    if (!document.activeElement?.matches?.('[data-tk-name]') || !panel.contains(document.activeElement)) renderPanel();
     if (fit) fitView(); else applyViewBox();
   }
 
@@ -406,7 +407,7 @@ export function mountMap(root, ctx, focusId = null) {
          <image class="map-image" href="${M.imageUrl(map)}" x="0" y="0" width="${W.w}" height="${W.h}" preserveAspectRatio="none"></image>
          <rect class="map-frame" x="0" y="0" width="${W.w}" height="${W.h}"></rect>`
       : geoBackground();
-    legend.hidden = !!map; // la leyenda describe el mapa dibujado
+    legend.hidden = !!map; // la leyenda describe el mapa dibujado (en Personajes y Red se oculta en render)
     svg.innerHTML = `${bg}<g class="edges">${edgeHtml}</g><g class="nodes">${nodeHtml}</g>${partyHtml}`;
   }
 
@@ -436,6 +437,9 @@ export function mountMap(root, ctx, focusId = null) {
     const degree = new Map(ids.map((id) => [id, 0]));
     for (const e of edges) { degree.set(e.a, degree.get(e.a) + e.weight); degree.set(e.b, degree.get(e.b) + e.weight); }
     const major = new Set([...degree.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).filter(([, d]) => d > 0).map(([id]) => id));
+    // Vista general: se encuadran las fichas con conexiones (las sueltas quedan alrededor y se ven al alejar).
+    const linked = ids.filter((id) => degree.get(id) > 0);
+    fitIds = !view.focus && linked.length >= 2 ? new Set(linked) : null;
     const selectedKey = view.focus && view.other ? [view.focus, view.other].sort().join('|') : null;
     const edgeHtml = edges.map((e) => {
       const a = P.get(e.a);
@@ -456,7 +460,8 @@ export function mountMap(root, ctx, focusId = null) {
       const p = P.get(id);
       const r = id === view.focus ? 46 : 24 + Math.round(14 * Math.sqrt((n.mentions || 0) / maxMentions));
       const cls = ['node', `kind-${n.entry.kind}`, id === view.focus ? 'center' : '', id === view.other ? 'selected' : '', !view.focus && !major.has(id) ? 'minor' : ''].join(' ');
-      return `<g class="${cls}" data-node="${esc(id)}" transform="translate(${p.x} ${p.y})">
+      const prio = (id === view.focus ? 1000 : 0) + (id === view.other ? 500 : 0) + (degree.get(id) || 0) * 10 + (n.mentions || 0);
+      return `<g class="${cls}" data-node="${esc(id)}" data-prio="${prio}" data-r="${r}" data-off="8" data-world transform="translate(${p.x} ${p.y})">
         <circle r="${r}"></circle>
         <use href="#i-${KIND_ICON[n.entry.kind] || 'user'}" x="${-r * 0.5}" y="${-r * 0.5}" width="${r}" height="${r}"></use>
         <text class="node-label" y="${r + 8}" dy="1em">${esc(n.entry.name || t('camp.unnamed'))}</text>
@@ -778,7 +783,7 @@ export function mountMap(root, ctx, focusId = null) {
     for (const el of svg.querySelectorAll('.tk-inner')) el.setAttribute('transform', `scale(${k})`);
     svg.classList.toggle('zoomed-out', k > 1.15); // de lejos se ocultan los nombres menos importantes
     svg.classList.toggle('zoomed-far', k > 1.8);  // muy de lejos, solo las ciudades grandes
-    if (view.mode === 'places') declutterSoon();
+    declutterSoon();
   }
 
   // Modo Lugares: si dos nombres se tapan, se oculta el de menos prioridad (vuelve a verse al acercar o al tocar la ficha).
@@ -794,11 +799,14 @@ export function mountMap(root, ctx, focusId = null) {
     const H = svg.clientHeight;
     if (!W || !H || !P) return;
     const toScreen = (p) => ({ x: ((p.x - vb.x) / vb.w) * W, y: ((p.y - vb.y) / vb.h) * H });
-    const nodes = [...svg.querySelectorAll('.place-token')].sort((a, b) => b.dataset.prio - a.dataset.prio);
+    // Fichas de lugar: radio y separación en px de pantalla. Red y Personajes (data-world): en unidades del mapa.
+    const k = vb.w / W;
+    const nodes = [...svg.querySelectorAll('.nodes [data-node][data-prio]')].sort((a, b) => b.dataset.prio - a.dataset.prio);
     const boxes = nodes.map((n) => {
       const c = toScreen(P.get(n.dataset.node) || { x: 0, y: 0 });
-      const r = Number(n.dataset.r);
-      return { c, r, left: c.x - r, right: c.x + r, top: c.y - r, bottom: c.y + r };
+      const scale = n.hasAttribute('data-world') ? 1 / k : 1;
+      const r = Number(n.dataset.r) * scale;
+      return { c, r, off: Number(n.dataset.off) * scale, left: c.x - r, right: c.x + r, top: c.y - r, bottom: c.y + r };
     });
     const kept = [];
     nodes.forEach((n, idx) => {
@@ -808,8 +816,8 @@ export function mountMap(root, ctx, focusId = null) {
       if (cs.display === 'none') return; // oculto por el nivel de zoom
       const size = parseFloat(cs.fontSize);
       const w = textWidth(label.textContent, `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`);
-      const { c, r } = boxes[idx];
-      const top = c.y + r + Number(n.dataset.off) + size * 0.15;
+      const { c, r, off } = boxes[idx];
+      const top = c.y + r + off + size * 0.15;
       const box = { left: c.x - w / 2, right: c.x + w / 2, top, bottom: top + size * 1.1 };
       const hit = (b) => box.left < b.right - 2 && box.right > b.left + 2 && box.top < b.bottom - 2 && box.bottom > b.top + 2;
       const clash = kept.some(hit) || boxes.slice(0, idx).some(hit); // fichas más importantes que esta
@@ -826,7 +834,7 @@ export function mountMap(root, ctx, focusId = null) {
       const W = world();
       [minX, minY, maxX, maxY] = view.mapId === M.DRAWN ? [200, 0, W.w, W.h + 50] : [-20, -20, W.w + 20, W.h + 20];
     } else {
-      const pts = [...(P?.values() || [])];
+      const pts = [...(P?.entries() || [])].filter(([id]) => !fitIds || fitIds.has(id)).map(([, p]) => p);
       minX = Math.min(...pts.map((p) => p.x), -100) - 120;
       maxX = Math.max(...pts.map((p) => p.x), 100) + 120;
       minY = Math.min(...pts.map((p) => p.y), -100) - 100;
@@ -965,10 +973,7 @@ export function mountMap(root, ctx, focusId = null) {
       render();
       return;
     }
-    if (el.matches('[data-tk-name]') && view.tokenSel) {
-      C.update('codex', view.tokenSel, { name: el.value.trim() || t('map.newPlace') }, { debounce: false });
-      return;
-    }
+    if (el.matches('[data-tk-name]') && view.tokenSel) { saveTokenName(el); return; }
     if (el.name === 'tk-size' && view.tokenSel) {
       const c = C.get('codex', view.tokenSel);
       C.update('codex', c.id, { token: { ...(c.token || {}), size: el.value } }, { debounce: false });
@@ -976,7 +981,21 @@ export function mountMap(root, ctx, focusId = null) {
     }
     if (el.matches('[data-map-name]')) { await M.renameMap(view.mapId, el.value.trim() || t('map.untitledMap')); renderSubbar(); }
   });
+  // Nombre del lugar: se guarda mientras se escribe (sin redibujar el panel, que tiene el foco). Si se guardara solo
+  // al salir del campo, el panel se redibujaría bajo el dedo y se perdería el toque en un icono o un color.
+  let nameTimer = 0;
+  function saveTokenName(el) {
+    clearTimeout(nameTimer);
+    const c = C.get('codex', view.tokenSel);
+    const name = el.value.trim() || t('map.newPlace');
+    if (c && c.name !== name) C.update('codex', c.id, { name }, { debounce: false });
+  }
   root.addEventListener('input', (e) => {
+    if (e.target.matches('[data-tk-name]') && view.tokenSel) {
+      clearTimeout(nameTimer);
+      nameTimer = setTimeout(() => saveTokenName(e.target), 400);
+      return;
+    }
     if (!e.target.matches('[data-people-q]')) return;
     view.peopleQuery = e.target.value;
     const pos = e.target.selectionStart;

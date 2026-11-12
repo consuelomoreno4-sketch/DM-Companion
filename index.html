@@ -53,6 +53,7 @@
       <symbol id="i-gem" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9zM2 9h20M9 3 7.5 9 12 21M15 3l1.5 6L12 21"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6"/></symbol>
       <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.2a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.9M12 17h.01"/></symbol>
       <symbol id="i-copy" viewBox="0 0 24 24"><path d="M9 9h10a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 21H9a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 9 9zM4.5 15V4.5A1.5 1.5 0 0 1 6 3h10.5"/></symbol>
       <symbol id="i-indent" viewBox="0 0 24 24"><path d="M3 5h18M11 10h10M11 14h10M3 19h18M3 9l4 3-4 3"/></symbol>
       <symbol id="i-outdent" viewBox="0 0 24 24"><path d="M3 5h18M11 10h10M11 14h10M3 19h18M7 9l-4 3 4 3"/></symbol>
@@ -98,6 +99,9 @@
         <a class="tab" href="#ambientacion" data-panel="ambientacion"><svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg><span data-i18n="tab.ambience">Ambience</span><kbd>4</kbd></a>
       </nav>
       <button class="btn btn-ghost clock-chip" id="btn-clock" type="button"></button>
+      <button class="btn btn-ghost" id="btn-help" type="button">
+        <svg class="icon" aria-hidden="true"><use href="#i-help"/></svg><span class="settings-label" data-i18n="tour.button">Guide</span>
+      </button>
       <button class="btn btn-ghost" id="btn-settings" type="button">
         <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg><span class="settings-label" data-i18n="btn.settings">Settings</span>
       </button>
@@ -305,6 +309,11 @@
       </div>
       <p class="hint" data-i18n="menu.undoHint">Both can be reverted with Undo.</p>
     </form>
+  </dialog>
+
+  <!-- DIALOG: guide (short tours per module) -->
+  <dialog class="dialog dialog-wide" id="dlg-help" aria-labelledby="dlg-help-title">
+    <div class="dialog-body" id="help-body"></div>
   </dialog>
 
   <!-- DIALOG: settings (language, data and backup) -->

@@ -43,7 +43,7 @@ export function mountCodex(root, ctx) {
     const q = normalize(qEl.value.trim());
     const cur = current();
     const items = C.list('codex')
-      .filter((c) => (!filter || c.kind === filter) && (!q || normalize(`${c.name} ${c.subtitle || ''} ${(c.tags || []).join(' ')}`).includes(q)))
+      .filter((c) => (!filter || c.kind === filter) && (!q || normalize(`${c.name} ${(c.aliases || []).join(' ')} ${c.subtitle || ''} ${(c.tags || []).join(' ')}`).includes(q)))
       .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     listEl.innerHTML = items.length ? items.map((c) => `
       <li><button type="button" class="comp-item" data-pick="${esc(c.id)}" aria-current="${c.id === cur?.id}">

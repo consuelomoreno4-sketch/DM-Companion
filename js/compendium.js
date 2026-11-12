@@ -452,6 +452,13 @@ function wireEntryForm() {
         await onShow();
       }
       ui.selected[ui.kind] = saved.id;
+      // Si la búsqueda o los filtros esconden la entrada recién guardada, se quitan para que se vea.
+      if (!filtered().some((it) => it.i === saved.id)) {
+        for (const k of Object.keys(ui.filters[ui.kind])) ui.filters[ui.kind][k] = '';
+        ui.query[ui.kind] = '';
+        els.search.value = '';
+        renderFilters();
+      }
       renderList();
       renderDetail();
       els.list.querySelector(`[data-id="${CSS.escape(saved.id)}"]`)?.scrollIntoView({ block: 'nearest' });

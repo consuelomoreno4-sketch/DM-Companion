@@ -32,6 +32,7 @@ const FILES = [
   './js/campaign-map.js',
   './js/campaign-import.js',
   './js/campaign-text.js',
+  './js/tour.js',
   './js/campaign-detect.js',
   './js/campaign-time.js',
   './js/clock.js',

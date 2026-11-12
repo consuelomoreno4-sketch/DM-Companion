@@ -15,8 +15,7 @@ Usa siempre estos nombres; son los de la interfaz actual (y del SRD 5.2 en cada 
 | Party | Grupo | Gruppe |
 | Short rest · Long rest | Descanso corto · Descanso largo | Kurze Rast · Lange Rast |
 
-> Ojo: el nombre de la pestaña es **Bitácora** / **Verzeichnis**. Algunos textos de la fase 4
-> (`ai.*`, `amb.*`) dicen "Códice" / "Kodex"; al tocarlos, usa el nombre de la pestaña.
+> El nombre de la pestaña es **Bitácora** / **Verzeichnis** en todos los textos (también en `ai.*` y `amb.*`).
 
 ## Combate
 

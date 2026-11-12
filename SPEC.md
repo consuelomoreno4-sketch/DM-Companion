@@ -187,6 +187,16 @@ Este documento es la referencia para todas las fases. Si algo cambia, se actuali
 - Modelo por defecto: el más reciente y capaz de Claude disponible.
 - Si no hay internet, el panel lo explica y muestra las descripciones guardadas.
 
+## Guía (v4.4)
+
+- Botón **?** en la barra superior (`#btn-help`) → ventana «Guía» con 8 recorridos: Combate, Compendio, Sesiones,
+  Bitácora, Líneas de historia, Mapa, Tiempo, Ajustes y guía (`js/tour.js`, textos `tour.<id>.<n>`).
+- Cada paso lleva al panel y la vista correctos, ilumina el elemento real (capa oscura con hueco) y muestra una
+  burbuja con Atrás / Siguiente / ×. Si el elemento no está (p. ej., sin tarjetas), la burbuja va al centro.
+- Salir (× , tocar fuera o Esc) pausa: el paso queda en kv `tours` (`{ [id]: { step, seen } }`) y «Continuar»
+  lo retoma, también tras recargar. ← → cambian de paso; con la guía abierta no actúan los atajos de la app.
+- Primera vez que se abre la app: aviso con «Ver la guía» (kv `tourHint`; no vuelve a salir).
+
 ## Estructura de archivos
 
 ```
@@ -212,6 +222,7 @@ js/campaign-stories.js  Vista Líneas de historia (tablero)
 js/campaign-map.js      Vista Mapa (Lugares / Personajes / Red)
 js/campaign-import.js   Paquetes de aventura e importación de notas
 js/campaign-text.js     Secciones Fichas / Historias del texto importado (unir por nombre)
+js/tour.js              Guía: recorridos cortos por módulo (botón ?)
 data/packs/icespire.json  Paquete Dragon of Icespire Peak
 js/campaign-ui.js       Piezas compartidas (enlaces entre fichas, fechas)
 js/ai.js               Conexión con la API de Anthropic (streaming, JSON estructurado, costo)
@@ -313,6 +324,7 @@ Ajustes pedidos que aún no están hechos o ideas para más adelante. Se revisan
 
 - Más secciones del SRD en el Compendio: objetos mágicos, equipo, dotes, clases (ya están en la fuente).
 - Ver el bloque de estadísticas al tocar el token de un monstruo en la grilla.
-- **Revisión de sesión con IA (propuesta para la fase 4)**: tras la sesión, un botón envía las notas a la API de
-  Anthropic para corregir ortografía, gramática y redacción (se muestran los cambios para aceptarlos o no) y
-  detectar personajes, lugares, objetos y facciones nuevos para crear sus fichas y que entren al mapa.
+- Nombres de monstruos del SRD también en español y alemán para la búsqueda («Lobo» → Wolf).
+- Mapa: etapas 2 (quién está en cada lugar, por importancia) y 3 (del personaje a sus conexiones), y distancias
+  según los hexágonos de la aventura (datos que debe pasar la dueña).
+- Historias con estructura (fases, pistas, decisiones pendientes) y diagrama radial (evaluado, en pausa).

@@ -151,7 +151,7 @@ p { margin: 0; }
   border-bottom: 1px solid var(--line);
 }
 .brand { font-size: 24px; color: var(--amber); white-space: nowrap; }
-#btn-settings { flex: none; }
+#btn-settings, #btn-help { flex: none; }
 
 .tabs { display: flex; gap: var(--s1); flex: 1; min-width: 0; }
 .tab {
@@ -920,6 +920,9 @@ mark.mention {
 .imp-sessions li.imp-nodate { background: #4a3a1a; color: #ffe2a8; }
 .imp-sessions input[type=date] { min-height: 44px; padding: 0 var(--s1); }
 .imp-sessions li.imp-nodate input[type=date] { border-color: var(--amber); }
+.imp-sessions .imp-replaces { grid-column: 2 / -1; justify-self: start; gap: 4px; font-size: 16px; }
+.imp-sessions .imp-replaces .icon { width: 16px; height: 16px; }
+.badge-warn { background: #4a3a1a; color: #ffe2a8; border: 1px solid var(--amber); }
 
 /* ---------- Ventanas (dialog) ---------- */
 
@@ -1181,3 +1184,34 @@ input::placeholder { color: #8994a7; }
 .next-steps li { display: grid; gap: var(--s1); justify-items: start; }
 .next-steps .hint { margin: 0; }
 .imp-prompt { font: 16px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+
+/* ---------- Guía (recorridos cortos) ---------- */
+.tour { position: fixed; inset: 0; z-index: 2000; }
+.tour[hidden] { display: none; }
+.tour:has(.tour-hole[hidden]) { background: rgba(8, 12, 20, 0.72); }
+.tour-hole {
+  position: fixed; border-radius: var(--radius); pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(8, 12, 20, 0.72); outline: 3px solid var(--amber); outline-offset: 0;
+  transition: left var(--t), top var(--t), width var(--t), height var(--t);
+}
+.tour-bubble {
+  position: fixed; width: min(400px, calc(100vw - 32px)); display: grid; gap: var(--s1);
+  padding: var(--s2); background: var(--surface); color: var(--text);
+  border: 1px solid var(--amber); border-radius: var(--radius); box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+.tour.busy .tour-bubble { visibility: hidden; }
+.tour-bubble h2 { margin: 0; font: 700 22px/1.2 var(--font-title); color: var(--amber); }
+.tour-bubble p { margin: 0; line-height: 1.45; }
+.tour-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s1); }
+.tour-foot { display: flex; justify-content: space-between; gap: var(--s1); margin-top: var(--s1); }
+.help-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); }
+.help-item {
+  display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: var(--s2);
+  padding: var(--s1) var(--s2); background: var(--surface-2); border-radius: var(--radius);
+}
+.help-icon .icon { width: 28px; height: 28px; color: var(--amber); }
+.help-text { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--s1); }
+.help-text .hint { flex-basis: 100%; }
+.help-text .badge .icon { width: 16px; height: 16px; }
+.help-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--s1); }
+#dlg-help-title .icon { width: 28px; height: 28px; vertical-align: -4px; color: var(--amber); }

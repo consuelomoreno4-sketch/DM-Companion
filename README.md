@@ -23,6 +23,9 @@ Herramienta para Dungeon Masters de D&D (reglas 2024), pensada para una tablet e
 - **Grilla**: arrastra los tokens con el dedo o el S Pen. Tamaño de la grilla en el botón "⋯" de la barra.
 - **Deshacer**: botón "Deshacer" (o Ctrl+Z) revierte la última acción, hasta 50 pasos.
 - **Ajustes** (⚙ arriba a la derecha): idioma, exportar o importar una copia de seguridad, y créditos.
+- **Guía** (botón **?** arriba): recorridos cortos por cada parte de la app (Combate, Compendio, Sesiones, Bitácora,
+  Historias, Mapa, Tiempo y Ajustes). Puedes salir cuando quieras con × o tocando fuera; «Continuar» retoma donde
+  quedaste. La primera vez que se abre la app aparece un aviso que la ofrece.
 
 ## Qué hace el panel de Compendio
 

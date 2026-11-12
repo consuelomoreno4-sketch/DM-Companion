@@ -46,7 +46,8 @@ const ITEM_WORDS = ['espada', 'sword', 'anillo', 'ring', 'amuleto', 'amulet', 'l
 const PLACE_BEFORE_STRONG = ['llegan a', 'llega a', 'llegamos a', 'viajan a', 'viajan hacia', 'van a', 'van hacia', 'vuelven a', 'regresan a', 'parten hacia',
   'salen de', 'salen hacia', 'ciudad de', 'pueblo de', 'aldea de', 'camino a', 'rumbo a', 'hacia', 'arrive at', 'arrive in', 'arrived at', 'arrived in', 'travel to',
   'traveled to', 'head to', 'headed to', 'towards', 'city of', 'town of', 'village of', 'reach', 'reached', 'nach', 'reisen nach', 'kommen in', 'erreichen'];
-const PLACE_BEFORE_WEAK = ['en', 'a', 'desde', 'cerca de', 'al norte de', 'al sur de', 'al este de', 'al oeste de', 'in', 'at', 'to', 'from', 'near', 'im', 'zum', 'zur', 'bei', 'aus', 'von'];
+// Sin 'a': en español es también la «a» personal («vio a Serafina»).
+const PLACE_BEFORE_WEAK = ['en', 'desde', 'cerca de', 'al norte de', 'al sur de', 'al este de', 'al oeste de', 'in', 'at', 'to', 'from', 'near', 'im', 'zum', 'zur', 'bei', 'aus', 'von'];
 const CHAR_AFTER = ['dice', 'dijo', 'les', 'le', 'pide', 'pidio', 'ofrece', 'ofrecio', 'ataca', 'ataco', 'cuenta', 'conto', 'explica', 'quiere', 'queria',
   'responde', 'grita', 'huye', 'muere', 'murio', 'sonrie', 'miente', 'contrata', 'envia', 'envio', 'confiesa', 'revela', 'traiciona', 'saluda', 'habla', 'hablo',
   'says', 'said', 'asks', 'asked', 'offers', 'offered', 'tells', 'told', 'wants', 'attacks', 'attacked', 'reveals', 'hires', 'sends', 'sent', 'dies', 'died', 'lies',
@@ -160,7 +161,10 @@ function scoreOccurrence(c, text, index, name) {
 export function guessKind(c) {
   const s = c.score;
   const best = Object.entries(s).sort((a, b) => b[1] - a[1])[0];
-  return best[1] >= 1 ? best[0] : 'character'; // sin pistas, lo más común en las notas son personajes
+  if (best[1] >= 1) return best[0];
+  // Solo pistas débiles de lugar ("en Leilon") y ninguna de persona: lugar.
+  if (s.place > 0 && !s.character && !s.faction && !s.item) return 'place';
+  return 'character'; // sin pistas, lo más común en las notas son personajes
 }
 
 // Sinónimos: "Dagult" o "Lord Neverember" se agrupan con "Dagult Neverember";
@@ -250,12 +254,18 @@ const DIR_RE = /\b(?:(?:al|hacia el)\s+(norte|sur|este|oeste|noreste|nordeste|no
 
 // Sitio libre junto a un lugar ya ubicado: en la dirección dada ([dx, dy]) o, sin dirección, alrededor sin taparse.
 export function spotNear(anchor, dir = null) {
-  if (dir) return { x: Math.round(anchor.pos.x + dir[0] * 70), y: Math.round(anchor.pos.y + dir[1] * 70) };
-  const taken = C.list('codex').filter((e) => e.pos).map((e) => e.pos);
+  const taken = C.list('codex').filter((e) => e.pos && e.id !== anchor.id).map((e) => e.pos);
+  const free = (p) => !taken.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 45) && Math.hypot(anchor.pos.x - p.x, anchor.pos.y - p.y) >= 85; // las ciudades tienen token grande
+  if (dir) {
+    // En esa dirección, el primer sitio libre (sin tapar otro lugar ni el de referencia).
+    const at = (d) => ({ x: Math.round(anchor.pos.x + dir[0] * d), y: Math.round(anchor.pos.y + dir[1] * d) });
+    for (const d of [70, 95, 120, 150]) if (free(at(d))) return at(d);
+    return at(70);
+  }
   for (let i = 0; i < 12; i++) {
     const a = (i * Math.PI) / 6 + 0.4;
     const p = { x: Math.round(anchor.pos.x + Math.cos(a) * 70), y: Math.round(anchor.pos.y + Math.sin(a) * 70) };
-    if (!taken.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 45)) return p;
+    if (free(p)) return p;
   }
   return { x: anchor.pos.x + 40, y: anchor.pos.y + 40 };
 }

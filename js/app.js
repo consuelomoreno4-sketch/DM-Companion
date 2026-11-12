@@ -9,6 +9,7 @@ import { initClock } from './clock-ui.js';
 import * as ambience from './ambience.js';
 import { renderAiSettings } from './ai-ui.js';
 import { loadAiSettings } from './ai.js';
+import { openHelp, firstRunHint, tourActive } from './tour.js';
 import { exportAll, importAll, validateBackup, kvGet, kvSet } from './db.js';
 import { toast, openDialog, closeDialog, wireDialog, confirmDialog, isTyping, esc } from './ui.js';
 import { t, setLang, getLang, applyStatic, LANGS, DEFAULT_LANG } from './i18n.js';
@@ -80,6 +81,7 @@ function wireShortcuts() {
     if (e.key === 'Escape') return; // las ventanas se cierran solas con Esc
 
     if (isTyping(e.target)) return;                       // nunca mientras se escribe
+    if (tourActive()) return;                             // ni con la guía abierta
     if (document.querySelector('dialog[open]')) return;   // ni con una ventana abierta
 
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z') {
@@ -104,9 +106,14 @@ function wireShortcuts() {
       showPanel(PANELS[n]);
     }
   });
-  // Al tocar la pantalla se ocultan otra vez las pistas de teclas.
-  document.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'touch' || e.pointerType === 'pen') document.body.classList.remove('has-keyboard');
+  // Al tocar la pantalla se ocultan otra vez las pistas de teclas, pero después del toque: si se ocultaran al apoyar el
+  // dedo, las pestañas se achicarían y el clic caería fuera de la pestaña tocada.
+  const hideKeys = () => document.body.classList.remove('has-keyboard');
+  document.addEventListener('pointerup', (e) => {
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') setTimeout(hideKeys, 600); // por si el toque no da clic
+  });
+  document.addEventListener('click', (e) => {
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') setTimeout(hideKeys, 0);
   });
 }
 
@@ -246,6 +253,7 @@ async function start() {
   initClock({ onTimeline: () => { campaign.setView('time'); showPanel('campana'); } }).catch(() => {});
   wireShortcuts();
   wireSettings();
+  $('#btn-help').addEventListener('click', openHelp);
   wireInstall();
   window.addEventListener('hashchange', () => showPanel(location.hash.slice(1)));
   showPanel(location.hash.slice(1));
@@ -256,6 +264,7 @@ async function start() {
     toast(t('app.loadError', { msg: t(err.message) }), { kind: 'error', duration: 0 });
   }
   navigator.storage?.persist?.().catch(() => {});
+  firstRunHint();
   registerServiceWorker();
 }
 

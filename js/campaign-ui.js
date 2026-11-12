@@ -54,7 +54,7 @@ export function linkPicker({ exclude = () => [], onPick }) {
     if (!q) { close(); return; }
     const skip = new Set(exclude());
     const matches = C.list('codex')
-      .filter((c) => !skip.has(c.id) && normalize(c.name || '').includes(q))
+      .filter((c) => !skip.has(c.id) && [c.name, ...(c.aliases || [])].some((n) => normalize(n || '').includes(q)))
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 6);
     const exact = C.list('codex').some((c) => normalize(c.name || '') === q);
@@ -69,6 +69,8 @@ export function linkPicker({ exclude = () => [], onPick }) {
   listEl.addEventListener('click', (e) => {
     const li = e.target.closest('li');
     if (!li) return;
+    // Las opciones llevan data-pick, como la lista de la Bitácora: sin esto, elegir aquí también cambiaría de ficha.
+    e.stopPropagation();
     let id = li.dataset.pick;
     if (li.hasAttribute('data-create')) id = C.create('codex', { kind: 'character', name: input.value.trim(), subtitle: '', tags: [], description: '', links: [] }).id;
     input.value = '';

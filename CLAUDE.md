@@ -40,7 +40,7 @@ con dedo, S Pen y teclado opcional. Cómo funciona la app hoy: `SPEC.md`. Regist
 
 | Área | Archivos |
 |---|---|
-| Arranque, ajustes, copia de seguridad | `app.js`, `db.js`, `ui.js` |
+| Arranque, ajustes, copia de seguridad, guía | `app.js`, `db.js`, `ui.js`, `tour.js` (recorridos del botón ?) |
 | Idiomas | `i18n.js` + `i18n/{en,es,de}.js` |
 | Combate | `combat.js`, `combat-state.js`, `conditions.js` |
 | Compendio (SRD) | `compendium.js`, `compendium-data.js`, `monsters.js`, `markdown.js` |
